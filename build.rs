@@ -6,8 +6,8 @@ fn main() {}
 #[cfg(feature = "prebuilt_libs")]*/
 fn main() {
     const STATIC_MAJOR: u32 = 0;
-    const STATIC_MINOR: u32 = 32;
-    const STATIC_PATCH: u32 = 0;
+    const STATIC_MINOR: u32 = 1;
+    const STATIC_PATCH: u32 = 2;
     const ENGINE_SHA: &str = "c7047d33c4d23b8b97b183cce90d319521601f7e";
     // gather variables
     let out_dir = std::path::Path::new(&std::env::var("OUT_DIR").unwrap()).to_owned();
@@ -99,8 +99,9 @@ fn main() {
     let extracted_libs_dir = cache_dir.join("lib");
     for require_lib in required_libs {
         println!(
-            "copying {}/{require_lib} to out_dir",
-            extracted_libs_dir.display()
+            "copying {}/{require_lib} to {}",
+            extracted_libs_dir.display(),
+            out_dir.display()
         );
         std::fs::copy(
             extracted_libs_dir.join(require_lib),

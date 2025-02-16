@@ -23,7 +23,9 @@ ls -lh tmp/lib
 if [[ "$PROFILE" == "release" ]]; then
     llvm-strip --strip-unneeded tmp/lib/* && ls -lh tmp/lib 
 fi
-7z a "$STATIC_ZIP_NAME" tmp/*
+cd tmp
+7z a ../"$STATIC_ZIP_NAME" *
+cd ..
 mv "$STATIC_ZIP_NAME" "$UPLOAD_DIR"
 rm -rf tmp "$OUT_DIR"
 
