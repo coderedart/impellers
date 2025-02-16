@@ -87,7 +87,7 @@ fn main() {
 
     let url = if static_link {
         format!(
-            "https://github.com/coderedart/flutter/releases/download/a_{}.{}.{}/{build_name}.zip",
+            "https://github.com/coderedart/impellers/releases/download/a_{}.{}.{}/{build_name}.zip",
             STATIC_MAJOR, STATIC_MINOR, STATIC_PATCH
         )
     } else {

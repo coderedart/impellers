@@ -25,6 +25,9 @@ jobs:
       - name: Install 7Zip and LLVM on Ubuntu
         if: matrix.os == 'ubuntu'
         run: sudo apt install -y 7zip llvm
+      - name: Add Depot Tools to path
+        shell: bash
+        run: echo "$GITHUB_WORKSPACE/depot_tools" >> $GITHUB_PATH
 
       - name: Download Depot Tools and Add it to PATH.
         shell: bash
@@ -32,7 +35,6 @@ jobs:
           mkdir $UPLOAD_DIR
           cd flutter
           git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
-          export PATH=$GITHUB_WORKSPACE/depot_tools:$PATH
           echo "$PATH"
           cp engine/scripts/standard.gclient .gclient
           gclient sync --delete_unversioned_trees --no-history --shallow
