@@ -1,0 +1,2371 @@
+#![doc = include_str!("../README.md")]
+//! ## API
+//! The API surface is small and easy to understand.
+//! ### Context and Surface
+//! The main entry point into the library is the [Context] struct. You create a context using [Context::new_opengl_es].
+//!
+//! The context allows you to do only 2 things:
+//! 1. wrap an opengl framebuffer into a [Surface]
+//!     or create a vulkan [VkSwapChain] to acquire a surface
+//!     or create a metal [Surface] (using a drawable).
+//! 2. create a texture from raw pixel data or adopt an opengl texture
+//!
+//! The [Surface] only has one function to draw things on it. i.e. [Surface::draw_display_list]
+//!
+//! ### Display Lists
+//! The [DisplayListBuilder] is used to record drawing commands like [DisplayListBuilder::draw_rect].
+//! Then, you call [DisplayListBuilder::build] to create a [DisplayList].
+//! [DisplayList] is an immutable and reusable copy of draw commands that you can
+//! execute on to a surface (or another display list builder).
+//!
+//! Think of the builder as writing a function by composing instructions and the build "compiles" it.
+//! Then, you just call the compiled function to replay those instructions as many times as you want.
+//!
+//! The builder maintains an internal "stack" of transformation matrices and clip rects.
+//! This works very well with how UI widgets generally work. For example, you may have a parent widget
+//! and a child widget.
+//!
+//! - The parent pushes a new transformation matrix and clip rect with [DisplayListBuilder::save]
+//! - The parent calls [DisplayListBuilder::transform] or [DisplayListBuilder::clip_rect] to modify the top of the stack
+//!   - The parent draws the background. calls the child to draw its content.
+//!   - The child pushes a new transformation matrix and clip rect with [DisplayListBuilder::save]
+//!     - just like its parent, the child calls [DisplayListBuilder::transform] or [DisplayListBuilder::clip_rect] to modify the top of the stack
+//!     - it issues its draw commands.
+//!   - the child calls [DisplayListBuilder::restore] to pop its clip/transform off the stack.
+//!       The top is now parent's clip/transform.
+//!   - The parent draws any overlay/foreground content
+//! - The parent pops its clip/transform off the stack with [DisplayListBuilder::restore]
+//!
+//! This allows each child to be "relative" to its parent (also known as "local to parent" or existing in parent's coordinate space).
+//! The child doesn't care about where it exists globally on the screen. It just cares about where it exists relative to its parent.
+//!
+//! ### Paint
+//! A [Paint] is used to configure the details of draw commands.
+//!
+//! For example, if you draw a rectangle using [DisplayListBuilder::draw_rect],
+//! the paint argument controls the details of the command like:
+//! * Color, Transparency, Blend mode
+//! * Draw style (filled rect or a stroked rect)
+//! * Blur effects and so on
+//!
+//! To affect sizes/positions etc., use [DisplayListBuilder::transform]
+//!
+//! ### Paragraphs
+//! Unlike simple shapes, text requires a lot of work. Just like [DisplayListBuilder] is used to
+//! record a bunch of commands and then, build an immutable and reusable [DisplayList],
+//! a [ParagraphBuilder] is used to record text and then, build an immutable and reusable [Paragraph].
+//!
+//! 1. You need a [TypographyContext] to hold your fonts.
+//! 2. You need a [ParagraphBuilder] to record text (with different parts using different styles like colors/fonts/sizes etc..)
+//! 3. You layout text with [ParagraphBuilder] using some max width and build a [Paragraph]
+//! 4. You draw text with [DisplayListBuilder::draw_paragraph].
+//!
+//! [ParagraphBuilder] also maintains an internal stack of text styles.
+//! So, you can push a style, add some text which will be rendered using that style and then,
+//! pop the style to go back to previous style.
+//!
+//! ### Textures
+//! You can create a [Texture] from raw pixel data or adopt an opengl texture.
+//!
+//! While you can just draw a texture (image) directly using [DisplayListBuilder::draw_texture],
+//! you can also use [ImageFilter] or [ColorFilter] of the [Paint] object to apply fancy effects.
+//!
+//! ### Filters/Sources etc..
+//! The other objects are there mostly to add fancy effects like blur/shadows etc..
+//! Read the respective docs for more details.
+//!
+//! ### LifeCycle
+//! For your average program, you usually have the phases of initialization, event loop and cleanup.
+//!
+//! The initialization phase is usually the one where you create the [Context] and [Surface].
+//!
+//! 1. Create a [Context] using opengl/vk/metal
+//! 2. Create a [Surface] from the context (usually wrapping the default framebuffer)
+//! 3. Create a [TypographyContext] (Most apps use a fixed set of fonts)
+//!
+//! Inside the event loop, you can do things in two ways:
+//!
+//! * Create a [DisplayListBuilder], record commands and build a [DisplayList]. draw it on to surface and drop it.
+//! * OTOH, you can create a [DisplayListBuilder], record commands and build a [DisplayList]
+//!   But, instead of dropping it, just keep it around in a cache to draw multiple times (across different frames).
+//!   Finally, drop it and rebuilt a new one if something changes (eg: layout or animations)
+//!
+//! During the cleanup phase, you drop the all the objects including [Surface] and [Context].
+//! Then,you destroy the window (or opengl context/surface).
+//!
+//!
+//! NOTE: The crate currently has *very* little API for some structs like matrices or rects. Contributions welcome :)
+
+pub mod sys;
+
+// enums
+pub use sys::{
+    BlendMode, BlurStyle, ClipOperation, ColorSpace, DrawStyle, FillType, FontStyle, FontWeight,
+    PixelFormat, StrokeCap, StrokeJoin, TextAlignment, TextDirection, TextureSampling, TileMode,
+};
+pub use sys::{
+    ImpellerColor as Color, ImpellerColorMatrix as ColorMatrix, ImpellerISize as ISize,
+    ImpellerMatrix as Matrix, ImpellerPoint as Point, ImpellerRect as Rect,
+    ImpellerRoundingRadii as RoundingRadii, ImpellerSize as Size,
+};
+
+//------------------------------------------------------------------------------
+/// The current Impeller API version.
+///
+/// Rust bindings will automatically pass the version behind the scenes, so this is mostly useless for users.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ImpellerVersion(u32);
+
+impl ImpellerVersion {
+    fn get_header_version() -> Self {
+        Self(
+            (sys::IMPELLER_VERSION_VARIANT << 29)
+                | (sys::IMPELLER_VERSION_MAJOR << 22)
+                | (sys::IMPELLER_VERSION_MINOR << 12)
+                | sys::IMPELLER_VERSION_PATCH,
+        )
+    }
+    /// Get the version of Impeller standalone library. This is the API that
+    /// will be accepted for validity checks when provided to the
+    /// context creation methods.
+    ///
+    /// NOTE: Rust bindings do the version validity checks behind the scenes, so the following doesn't really apply to users.
+    ///
+    /// The current version of the API generated from `impeller.h` is denoted by the
+    /// given by [Self::get_header_version]. This version must be passed to APIs
+    /// that create top-level objects like graphics contexts.
+    /// Construction of the context may fail if the API version expected
+    /// by the caller is not supported by the library.
+    ///
+    /// Since there are no API stability guarantees today, passing a
+    /// version that is different to the one returned by
+    /// [Self::get_version] will always fail.
+    ///
+    /// see [Context::new_opengl_es]
+    ///
+    ///
+    /// @return     The version of the standalone API. None if the version of the bindings is not compatible with the version of the Impeller library that was linked into the application.
+    fn get_linked_version() -> Self {
+        Self(unsafe { sys::ImpellerGetVersion() })
+    }
+    /// Checks that the [Self::get_header_version] is the same as the [Self::get_linked_version].
+    fn sanity_check() -> bool {
+        Self::get_header_version() == Self::get_linked_version()
+    }
+}
+/// The primary form of WSI when using a Vulkan context, these swapchains use
+/// the `VK_KHR_surface` Vulkan extension.
+///
+/// Creating a swapchain is extremely expensive. One must be created at
+/// application startup and re-used throughout the application lifecycle.
+///
+/// Swapchains are resilient to the underlying surfaces being resized. The
+/// swapchain images will be re-created as necessary on-demand.
+pub struct VkSwapChain(sys::ImpellerVulkanSwapchain);
+impl Clone for VkSwapChain {
+    fn clone(&self) -> Self {
+        unsafe {
+            sys::ImpellerVulkanSwapchainRetain(self.0);
+        }
+        Self(self.0)
+    }
+}
+
+impl Drop for VkSwapChain {
+    fn drop(&mut self) {
+        unsafe {
+            sys::ImpellerVulkanSwapchainRelease(self.0);
+        }
+    }
+}
+impl VkSwapChain {
+    //------------------------------------------------------------------------------
+    /// A potentially blocking operation, acquires the next surface to
+    /// render to. Since this may block, surface acquisition must be
+    /// delayed for as long as possible to avoid an idle wait on the
+    /// CPU.
+    ///
+    ///
+    /// @return     The surface if one could be obtained, NULL otherwise.
+    ///
+    pub fn acquire_next_surface_new(&self) -> Option<Surface> {
+        let surface = unsafe { sys::ImpellerVulkanSwapchainAcquireNextSurfaceNew(self.0) };
+        if surface.is_null() {
+            None
+        } else {
+            Some(Surface(surface))
+        }
+    }
+}
+/// An Impeller graphics context. Contexts are platform and client-rendering-API
+/// specific.
+///
+/// Contexts are thread-safe objects (not thread-safe with openGL) that are expensive to create. Most
+/// applications will only ever create a single context during their lifetimes.
+/// Once setup, Impeller is ready to render frames as performantly as possible.
+///
+/// During setup, context create the underlying graphics pipelines, allocators,
+/// worker threads, etc...
+///
+/// The general guidance is to create as few contexts as possible (typically
+/// just one) and share them as much as possible.
+///
+pub struct Context(sys::ImpellerContext);
+
+impl Clone for Context {
+    fn clone(&self) -> Self {
+        unsafe {
+            sys::ImpellerContextRetain(self.0);
+        }
+        Self(self.0)
+    }
+}
+
+impl Drop for Context {
+    fn drop(&mut self) {
+        unsafe {
+            sys::ImpellerContextRelease(self.0);
+        }
+    }
+}
+unsafe extern "C" fn wrap_gl_proc_address<F: FnMut(&str) -> *mut std::os::raw::c_void>(
+    name: *const std::os::raw::c_char,
+    user_data: *mut std::os::raw::c_void,
+) -> *mut std::os::raw::c_void {
+    let name = unsafe { std::ffi::CStr::from_ptr(name) };
+    let Ok(name) = name.to_str() else {
+        tracing::error!("inside wrap_gl_proc_address, name is not valid utf8");
+        return std::ptr::null_mut();
+    };
+    (*(user_data as *mut F))(name)
+}
+unsafe extern "C" fn wrap_vk_proc_address<
+    F: FnMut(*mut std::os::raw::c_void, *const std::os::raw::c_char) -> *mut std::os::raw::c_void,
+>(
+    vulkan_instance: *mut std::os::raw::c_void,
+    vulkan_proc_name: *const std::os::raw::c_char,
+    user_data: *mut std::os::raw::c_void,
+) -> *mut std::os::raw::c_void {
+    (*(user_data as *mut F))(vulkan_instance, vulkan_proc_name)
+}
+
+impl Context {
+    /// Create an OpenGL(ES) Impeller context.
+    ///
+    /// @param
+    /// - gl_proc_address: A closure that returns the address of GL fn pointers
+    ///
+    /// @return The context or error if the context could not be created.
+    ///
+    /// ```ignore
+    /// Context::new_opengl_es( |name| {
+    ///     glutin_or_glfw_or_sdl_thing.get_proc_address(name)
+    /// });
+    /// ```
+    ///
+    /// # Safety
+    /// Unlike other context types, the OpenGL ES context can only be
+    /// created, used, and collected on the calling thread. This
+    /// restriction may be lifted in the future once reactor workers are
+    /// exposed in the API. No other context types have threading
+    /// restrictions. Till reactor workers can be used, using the
+    /// context on a background thread will cause a stall of OpenGL
+    /// operations.
+    #[must_use]
+    pub unsafe fn new_opengl_es<F: FnMut(&str) -> *mut std::os::raw::c_void>(
+        mut gl_proc_address: F,
+    ) -> Result<Context, &'static str> {
+        if !ImpellerVersion::sanity_check() {
+            return Err("Impeller version mismatch when creating opengl context");
+        }
+        let ctx = unsafe {
+            sys::ImpellerContextCreateOpenGLESNew(
+                ImpellerVersion::get_linked_version().0,
+                Some(wrap_gl_proc_address::<F>),
+                &raw mut gl_proc_address as *mut _,
+            )
+        };
+        if ctx.is_null() {
+            Err("ImpellerContextCreateOpenGLESNew returned null :(")
+        } else {
+            Ok(Context(ctx))
+        }
+    }
+    /// Create a new surface by wrapping an existing framebuffer object.
+    /// @param
+    /// - context  The context.
+    /// - fbo      The framebuffer object handle.
+    /// - format   The format of the framebuffer.
+    /// - size     The size of the framebuffer is texels.
+    ///
+    /// @return    The surface if once can be created, NULL otherwise.
+    ///
+    /// # Safety
+    /// The framebuffer must be complete as determined by
+    /// `glCheckFramebufferStatus`. The framebuffer is still owned by
+    /// the caller and it must be collected once the surface is
+    /// collected.
+    pub unsafe fn wrap_fbo(
+        &self,
+        fbo: u64,
+        format: PixelFormat,
+        size: &sys::ImpellerISize,
+    ) -> Option<Surface> {
+        let surface = unsafe { sys::ImpellerSurfaceCreateWrappedFBONew(self.0, fbo, format, size) };
+        if surface.is_null() {
+            None
+        } else {
+            Some(Surface(surface))
+        }
+    }
+
+    /// Create a texture with decompressed bytes.
+    ///
+    /// @warning    Do **not** supply compressed image data directly (PNG, JPEG,
+    ///             etc...). This function only works with tightly packed
+    ///             decompressed data.
+    /// @param
+    /// - contents  texture bytes. contiguously laid out as RGBA8888
+    /// - width     width of texture
+    /// - height    height of texture
+    ///
+    /// @return     The texture if one can be created using the provided data, NULL
+    ///             otherwise.
+    ///
+    /// Note:   The following section doesn't apply to rust bindings.
+    ///         we just don't bother with owned copies and always prefer borrowed version.
+    ///         If someone has any idea on how to ergonomically implement this, please do let me know.
+    ///
+    /// Impeller will do its best to perform the transfer of this data
+    /// to GPU memory with a minimal number of copies. Towards this
+    /// end, it may need to send this data to a different thread for
+    /// preparation and transfer. To facilitate this transfer, it is
+    /// recommended that the content mapping have a release callback
+    /// attach to it. When there is a release callback, Impeller assumes
+    /// that collection of the data can be deferred till texture upload
+    /// is done and can happen on a background thread. When there is no
+    /// release callback, Impeller may try to perform an eager copy of
+    /// the data if it needs to perform data preparation and transfer on
+    /// a background thread.
+    ///
+    /// Whether an extra data copy actually occurs will always depend on
+    /// the rendering backend in use. But it is best practice to provide
+    /// a release callback and be resilient to the data being released
+    /// in a deferred manner on a background thread.
+    ///
+    #[doc(alias = "sys::ImpellerTextureCreateWithContentsNew")]
+    pub fn create_texture_with_rgba8(
+        &self,
+        contents: &[u8],
+        width: u32,
+        height: u32,
+    ) -> Result<Texture, &'static str> {
+        if width == 0 || height == 0 {
+            return Err("width and height must be greater than zero");
+        }
+
+        // we know this is 4 byte per pixel
+        let total_bytes = width as usize * height as usize * 4;
+        if contents.len() != total_bytes {
+            tracing::error!(
+                "provided buffer size does not match expected size of {} bytes",
+                total_bytes
+            );
+            return Err("provided buffer size does not match expected size");
+        }
+        let mip_count = sys::ImpellerSize {
+            width: width as f32,
+            height: height as f32,
+        }
+        .mip_count();
+        let t = unsafe {
+            sys::ImpellerTextureCreateWithContentsNew(
+                self.0,
+                &sys::ImpellerTextureDescriptor {
+                    size: sys::ImpellerISize {
+                        width: width.into(),
+                        height: height.into(),
+                    },
+                    pixel_format: PixelFormat::RGBA8888,
+                    mip_count,
+                },
+                &sys::ImpellerMapping {
+                    data: contents.as_ptr(),
+                    length: contents.len() as u64,
+                    on_release: None,
+                },
+                std::ptr::null_mut(),
+            )
+        };
+        if t.is_null() {
+            Err("ImpellerTextureCreateWithContentsNew returned null")
+        } else {
+            Ok(Texture(t))
+        }
+    }
+
+    /// Create a texture with an externally created OpenGL texture handle.
+    ///
+    /// - width     width of texture
+    /// - height    height of texture
+    /// - mip_count mipcount of texture
+    /// - handle      The handle
+    ///
+    /// @return     The texture if one could be created by adopting the supplied
+    ///             texture handle, NULL otherwise.
+    /// # Safety
+    /// Ownership of the handle is transferred over to Impeller after a
+    /// successful call to this method. Impeller is responsible for
+    /// calling glDeleteTextures on this handle. Do **not** collect this
+    /// handle yourself as this will lead to a double-free.
+    ///
+    /// The handle must be created in the same context as the one used
+    /// by Impeller. If a different context is used, that context must
+    /// be in the same sharegroup as Impellers OpenGL context and all
+    /// synchronization of texture contents must already be complete.
+    ///
+    /// If the context is not an OpenGL context, this call will always fail.
+    ///
+    #[doc(alias = "sys::ImpellerTextureCreateWithOpenGLTextureHandleNew")]
+    pub unsafe fn adopt_opengl_texture(
+        &self,
+        width: u32,
+        height: u32,
+        mip_count: u32,
+        handle: u64,
+    ) -> Option<Texture> {
+        let size = sys::ImpellerISize {
+            width: width.into(),
+            height: height.into(),
+        };
+        let t = sys::ImpellerTextureCreateWithOpenGLTextureHandleNew(
+            self.0,
+            &sys::ImpellerTextureDescriptor {
+                pixel_format: PixelFormat::RGBA8888,
+                size,
+                mip_count,
+            },
+            handle,
+        );
+        if t.is_null() {
+            None
+        } else {
+            Some(Texture(t))
+        }
+    }
+    //------------------------------------------------------------------------------
+    /// Create a Metal context using the system default Metal device.
+    ///
+    /// @return     The Metal context or NULL if one cannot be created.
+    #[doc(alias = "ImpellerContextCreateMetalNew")]
+    #[must_use]
+    pub unsafe fn new_metal() -> Result<Context, &'static str> {
+        if !ImpellerVersion::sanity_check() {
+            return Err("ImpellerVersion::sanity_check failed");
+        }
+        let ctx = sys::ImpellerContextCreateMetalNew(ImpellerVersion::get_linked_version().0);
+        if ctx.is_null() {
+            Err("ImpellerContextCreateMetalNew returned null")
+        } else {
+            Ok(Context(ctx))
+        }
+    }
+    /// Create a Vulkan context using the provided Vulkan Settings.
+    ///
+    /// - enable_validation  Enable Vulkan validation layers
+    /// - proc_address_callback  A callback to query the address of Vulkan function
+    ///                          pointers. The first argument is a pointer to vulkan instance.
+    ///                          The second argument is a pointer to the function name.
+    ///
+    /// @return     The Vulkan context or NULL if one cannot be created.
+    ///
+    /// # Safety
+    ///
+    /// Just look at vulkan docs for how your proc_address_callback should work.
+    /// Don't hold on to any pointers given to your closure (instance pointer or char pointer).
+    #[must_use]
+    #[doc(alias = "ImpellerContextCreateVulkanNew")]
+    pub unsafe fn new_vulkan<
+        F: FnMut(*mut std::os::raw::c_void, *const std::os::raw::c_char) -> *mut std::os::raw::c_void,
+    >(
+        enable_validation: bool,
+        mut proc_address_callback: F,
+    ) -> Result<Context, &'static str> {
+        if !ImpellerVersion::sanity_check() {
+            return Err("ImpellerVersion::sanity_check failed");
+        }
+        let settings = sys::ImpellerContextVulkanSettings {
+            user_data: &raw mut proc_address_callback as *mut _,
+            proc_address_callback: Some(wrap_vk_proc_address::<F>),
+            enable_vulkan_validation: enable_validation,
+        };
+        let ctx =
+            sys::ImpellerContextCreateVulkanNew(ImpellerVersion::get_linked_version().0, &settings);
+        if ctx.is_null() {
+            Err("ImpellerContextCreateVulkanNew returned null")
+        } else {
+            Ok(Context(ctx))
+        }
+    }
+    /// Get internal Vulkan handles managed by the given Vulkan context.
+    /// Ownership of the handles is still maintained by Impeller. This
+    /// accessor is just available so embedders can create resources
+    /// using the same device and instance as Impeller for interop.
+    ///
+    /// @warning    If the context is not a Vulkan context, this will return Err.
+    ///
+    #[doc(alias = "ImpellerContextGetVulkanInfo")]
+    pub fn get_vulkan_info(&self) -> Result<sys::ImpellerContextVulkanInfo, &'static str> {
+        let mut vulkan_info = sys::ImpellerContextVulkanInfo::default();
+        if unsafe { sys::ImpellerContextGetVulkanInfo(self.0, &mut vulkan_info) } {
+            Ok(vulkan_info)
+        } else {
+            Err("ImpellerContextGetVulkanInfo returned false. Is the context a Vulkan context?")
+        }
+    }
+
+    //------------------------------------------------------------------------------
+    /// Create a new Vulkan swapchain using a VkSurfaceKHR instance.
+    /// Ownership of the surface is transferred over to Impeller.
+    ///
+    /// - vulkan_surface_khr  The vulkan surface.
+    ///
+    /// @return     The vulkan swapchain.
+    ///
+    /// # Safety
+    ///
+    /// The Vulkan instance the surface is created from must the same as the
+    /// context provided.
+    ///
+    /// The context must be a Vulkan context whose
+    ///          instance is the same used to create the
+    ///          surface passed into the next argument.
+    ///
+    /// The surface pointer must be valid (and kept alive until this swapchain is dropped).
+    pub unsafe fn create_new_vulkan_swapchain(
+        &self,
+        vulkan_surface_khr: *mut std::os::raw::c_void,
+    ) -> Option<VkSwapChain> {
+        let swapchain = sys::ImpellerVulkanSwapchainCreateNew(self.0, vulkan_surface_khr);
+        if swapchain.is_null() {
+            None
+        } else {
+            Some(VkSwapChain(swapchain))
+        }
+    }
+    //------------------------------------------------------------------------------
+    /// Create a surface by wrapping a Metal drawable. This is useful
+    /// during WSI when the drawable is the backing store of the Metal
+    /// layer being drawn to.
+    ///
+    /// # Safety
+    ///
+    /// The Metal layer must be using the same device managed by the
+    /// underlying context.
+    ///
+    /// The Metal device managed by this
+    /// context must be the same used to create the
+    /// drawable that is being wrapped.
+    ///
+    /// - metal_drawable  The drawable to wrap as a surface.
+    ///
+    /// @return     The surface if one could be wrapped, NULL otherwise.
+    pub unsafe fn wrap_metal_drawable(
+        &self,
+        metal_drawable: *mut std::os::raw::c_void,
+    ) -> Option<Surface> {
+        let surface = sys::ImpellerSurfaceCreateWrappedMetalDrawableNew(self.0, metal_drawable);
+        if surface.is_null() {
+            None
+        } else {
+            Some(Surface(surface))
+        }
+    }
+}
+
+/// Display lists represent encoded rendering intent (draw commands). These objects are
+/// immutable, reusable, thread-safe, and context-agnostic.
+///
+/// While it is perfectly fine to create new display lists per frame, there may
+/// be opportunities for optimization when display lists are reused multiple
+/// times.
+///
+pub struct DisplayList(sys::ImpellerDisplayList);
+
+impl Clone for DisplayList {
+    fn clone(&self) -> Self {
+        unsafe {
+            sys::ImpellerDisplayListRetain(self.0);
+        }
+        Self(self.0)
+    }
+}
+
+impl Drop for DisplayList {
+    fn drop(&mut self) {
+        unsafe {
+            sys::ImpellerDisplayListRelease(self.0);
+        }
+    }
+}
+/// Display list builders allow for the incremental creation of display lists.
+///
+/// Display list builders are context-agnostic.
+pub struct DisplayListBuilder(sys::ImpellerDisplayListBuilder);
+
+impl Clone for DisplayListBuilder {
+    fn clone(&self) -> Self {
+        unsafe {
+            sys::ImpellerDisplayListBuilderRetain(self.0);
+        }
+        Self(self.0)
+    }
+}
+
+impl Drop for DisplayListBuilder {
+    fn drop(&mut self) {
+        unsafe {
+            sys::ImpellerDisplayListBuilderRelease(self.0);
+        }
+    }
+}
+impl DisplayListBuilder {
+    /// Create a new display list builder.
+    ///
+    /// An optional cull rectangle may be specified. Impeller is allowed
+    /// to treat the contents outside this rectangle as being undefined.
+    /// This may aid performance optimizations.
+    ///
+    /// @param
+    /// - cull_rect:    The cull rectangle or NULL.
+    ///
+    /// @return         The display list builder.
+    #[doc(alias = "sys::ImpellerDisplayListBuilderNew")]
+    pub fn new(cull_rect: Option<&Rect>) -> Self {
+        let result = unsafe {
+            sys::ImpellerDisplayListBuilderNew(cull_rect.map_or(std::ptr::null(), |r| r))
+        };
+        assert!(!result.is_null(), "Failed to create display list builder");
+        Self(result)
+    }
+    //------------------------------------------------------------------------------
+    /// Create a new display list using the rendering intent already
+    /// encoded in the builder. The builder is reset after this call.
+    ///
+    /// @return     The display list.
+    #[must_use]
+    #[doc(alias = "sys::ImpellerDisplayListBuilderCreateDisplayListNew")]
+    pub fn build(&self) -> Option<DisplayList> {
+        let d = unsafe { sys::ImpellerDisplayListBuilderCreateDisplayListNew(self.0) };
+        if d.is_null() {
+            None
+        } else {
+            Some(DisplayList(d))
+        }
+    }
+    //------------------------------------------------------------------------------
+    // Display List Builder: Managing the transformation stack.
+    //------------------------------------------------------------------------------
+
+    //------------------------------------------------------------------------------
+    /// Stashes the current transformation and clip state onto a save
+    /// stack.
+    #[doc(alias = "sys::ImpellerDisplayListBuilderSave")]
+    pub fn save(&self) {
+        unsafe {
+            sys::ImpellerDisplayListBuilderSave(self.0);
+        }
+    }
+    //------------------------------------------------------------------------------
+    /// Stashes the current transformation and clip state onto a save
+    /// stack and creates and creates an offscreen layer onto which
+    /// subsequent rendering intent will be directed to.
+    ///
+    /// On the balancing call to restore, the supplied paints filters
+    /// and blend modes will be used to composite the offscreen contents
+    /// back onto the display display list.
+    ///
+    /// - bounds    The bounds.
+    /// - paint     The paint.
+    /// - backdrop  The backdrop.
+    ///
+    #[doc(alias = "sys::ImpellerDisplayListBuilderSaveLayer")]
+    pub fn save_layer(
+        &self,
+        bounds: &sys::ImpellerRect,
+        paint: Option<&Paint>,
+        backdrop: Option<&ImageFilter>,
+    ) {
+        unsafe {
+            sys::ImpellerDisplayListBuilderSaveLayer(
+                self.0,
+                bounds,
+                paint.map_or(std::ptr::null_mut(), |p| p.0),
+                backdrop.map_or(std::ptr::null_mut(), |b| b.0),
+            );
+        }
+    }
+
+    //------------------------------------------------------------------------------
+    /// Pops the last entry pushed onto the save stack using a call to
+    /// [Self::save] or [Self::save_layer].
+    #[doc(alias = "sys::ImpellerDisplayListBuilderRestore")]
+    pub fn restore(&self) {
+        unsafe {
+            sys::ImpellerDisplayListBuilderRestore(self.0);
+        }
+    }
+    //------------------------------------------------------------------------------
+    /// Apply a scale to the transformation matrix currently on top of
+    /// the save stack.
+    ///
+    /// - x_scale  The x scale.
+    /// - y_scale  The y scale.
+    #[doc(alias = "sys::ImpellerDisplayListBuilderScale")]
+    pub fn scale(&self, x_scale: f32, y_scale: f32) {
+        unsafe {
+            sys::ImpellerDisplayListBuilderScale(self.0, x_scale, y_scale);
+        }
+    }
+    //------------------------------------------------------------------------------
+    /// Apply a clockwise rotation to the transformation matrix
+    /// currently on top of the save stack.
+    ///
+    /// - angle_degrees  The angle in degrees.
+    #[doc(alias = "sys::ImpellerDisplayListBuilderRotate")]
+    pub fn rotate(&self, angle_degrees: f32) {
+        unsafe {
+            sys::ImpellerDisplayListBuilderRotate(self.0, angle_degrees);
+        }
+    }
+    /// Apply a translation to the transformation matrix currently on
+    /// top of the save stack.
+    ///
+    /// - x_translation  The x translation.
+    /// - y_translation  The y translation.
+    #[doc(alias = "sys::ImpellerDisplayListBuilderTranslate")]
+    pub fn translate(&self, x_translation: f32, y_translation: f32) {
+        unsafe {
+            sys::ImpellerDisplayListBuilderTranslate(self.0, x_translation, y_translation);
+        }
+    }
+    //------------------------------------------------------------------------------
+    /// Appends the the provided transformation to the transformation
+    /// already on the save stack.
+    ///
+    /// - transform  The transform to append.
+    #[doc(alias = "sys::ImpellerDisplayListBuilderTransform")]
+    pub fn transform(&self, transform: &sys::ImpellerMatrix) {
+        unsafe {
+            sys::ImpellerDisplayListBuilderTransform(self.0, transform);
+        }
+    }
+
+    //------------------------------------------------------------------------------
+    /// Clear the transformation on top of the save stack and replace it
+    /// with a new value.
+    ///
+    /// - transform  The new transform.
+    #[doc(alias = "sys::ImpellerDisplayListBuilderSetTransform")]
+    pub fn set_transform(&self, transform: &sys::ImpellerMatrix) {
+        unsafe {
+            sys::ImpellerDisplayListBuilderSetTransform(self.0, transform);
+        }
+    }
+    //------------------------------------------------------------------------------
+    /// Get the transformation currently built up on the top of the
+    /// transformation stack.
+    ///
+    /// @return The transform.
+    #[doc(alias = "sys::ImpellerDisplayListBuilderGetTransform")]
+    pub fn get_transform(&self) -> sys::ImpellerMatrix {
+        let mut out_transform = sys::ImpellerMatrix::default();
+        unsafe {
+            sys::ImpellerDisplayListBuilderGetTransform(self.0, &mut out_transform);
+        }
+        out_transform
+    }
+
+    //------------------------------------------------------------------------------
+    /// Reset the transformation on top of the transformation stack to
+    /// identity.
+    #[doc(alias = "sys::ImpellerDisplayListBuilderResetTransform")]
+    pub fn reset_transform(&self) {
+        unsafe {
+            sys::ImpellerDisplayListBuilderResetTransform(self.0);
+        }
+    }
+    //------------------------------------------------------------------------------
+    /// Get the current size of the save stack.
+    ///
+    /// @return     The save stack size.
+    #[doc(alias = "sys::ImpellerDisplayListBuilderGetSaveCount")]
+    pub fn get_save_count(&self) -> u32 {
+        unsafe { sys::ImpellerDisplayListBuilderGetSaveCount(self.0) }
+    }
+    //------------------------------------------------------------------------------
+    /// Effectively calls ImpellerDisplayListBuilderRestore till the
+    /// size of the save stack becomes a specified count.
+    ///
+    /// - count    The count.
+    #[doc(alias = "sys::ImpellerDisplayListBuilderRestoreToCount")]
+    pub fn restore_to_count(&self, count: u32) {
+        unsafe {
+            sys::ImpellerDisplayListBuilderRestoreToCount(self.0, count);
+        }
+    }
+    //------------------------------------------------------------------------------
+    // Display List Builder: Clipping
+    //------------------------------------------------------------------------------
+
+    //------------------------------------------------------------------------------
+    /// Reduces the clip region to the intersection of the current clip
+    /// and the given rectangle taking into account the clip operation.
+    ///
+    /// - rect     The rectangle.
+    /// - op       The operation.
+    #[doc(alias = "sys::ImpellerDisplayListBuilderClipRect")]
+    pub fn clip_rect(&self, rect: &sys::ImpellerRect, op: sys::ClipOperation) {
+        unsafe {
+            sys::ImpellerDisplayListBuilderClipRect(self.0, rect, op);
+        }
+    }
+
+    //------------------------------------------------------------------------------
+    /// Reduces the clip region to the intersection of the current clip
+    /// and the given oval taking into account the clip operation.
+    ///
+    /// - oval_bounds  The oval bounds.
+    /// - op           The operation.
+    #[doc(alias = "sys::ImpellerDisplayListBuilderClipOval")]
+    pub fn clip_oval(&self, oval_bounds: &sys::ImpellerRect, op: sys::ClipOperation) {
+        unsafe {
+            sys::ImpellerDisplayListBuilderClipOval(self.0, oval_bounds, op);
+        }
+    }
+    //------------------------------------------------------------------------------
+    /// Reduces the clip region to the intersection of the current clip
+    /// and the given rounded rectangle taking into account the clip
+    /// operation.
+    ///
+    /// - rect     The rectangle.
+    /// - radii    The radii.
+    /// - op       The operation.
+    #[doc(alias = "sys::ImpellerDisplayListBuilderClipRoundedRect")]
+    pub fn clip_rounded_rect(
+        &self,
+        rect: &sys::ImpellerRect,
+        radii: &sys::ImpellerRoundingRadii,
+        op: sys::ClipOperation,
+    ) {
+        unsafe {
+            sys::ImpellerDisplayListBuilderClipRoundedRect(self.0, rect, radii, op);
+        }
+    }
+    //------------------------------------------------------------------------------
+    /// Reduces the clip region to the intersection of the current clip
+    /// and the given path taking into account the clip operation.
+    ///
+    /// - path     The path.
+    /// - op       The operation.
+    #[doc(alias = "sys::ImpellerDisplayListBuilderClipPath")]
+    pub fn clip_path(&self, path: &Path, op: sys::ClipOperation) {
+        unsafe {
+            sys::ImpellerDisplayListBuilderClipPath(self.0, path.0, op);
+        }
+    }
+    //------------------------------------------------------------------------------
+    // Display List Builder: Drawing Shapes
+    //------------------------------------------------------------------------------
+
+    //------------------------------------------------------------------------------
+    /// Fills the current clip with the specified paint.
+    ///
+    /// - paint    The paint.
+    #[doc(alias = "sys::ImpellerDisplayListBuilderDrawPaint")]
+    pub fn draw_paint(&self, paint: &Paint) {
+        unsafe {
+            sys::ImpellerDisplayListBuilderDrawPaint(self.0, paint.0);
+        }
+    }
+    //------------------------------------------------------------------------------
+    /// Draws a line segment.
+    ///
+    /// - from     The starting point of the line.
+    /// - to       The end point of the line.
+    /// - paint    The paint.
+    #[doc(alias = "sys::ImpellerDisplayListBuilderDrawLine")]
+    pub fn draw_line(&self, from: &Point, to: &Point, paint: &Paint) {
+        unsafe {
+            sys::ImpellerDisplayListBuilderDrawLine(self.0, from, to, paint.0);
+        }
+    }
+
+    //------------------------------------------------------------------------------
+    /// Draws a dash line segment.
+    ///
+    /// - from        The starting point of the line.
+    /// - to          The end point of the line.
+    /// - on_length   On length.
+    /// - off_length  Off length.
+    /// - paint       The paint.
+    #[doc(alias = "sys::ImpellerDisplayListBuilderDrawDashedLine")]
+    pub fn draw_dashed_line(
+        &self,
+        from: &Point,
+        to: &Point,
+        on_length: f32,
+        off_length: f32,
+        paint: &Paint,
+    ) {
+        unsafe {
+            sys::ImpellerDisplayListBuilderDrawDashedLine(
+                self.0, from, to, on_length, off_length, paint.0,
+            );
+        }
+    }
+
+    //------------------------------------------------------------------------------
+    /// Draws a rectangle.
+    ///
+    /// - rect     The rectangle.
+    /// - paint    The paint.
+    #[doc(alias = "sys::ImpellerDisplayListBuilderDrawRect")]
+    pub fn draw_rect(&self, rect: &Rect, paint: &Paint) {
+        unsafe {
+            sys::ImpellerDisplayListBuilderDrawRect(self.0, rect, paint.0);
+        }
+    }
+    //------------------------------------------------------------------------------
+    /// Draws an oval.
+    ///
+    /// - oval_bounds  The oval bounds.
+    /// - paint        The paint.
+    #[doc(alias = "sys::ImpellerDisplayListBuilderDrawOval")]
+    pub fn draw_oval(&self, oval_bounds: &Rect, paint: &Paint) {
+        unsafe {
+            sys::ImpellerDisplayListBuilderDrawOval(self.0, oval_bounds, paint.0);
+        }
+    }
+    //------------------------------------------------------------------------------
+    /// Draws a rounded rect.
+    ///
+    /// - rect     The rectangle.
+    /// - radii    The radii.
+    /// - paint    The paint.
+    #[doc(alias = "sys::ImpellerDisplayListBuilderDrawRoundedRect")]
+    pub fn draw_rounded_rect(&self, rect: &Rect, radii: &RoundingRadii, paint: &Paint) {
+        unsafe {
+            sys::ImpellerDisplayListBuilderDrawRoundedRect(self.0, rect, radii, paint.0);
+        }
+    }
+    //------------------------------------------------------------------------------
+    /// Draws a shape that is the different between the specified
+    /// rectangles (each with configurable corner radii).
+    ///
+    /// - outer_rect   The outer rectangle.
+    /// - outer_radii  The outer radii.
+    /// - inner_rect   The inner rectangle.
+    /// - inner_radii  The inner radii.
+    /// - paint        The paint.
+    #[doc(alias = "sys::ImpellerDisplayListBuilderDrawRoundedRectDifference")]
+    pub fn draw_rounded_rect_difference(
+        &self,
+        outer_rect: &Rect,
+        outer_radii: &RoundingRadii,
+        inner_rect: &Rect,
+        inner_radii: &RoundingRadii,
+        paint: &Paint,
+    ) {
+        unsafe {
+            sys::ImpellerDisplayListBuilderDrawRoundedRectDifference(
+                self.0,
+                outer_rect,
+                outer_radii,
+                inner_rect,
+                inner_radii,
+                paint.0,
+            );
+        }
+    }
+    //------------------------------------------------------------------------------
+    /// Draws the specified path shape.
+    ///
+    /// - path     The path.
+    /// - paint    The paint.
+    #[doc(alias = "sys::ImpellerDisplayListBuilderDrawPath")]
+    pub fn draw_path(&self, path: &Path, paint: &Paint) {
+        unsafe {
+            sys::ImpellerDisplayListBuilderDrawPath(self.0, path.0, paint.0);
+        }
+    }
+    //------------------------------------------------------------------------------
+    /// Flattens the contents of another display list into the one
+    /// currently being built.
+    ///
+    /// - display_list  The display list.
+    /// - opacity       The opacity.
+    #[doc(alias = "sys::ImpellerDisplayListBuilderDrawDisplayList")]
+    pub fn draw_display_list(&self, display_list: &DisplayList, opacity: f32) {
+        unsafe {
+            sys::ImpellerDisplayListBuilderDrawDisplayList(self.0, display_list.0, opacity);
+        }
+    }
+    //------------------------------------------------------------------------------
+    /// @brief      Draw a paragraph at the specified point.
+    ///
+    /// paragraph  The paragraph.
+    /// point      The point.
+    #[doc(alias = "sys::ImpellerDisplayListBuilderDrawParagraph")]
+    pub fn draw_paragraph(&self, paragraph: &Paragraph, point: &Point) {
+        unsafe {
+            sys::ImpellerDisplayListBuilderDrawParagraph(self.0, paragraph.0, point);
+        }
+    }
+    //------------------------------------------------------------------------------
+    // Display List Builder: Drawing Textures
+    //------------------------------------------------------------------------------
+
+    //------------------------------------------------------------------------------
+    /// Draw a texture at the specified point.
+    ///
+    /// - texture   The texture.
+    /// - point     The point.
+    /// - sampling  The sampling.
+    /// - paint     The paint.
+    #[doc(alias = "sys::ImpellerDisplayListBuilderDrawTexture")]
+    pub fn draw_texture(
+        &self,
+        texture: &Texture,
+        point: &Point,
+        sampling: TextureSampling,
+        paint: &Paint,
+    ) {
+        unsafe {
+            sys::ImpellerDisplayListBuilderDrawTexture(self.0, texture.0, point, sampling, paint.0);
+        }
+    }
+    //------------------------------------------------------------------------------
+    /// Draw a portion of texture at the specified location.
+    ///
+    /// - texture   The texture.
+    /// - src_rect  The source rectangle.
+    /// - dst_rect  The destination rectangle.
+    /// - sampling  The sampling.
+    /// - paint     The paint.
+    #[doc(alias = "sys::ImpellerDisplayListBuilderDrawTextureRect")]
+    pub fn draw_texture_rect(
+        &self,
+        texture: &Texture,
+        src_rect: &Rect,
+        dst_rect: &Rect,
+        sampling: TextureSampling,
+        paint: Option<&Paint>,
+    ) {
+        unsafe {
+            sys::ImpellerDisplayListBuilderDrawTextureRect(
+                self.0,
+                texture.0,
+                src_rect,
+                dst_rect,
+                sampling,
+                paint.map_or(std::ptr::null_mut(), |p| p.0),
+            );
+        }
+    }
+}
+/// Paints control the behavior of draw calls encoded in a display list.
+///
+/// Like display lists, paints are context-agnostic.
+pub struct Paint(sys::ImpellerPaint);
+
+impl Clone for Paint {
+    fn clone(&self) -> Self {
+        unsafe {
+            sys::ImpellerPaintRetain(self.0);
+        }
+        Self(self.0)
+    }
+}
+
+impl Drop for Paint {
+    fn drop(&mut self) {
+        unsafe {
+            sys::ImpellerPaintRelease(self.0);
+        }
+    }
+}
+impl Default for Paint {
+    fn default() -> Self {
+        let p = unsafe { sys::ImpellerPaintNew() };
+        assert!(!p.is_null());
+        Self(p)
+    }
+}
+impl Paint {
+    /// Set the paint color.
+    ///
+    /// - color     The color.
+    ///
+    pub fn set_color(&mut self, color: &sys::ImpellerColor) {
+        unsafe {
+            sys::ImpellerPaintSetColor(self.0, color);
+        }
+    }
+
+    /// Set the paint blend mode. The blend mode controls how the new
+    /// paints contents are mixed with the values already drawn using
+    /// previous draw calls.
+    ///
+    /// - mode      The mode.
+    ///
+    pub fn set_blend_mode(&mut self, mode: sys::BlendMode) {
+        unsafe {
+            sys::ImpellerPaintSetBlendMode(self.0, mode);
+        }
+    }
+
+    /// Set the paint draw style. The style controls if the closed
+    /// shapes are filled and/or stroked.
+    ///
+    /// - style     The style.
+    ///
+    pub fn set_draw_style(&mut self, style: sys::DrawStyle) {
+        unsafe {
+            sys::ImpellerPaintSetDrawStyle(self.0, style);
+        }
+    }
+
+    /// Sets how strokes rendered using this paint are capped.
+    ///
+    /// - cap       The stroke cap style.
+    ///
+    pub fn set_stroke_cap(&mut self, cap: sys::StrokeCap) {
+        unsafe {
+            sys::ImpellerPaintSetStrokeCap(self.0, cap);
+        }
+    }
+
+    /// Sets how strokes rendered using this paint are joined.
+    ///
+    /// - join      The join.
+    ///
+    pub fn set_stroke_join(&mut self, join: sys::StrokeJoin) {
+        unsafe {
+            sys::ImpellerPaintSetStrokeJoin(self.0, join);
+        }
+    }
+
+    /// Set the width of the strokes rendered using this paint.
+    ///
+    /// - width     The width.
+    ///
+    pub fn set_stroke_width(&mut self, width: f32) {
+        unsafe {
+            sys::ImpellerPaintSetStrokeWidth(self.0, width);
+        }
+    }
+
+    /// Set the miter limit of the strokes rendered using this paint.
+    ///
+    /// - miter     The miter limit.
+    ///
+    pub fn set_stroke_miter(&mut self, miter: f32) {
+        unsafe {
+            sys::ImpellerPaintSetStrokeMiter(self.0, miter);
+        }
+    }
+
+    /// Set the color filter of the paint.
+    ///
+    /// Color filters are functions that take two colors and mix them to
+    /// produce a single color. This color is then usually merged with
+    /// the destination during blending.
+    ///
+    /// - color_filter  The color filter.
+    pub fn set_color_filter(&mut self, color_filter: &ColorFilter) {
+        unsafe {
+            sys::ImpellerPaintSetColorFilter(self.0, color_filter.0);
+        }
+    }
+
+    /// Set the image filter of a paint.
+    ///
+    /// Image filters are functions that are applied to regions of a
+    /// texture to produce a single color.
+    ///
+    /// - image_filter  The image filter.
+    pub fn set_image_filter(&mut self, image_filter: &ImageFilter) {
+        unsafe {
+            sys::ImpellerPaintSetImageFilter(self.0, image_filter.0);
+        }
+    }
+    /// Set the color source of the paint.
+    ///
+    /// Color sources are functions that generate colors for each
+    /// texture element covered by a draw call.
+    ///
+    /// - color_source  The color source.
+    pub fn set_color_source(&mut self, color_source: &ColorSource) {
+        unsafe {
+            sys::ImpellerPaintSetColorSource(self.0, color_source.0);
+        }
+    }
+    /// Set the mask filter of a paint.
+    ///
+    /// Mask filters are functions that are applied over a shape after it
+    /// has been drawn but before it has been blended into the final
+    /// image.
+    ///
+    /// - mask_filter  The mask filter.
+    pub fn set_mask_filter(&mut self, mask_filter: &MaskFilter) {
+        unsafe {
+            sys::ImpellerPaintSetMaskFilter(self.0, mask_filter.0);
+        }
+    }
+}
+/// Color filters are functions that take two colors and mix them to produce a
+/// single color. This color is then merged with the destination during
+/// blending.
+pub struct ColorFilter(sys::ImpellerColorFilter);
+unsafe impl Send for ColorFilter {}
+unsafe impl Sync for ColorFilter {}
+impl Clone for ColorFilter {
+    fn clone(&self) -> Self {
+        unsafe {
+            sys::ImpellerColorFilterRetain(self.0);
+        }
+        Self(self.0)
+    }
+}
+
+impl Drop for ColorFilter {
+    fn drop(&mut self) {
+        unsafe {
+            sys::ImpellerColorFilterRelease(self.0);
+        }
+    }
+}
+impl ColorFilter {
+    /// Create a color filter that performs blending of pixel values
+    /// independently.
+    ///
+    /// - color       The color.
+    /// - blend_mode  The blend mode.
+    ///
+    /// @return     The color filter.
+    #[must_use]
+    pub fn new_blend(color: &sys::ImpellerColor, blend_mode: sys::BlendMode) -> Self {
+        unsafe { Self(sys::ImpellerColorFilterCreateBlendNew(color, blend_mode)) }
+    }
+
+    /// Create a color filter that transforms pixel color values
+    /// independently.
+    ///
+    /// - color_matrix  The color matrix.
+    ///
+    /// @return     The color filter.
+    #[must_use]
+    pub fn new_matrix(color_matrix: &sys::ImpellerColorMatrix) -> Self {
+        unsafe { Self(sys::ImpellerColorFilterCreateColorMatrixNew(color_matrix)) }
+    }
+}
+/// Color sources are functions that generate colors for each texture element
+/// covered by a draw call. The colors for each element can be generated using a
+/// mathematical function (to produce gradients for example) or sampled from a
+/// texture.
+pub struct ColorSource(sys::ImpellerColorSource);
+unsafe impl Send for ColorSource {}
+unsafe impl Sync for ColorSource {}
+impl Clone for ColorSource {
+    fn clone(&self) -> Self {
+        unsafe {
+            sys::ImpellerColorSourceRetain(self.0);
+        }
+        Self(self.0)
+    }
+}
+
+impl Drop for ColorSource {
+    fn drop(&mut self) {
+        unsafe {
+            sys::ImpellerColorSourceRelease(self.0);
+        }
+    }
+}
+impl ColorSource {
+    //------------------------------------------------------------------------------
+    /// Create a color source that forms a linear gradient.
+    ///
+    /// - start_point     The start point.
+    /// - end_point       The end point.
+    /// - colors          The colors.
+    /// - stops           The stops.
+    /// - tile_mode       The tile mode.
+    /// - transformation  The transformation.
+    ///
+    /// @return     The color source.
+    #[must_use]
+    pub fn new_linear_gradient(
+        start: &sys::ImpellerPoint,
+        end: &sys::ImpellerPoint,
+        colors: &[sys::ImpellerColor],
+        stops: &[f32],
+        tile_mode: sys::TileMode,
+        transformation: Option<&sys::ImpellerMatrix>,
+    ) -> Self {
+        assert_eq!(colors.len(), stops.len());
+        assert!(!colors.is_empty());
+        let result = unsafe {
+            sys::ImpellerColorSourceCreateLinearGradientNew(
+                start,
+                end,
+                stops.len() as _,
+                colors.as_ptr(),
+                stops.as_ptr(),
+                tile_mode,
+                transformation.map_or(std::ptr::null(), |m| m),
+            )
+        };
+        assert!(!result.is_null());
+        Self(result)
+    }
+
+    //------------------------------------------------------------------------------
+    /// Create a color source that forms a radial gradient.
+    ///
+    /// - center          The center.
+    /// - radius          The radius.
+    /// - stop_count      The stop count.
+    /// - colors          The colors.
+    /// - stops           The stops.
+    /// - tile_mode       The tile mode.
+    /// - transformation  The transformation.
+    ///
+    /// @return     The color source.
+    #[must_use]
+    pub fn new_radial_gradient(
+        center: &sys::ImpellerPoint,
+        radius: f32,
+        colors: &[sys::ImpellerColor],
+        stops: &[f32],
+        tile_mode: sys::TileMode,
+        transformation: Option<&sys::ImpellerMatrix>,
+    ) -> Self {
+        assert_eq!(colors.len(), stops.len());
+        assert!(!colors.is_empty());
+        let result = unsafe {
+            sys::ImpellerColorSourceCreateRadialGradientNew(
+                center,
+                radius,
+                stops.len() as _,
+                colors.as_ptr(),
+                stops.as_ptr(),
+                tile_mode,
+                transformation.map_or(std::ptr::null(), |m| m),
+            )
+        };
+        assert!(!result.is_null());
+        Self(result)
+    }
+
+    //------------------------------------------------------------------------------
+    /// Create a color source that forms a conical gradient.
+    ///
+    /// - start_center    The start center.
+    /// - start_radius    The start radius.
+    /// - end_center      The end center.
+    /// - end_radius      The end radius.
+    /// - stop_count      The stop count.
+    /// - colors          The colors.
+    /// - stops           The stops.
+    /// - tile_mode       The tile mode.
+    /// - transformation  The transformation.
+    ///
+    /// @return     The color source.
+    #[must_use]
+    pub fn new_conical_gradient(
+        start_center: &sys::ImpellerPoint,
+        start_radius: f32,
+        end_center: &sys::ImpellerPoint,
+        end_radius: f32,
+        colors: &[sys::ImpellerColor],
+        stops: &[f32],
+        tile_mode: sys::TileMode,
+        transformation: Option<&sys::ImpellerMatrix>,
+    ) -> Self {
+        assert_eq!(colors.len(), stops.len());
+        assert!(!colors.is_empty());
+        let result = unsafe {
+            sys::ImpellerColorSourceCreateConicalGradientNew(
+                start_center,
+                start_radius,
+                end_center,
+                end_radius,
+                stops.len() as _,
+                colors.as_ptr(),
+                stops.as_ptr(),
+                tile_mode,
+                transformation.map_or(std::ptr::null(), |m| m),
+            )
+        };
+        assert!(!result.is_null());
+        Self(result)
+    }
+
+    //------------------------------------------------------------------------------
+    /// Create a color source that forms a sweep gradient.
+    ///
+    /// - center          The center.
+    /// - start           The start.
+    /// - end             The end.
+    /// - stop_count      The stop count.
+    /// - colors          The colors.
+    /// - stops           The stops.
+    /// - tile_mode       The tile mode.
+    /// - transformation  The transformation.
+    ///
+    /// @return     The color source.
+    #[must_use]
+    pub fn new_sweep_gradient(
+        center: &sys::ImpellerPoint,
+        start: f32,
+        end: f32,
+        colors: &[sys::ImpellerColor],
+        stops: &[f32],
+        tile_mode: sys::TileMode,
+        transformation: Option<&sys::ImpellerMatrix>,
+    ) -> Self {
+        assert_eq!(colors.len(), stops.len());
+        assert!(!colors.is_empty());
+        let result = unsafe {
+            sys::ImpellerColorSourceCreateSweepGradientNew(
+                center,
+                start,
+                end,
+                stops.len() as _,
+                colors.as_ptr(),
+                stops.as_ptr(),
+                tile_mode,
+                transformation.map_or(std::ptr::null(), |m| m),
+            )
+        };
+        assert!(!result.is_null());
+        Self(result)
+    }
+    /// Create a color source that samples from an image.
+    ///
+    /// - image                 The image.
+    /// - horizontal_tile_mode  The horizontal tile mode.
+    /// - vertical_tile_mode    The vertical tile mode.
+    /// - sampling              The sampling.
+    /// - transformation        The transformation.
+    ///
+    /// @return     The color source.
+    #[must_use]
+    pub fn new_image(
+        image: &Texture,
+        horizontal_tile_mode: sys::TileMode,
+        vertical_tile_mode: sys::TileMode,
+        sampling: sys::TextureSampling,
+        transformation: Option<&sys::ImpellerMatrix>,
+    ) -> Self {
+        let result = unsafe {
+            sys::ImpellerColorSourceCreateImageNew(
+                image.0,
+                horizontal_tile_mode,
+                vertical_tile_mode,
+                sampling,
+                transformation.map_or(std::ptr::null(), |m| m),
+            )
+        };
+        assert!(!result.is_null());
+        Self(result)
+    }
+}
+/// Image filters are functions that are applied regions of a texture to produce
+/// a single color. Contrast this with color filters that operate independently
+/// on a per-pixel basis. The generated color is then merged with the
+/// destination during blending.
+pub struct ImageFilter(sys::ImpellerImageFilter);
+unsafe impl Send for ImageFilter {}
+unsafe impl Sync for ImageFilter {}
+impl Clone for ImageFilter {
+    fn clone(&self) -> Self {
+        unsafe {
+            sys::ImpellerImageFilterRetain(self.0);
+        }
+        Self(self.0)
+    }
+}
+impl Drop for ImageFilter {
+    fn drop(&mut self) {
+        unsafe {
+            sys::ImpellerImageFilterRelease(self.0);
+        }
+    }
+}
+impl ImageFilter {
+    /// Creates an image filter that applies a Gaussian blur.
+    ///
+    /// The Gaussian blur applied may be an approximation for
+    /// performance.
+    ///
+    ///
+    /// - x_sigma    The x sigma.
+    /// - y_sigma    The y sigma.
+    /// - tile_mode  The tile mode.
+    ///
+    /// @return     The image filter.
+    #[must_use]
+    pub fn new_blur(x_sigma: f32, y_sigma: f32, tile_mode: sys::TileMode) -> Self {
+        let result = unsafe { sys::ImpellerImageFilterCreateBlurNew(x_sigma, y_sigma, tile_mode) };
+        assert!(!result.is_null());
+        Self(result)
+    }
+    /// Creates an image filter that enhances the per-channel pixel
+    /// values to the maximum value in a circle around the pixel.
+    ///
+    /// - x_radius  The x radius.
+    /// - y_radius  The y radius.
+    ///
+    /// @return     The image filter.
+    #[must_use]
+    pub fn new_dilate(x_radius: f32, y_radius: f32) -> Self {
+        let result = unsafe { sys::ImpellerImageFilterCreateDilateNew(x_radius, y_radius) };
+        assert!(!result.is_null());
+        Self(result)
+    }
+    /// Creates an image filter that dampens the per-channel pixel
+    /// values to the minimum value in a circle around the pixel.
+    ///
+    /// - x_radius  The x radius.
+    /// - y_radius  The y radius.
+    ///
+    /// @return     The image filter.
+    #[must_use]
+    pub fn new_erode(x_radius: f32, y_radius: f32) -> Self {
+        let result = unsafe { sys::ImpellerImageFilterCreateErodeNew(x_radius, y_radius) };
+        assert!(!result.is_null());
+        Self(result)
+    }
+    /// Creates an image filter that applies a transformation matrix to
+    /// the underlying image.
+    ///
+    /// - matrix    The transformation matrix.
+    /// - sampling  The image sampling mode.
+    ///
+    /// @return     The image filter.
+    #[must_use]
+    pub fn new_matrix(matrix: &sys::ImpellerMatrix, sampling: sys::TextureSampling) -> Self {
+        let result = unsafe { sys::ImpellerImageFilterCreateMatrixNew(matrix, sampling) };
+        assert!(!result.is_null());
+        Self(result)
+    }
+
+    //------------------------------------------------------------------------------
+    /// Creates a composed filter that when applied is identical to
+    /// subsequently applying the inner and then the outer filters.
+    ///
+    /// ```ignore
+    /// destination = outer_filter(inner_filter(source))
+    /// ```
+    ///
+    /// - outer  The outer image filter.
+    /// - inner  The inner image filter.
+    ///
+    /// @return     The combined image filter.
+    #[must_use]
+    pub fn new_compose(outer: &Self, inner: &Self) -> Self {
+        let result = unsafe { sys::ImpellerImageFilterCreateComposeNew(outer.0, inner.0) };
+        assert!(!result.is_null());
+        Self(result)
+    }
+}
+/// Mask filters are functions that are applied over a shape after it has been
+/// drawn but before it has been blended into the final image.
+pub struct MaskFilter(sys::ImpellerMaskFilter);
+unsafe impl Send for MaskFilter {}
+unsafe impl Sync for MaskFilter {}
+impl Clone for MaskFilter {
+    fn clone(&self) -> Self {
+        unsafe {
+            sys::ImpellerMaskFilterRetain(self.0);
+        }
+        Self(self.0)
+    }
+}
+impl Drop for MaskFilter {
+    fn drop(&mut self) {
+        unsafe {
+            sys::ImpellerMaskFilterRelease(self.0);
+        }
+    }
+}
+impl MaskFilter {
+    //------------------------------------------------------------------------------
+    /// Create a mask filter that blurs contents in the masked shape.
+    ///
+    /// - style  The style.
+    /// - sigma  The sigma.
+    ///
+    /// @return     The mask filter.
+    #[must_use]
+    pub fn new_blur(style: sys::BlurStyle, sigma: f32) -> Self {
+        let result = unsafe { sys::ImpellerMaskFilterCreateBlurNew(style, sigma) };
+        assert!(!result.is_null());
+        Self(result)
+    }
+}
+/// Typography contexts allow for the layout and rendering of text.
+///
+/// These are typically expensive to create and applications will only ever need
+/// to create a single one of these during their lifetimes.
+///
+/// Unlike graphics context, typograhy contexts are not thread-safe. These must
+/// be created, used, and collected on a single thread.
+pub struct TypographyContext(sys::ImpellerTypographyContext);
+
+impl Clone for TypographyContext {
+    fn clone(&self) -> Self {
+        unsafe {
+            sys::ImpellerTypographyContextRetain(self.0);
+        }
+        Self(self.0)
+    }
+}
+impl Drop for TypographyContext {
+    fn drop(&mut self) {
+        unsafe {
+            sys::ImpellerTypographyContextRelease(self.0);
+        }
+    }
+}
+impl Default for TypographyContext {
+    fn default() -> Self {
+        let result = unsafe { sys::ImpellerTypographyContextNew() };
+        assert!(!result.is_null());
+        Self(result)
+    }
+}
+impl TypographyContext {
+    /// Register a custom font.
+    ///
+    /// The following font formats are supported:
+    /// * OpenType font collections (.ttc extension)
+    /// * TrueType fonts: (.ttf extension)
+    /// * OpenType fonts: (.otf extension)
+    ///
+    /// @warning: Web Open Font Formats (.woff and .woff2 extensions) are **not**
+    /// supported.
+    ///
+    /// The family alias name can be NULL. In such cases, the font
+    /// family specified in paragraph styles must match the family that
+    /// is specified in the font data.
+    ///
+    /// If the family name alias is not NULL, that family name must be
+    /// used in the paragraph style to reference glyphs from this font
+    /// instead of the one encoded in the font itself.
+    ///
+    /// Multiple fonts (with glyphs for different styles) can be
+    /// specified with the same family.
+    ///
+    /// @see        [ParagraphStyle::set_font_family]
+    ///
+    /// - font_data: The contents.
+    /// - family_name_alias: The family name alias or NULL if the one specified in the font
+    ///                      data is to be used.
+    ///
+    /// @return     If the font could be successfully registered.
+    #[doc(alias = "ImpellerTypographyContextRegisterFont")]
+    pub fn register_font(
+        &self,
+        font_data: &[u8],
+        family_name_alias: Option<&str>,
+    ) -> Result<(), &'static str> {
+        let family_name_alias = if let Some(s) = family_name_alias {
+            Some(std::ffi::CString::new(s).map_err(|_| "the family name alias has a null byte")?)
+        } else {
+            None
+        };
+
+        let result = unsafe {
+            sys::ImpellerTypographyContextRegisterFont(
+                self.0,
+                &sys::ImpellerMapping {
+                    data: font_data.as_ptr(),
+                    length: font_data.len().try_into().unwrap(),
+                    on_release: None,
+                },
+                std::ptr::null_mut(),
+                family_name_alias
+                    .as_ref()
+                    .map_or(std::ptr::null(), |s| s.as_ptr()),
+            )
+        };
+        // explicit drop to ensure that it's not dropped before this point.
+        // When I first wrote this function, I used family_name_alias.map(|s|s.as_ptr()) in the previous line, which would have been UB :/
+        std::mem::drop(family_name_alias);
+        result.then_some(()).ok_or("Failed to register font")
+    }
+}
+
+/// An immutable, fully laid out paragraph.
+pub struct Paragraph(sys::ImpellerParagraph);
+unsafe impl Send for Paragraph {}
+unsafe impl Sync for Paragraph {}
+impl Clone for Paragraph {
+    fn clone(&self) -> Self {
+        unsafe {
+            sys::ImpellerParagraphRetain(self.0);
+        }
+        Self(self.0)
+    }
+}
+impl Drop for Paragraph {
+    fn drop(&mut self) {
+        unsafe {
+            sys::ImpellerParagraphRelease(self.0);
+        }
+    }
+}
+impl Paragraph {
+    //------------------------------------------------------------------------------
+    /// @see        [Self::get_min_intrinsic_width]
+    ///
+    /// The width provided to the paragraph builder during the call to
+    /// layout. This is the maximum width any line in the laid out
+    /// paragraph can occupy. But, it is not necessarily the actual
+    ///             width of the paragraph after layout.
+    #[doc(alias = "ImpellerParagraphGetMaxWidth")]
+    pub fn get_max_width(paragraph: &Paragraph) -> f32 {
+        unsafe { sys::ImpellerParagraphGetMaxWidth(paragraph.0) }
+    }
+    //------------------------------------------------------------------------------
+    /// The height of the laid out paragraph. This is **not** a tight
+    /// bounding box and some glyphs may not reach the minimum location
+    /// they are allowed to reach.
+    #[doc(alias = "ImpellerParagraphGetHeight")]
+    pub fn get_height(paragraph: &Paragraph) -> f32 {
+        unsafe { sys::ImpellerParagraphGetHeight(paragraph.0) }
+    }
+    //------------------------------------------------------------------------------
+    /// The length of the longest line in the paragraph. This is the
+    /// horizontal distance between the left edge of the leftmost glyph
+    /// and the right edge of the rightmost glyph, in the longest line
+    /// in the paragraph.
+    #[doc(alias = "ImpellerParagraphGetLongestLineWidth")]
+    pub fn get_longest_line_width(paragraph: &Paragraph) -> f32 {
+        unsafe { sys::ImpellerParagraphGetLongestLineWidth(paragraph.0) }
+    }
+    //------------------------------------------------------------------------------
+    /// @see        [Self::get_max_width]
+    ///
+    /// The actual width of the longest line in the paragraph after
+    /// layout. This is expected to be less than or equal to
+    /// [Self::get_max_width].
+    #[doc(alias = "ImpellerParagraphGetMinIntrinsicWidth")]
+    pub fn get_min_intrinsic_width(paragraph: &Paragraph) -> f32 {
+        unsafe { sys::ImpellerParagraphGetMinIntrinsicWidth(paragraph.0) }
+    }
+    //------------------------------------------------------------------------------
+    /// The width of the paragraph without line breaking.
+    #[doc(alias = "ImpellerParagraphGetMaxIntrinsicWidth")]
+    pub fn get_max_intrinsic_width(paragraph: &Paragraph) -> f32 {
+        unsafe { sys::ImpellerParagraphGetMaxIntrinsicWidth(paragraph.0) }
+    }
+    //------------------------------------------------------------------------------
+    /// The distance from the top of the paragraph to the ideographic
+    /// baseline of the first line when using ideographic fonts
+    /// (Japanese, Korean, etc...).
+    #[doc(alias = "ImpellerParagraphGetIdeographicBaseline")]
+    pub fn get_ideographic_baseline(paragraph: &Paragraph) -> f32 {
+        unsafe { sys::ImpellerParagraphGetIdeographicBaseline(paragraph.0) }
+    }
+    //------------------------------------------------------------------------------
+    /// The distance from the top of the paragraph to the alphabetic
+    /// baseline of the first line when using alphabetic fonts (A-Z,
+    /// a-z, Greek, etc...).
+    #[doc(alias = "ImpellerParagraphGetAlphabeticBaseline")]
+    pub fn get_alphabetic_baseline(paragraph: &Paragraph) -> f32 {
+        unsafe { sys::ImpellerParagraphGetAlphabeticBaseline(paragraph.0) }
+    }
+    //------------------------------------------------------------------------------
+    /// The number of lines visible in the paragraph after line
+    /// breaking.
+    #[doc(alias = "ImpellerParagraphGetLineCount")]
+    pub fn get_line_count(paragraph: &Paragraph) -> u32 {
+        unsafe { sys::ImpellerParagraphGetLineCount(paragraph.0) }
+    }
+}
+/// Paragraph builders allow for the creation of fully laid out paragraphs
+/// (which themselves are immutable).
+///
+/// To build a paragraph, users push/pop paragraph styles onto a stack then add
+/// UTF-8 encoded text. The properties on the top of paragraph style stack when
+/// the text is added are used to layout and shape that subset of the paragraph.
+///
+/// @see      [ParagraphStyle]
+pub struct ParagraphBuilder(sys::ImpellerParagraphBuilder);
+
+impl Clone for ParagraphBuilder {
+    fn clone(&self) -> Self {
+        unsafe {
+            sys::ImpellerParagraphBuilderRetain(self.0);
+        }
+        Self(self.0)
+    }
+}
+impl Drop for ParagraphBuilder {
+    fn drop(&mut self) {
+        unsafe {
+            sys::ImpellerParagraphBuilderRelease(self.0);
+        }
+    }
+}
+
+impl ParagraphBuilder {
+    //------------------------------------------------------------------------------
+    /// Create a new paragraph builder.
+    ///
+    /// @return     The paragraph builder.
+    #[doc(alias = "ImpellerParagraphBuilderNew")]
+    pub fn new(context: &TypographyContext) -> Result<ParagraphBuilder, ()> {
+        let result = unsafe { sys::ImpellerParagraphBuilderNew(context.0) };
+        if result.is_null() {
+            Err(())
+        } else {
+            Ok(ParagraphBuilder(result))
+        }
+    }
+    //------------------------------------------------------------------------------
+    /// Push a new paragraph style onto the paragraph style stack
+    /// managed by the paragraph builder.
+    ///
+    /// Not all paragraph styles can be combined. For instance, it does
+    /// not make sense to mix text alignment for different text runs
+    /// within a paragraph. In such cases, the preference of the the
+    /// first paragraph style on the style stack will take hold.
+    ///
+    /// If text is pushed onto the paragraph builder without a style
+    /// previously pushed onto the stack, a default paragraph text style
+    /// will be used. This may not always be desirable because some
+    /// style element cannot be overridden. It is recommended that a
+    /// default paragraph style always be pushed onto the stack before
+    /// the addition of any text.
+    ///
+    /// - style              The style.
+    #[doc(alias = "ImpellerParagraphBuilderPushStyle")]
+    pub fn push_style(paragraph_builder: &ParagraphBuilder, style: &ParagraphStyle) {
+        unsafe {
+            sys::ImpellerParagraphBuilderPushStyle(paragraph_builder.0, style.0);
+        }
+    }
+    //------------------------------------------------------------------------------
+    /// Pop a previously pushed paragraph style from the paragraph style
+    /// stack.
+    ///
+    #[doc(alias = "ImpellerParagraphBuilderPopStyle")]
+    pub fn pop_style(paragraph_builder: &ParagraphBuilder) {
+        unsafe {
+            sys::ImpellerParagraphBuilderPopStyle(paragraph_builder.0);
+        }
+    }
+    //------------------------------------------------------------------------------
+    /// Add UTF-8 encoded text to the paragraph. The text will be styled
+    /// according to the paragraph style already on top of the paragraph
+    /// style stack.
+    #[doc(alias = "ImpellerParagraphBuilderAddText")]
+    pub fn add_text(&self, text: &str) {
+        unsafe {
+            sys::ImpellerParagraphBuilderAddText(self.0, text.as_ptr(), text.len() as u32);
+        }
+    }
+
+    //------------------------------------------------------------------------------
+    /// Layout and build a new paragraph using the specified width. The
+    /// resulting paragraph is immutable. The paragraph builder must be
+    /// discarded and a new one created to build more paragraphs.
+    ///
+    /// - width              The paragraph width.
+    ///
+    /// @return     The paragraph if one can be created, NULL otherwise.
+    #[must_use]
+    #[doc(alias = "ImpellerParagraphBuilderBuildParagraphNew")]
+    pub fn build(&self, width: f32) -> Option<Paragraph> {
+        let result = unsafe { sys::ImpellerParagraphBuilderBuildParagraphNew(self.0, width) };
+        (!result.is_null()).then_some(Paragraph(result))
+    }
+}
+
+/// Specified when building a paragraph, paragraph styles are managed in a stack
+/// with specify text properties to apply to text that is added to the paragraph
+/// builder.
+pub struct ParagraphStyle(sys::ImpellerParagraphStyle);
+
+impl Clone for ParagraphStyle {
+    fn clone(&self) -> Self {
+        unsafe {
+            sys::ImpellerParagraphStyleRetain(self.0);
+        }
+        Self(self.0)
+    }
+}
+impl Drop for ParagraphStyle {
+    fn drop(&mut self) {
+        unsafe {
+            sys::ImpellerParagraphStyleRelease(self.0);
+        }
+    }
+}
+impl Default for ParagraphStyle {
+    fn default() -> Self {
+        let result = unsafe { sys::ImpellerParagraphStyleNew() };
+        assert!(!result.is_null());
+        Self(result)
+    }
+}
+impl ParagraphStyle {
+    /// Set the paint used to render the text glyph contents.
+    ///
+    /// - paint            The paint.
+    #[doc(alias = "ImpellerParagraphStyleSetForeground")]
+    pub fn set_foreground(&self, paint: &Paint) {
+        unsafe {
+            sys::ImpellerParagraphStyleSetForeground(self.0, paint.0);
+        }
+    }
+    //------------------------------------------------------------------------------
+    /// Set the paint used to render the background of the text glyphs.
+    ///
+    /// - paint            The paint.
+    #[doc(alias = "ImpellerParagraphStyleSetBackground")]
+    pub fn set_background(&self, paint: &Paint) {
+        unsafe {
+            sys::ImpellerParagraphStyleSetBackground(self.0, paint.0);
+        }
+    }
+    /// Set the weight of the font to select when rendering glyphs.
+    ///
+    /// - weight           The weight.
+    #[doc(alias = "ImpellerParagraphStyleSetFontWeight")]
+    pub fn set_font_weight(&self, weight: FontWeight) {
+        unsafe {
+            sys::ImpellerParagraphStyleSetFontWeight(self.0, weight);
+        }
+    }
+    /// Set whether the glyphs should be bolded or italicized.
+    ///
+    /// - style            The style.
+    #[doc(alias = "ImpellerParagraphStyleSetFontStyle")]
+    pub fn set_font_style(&self, style: FontStyle) {
+        unsafe {
+            sys::ImpellerParagraphStyleSetFontStyle(self.0, style);
+        }
+    }
+    /// Set the font family.
+    ///
+    /// - family_name      The family name.
+    #[doc(alias = "ImpellerParagraphStyleSetFontFamily")]
+    pub fn set_font_family(&self, family_name: &str) {
+        let family_name =
+            std::ffi::CString::new(family_name).expect("failed to create Cstring from family name");
+        unsafe {
+            sys::ImpellerParagraphStyleSetFontFamily(self.0, family_name.as_ptr());
+        }
+        std::mem::drop(family_name);
+    }
+    /// Set the font size.
+    ///
+    /// - size             The size.
+    #[doc(alias = "ImpellerParagraphStyleSetFontSize")]
+    pub fn set_font_size(&self, size: f32) {
+        unsafe {
+            sys::ImpellerParagraphStyleSetFontSize(self.0, size);
+        }
+    }
+    /// The height of the text as a multiple of text size.
+    ///
+    /// When height is 0.0, the line height will be determined by the
+    /// font's metrics directly, which may differ from the font size.
+    /// Otherwise the line height of the text will be a multiple of font
+    /// size, and be exactly fontSize * height logical pixels tall.
+    ///
+    /// - height           The height.
+    #[doc(alias = "ImpellerParagraphStyleSetHeight")]
+    pub fn set_height(&self, height: f32) {
+        unsafe {
+            sys::ImpellerParagraphStyleSetHeight(self.0, height);
+        }
+    }
+    //------------------------------------------------------------------------------
+    /// Set the alignment of text within the paragraph.
+    ///
+    /// - align            The align.
+    #[doc(alias = "ImpellerParagraphStyleSetTextAlignment")]
+    pub fn set_text_alignment(&self, align: TextAlignment) {
+        unsafe {
+            sys::ImpellerParagraphStyleSetTextAlignment(self.0, align);
+        }
+    }
+    //------------------------------------------------------------------------------
+    /// Set the directionality of the text within the paragraph.
+    ///
+    /// - direction        The direction.
+    #[doc(alias = "ImpellerParagraphStyleSetTextDirection")]
+    pub fn set_text_direction(&self, direction: TextDirection) {
+        unsafe {
+            sys::ImpellerParagraphStyleSetTextDirection(self.0, direction);
+        }
+    }
+    //------------------------------------------------------------------------------
+    /// Set the maximum line count within the paragraph.
+    ///
+    /// - max_lines        The maximum lines.
+    #[doc(alias = "ImpellerParagraphStyleSetMaxLines")]
+    pub fn set_max_lines(&self, max_lines: u32) {
+        unsafe {
+            sys::ImpellerParagraphStyleSetMaxLines(self.0, max_lines);
+        }
+    }
+    //------------------------------------------------------------------------------
+    /// Set the paragraph locale.
+    ///
+    /// - locale           The locale.
+    #[doc(alias = "ImpellerParagraphStyleSetLocale")]
+    pub fn set_locale(&self, locale: &str) {
+        let locale = std::ffi::CString::new(locale).expect("failed to create Cstring from locale");
+        unsafe {
+            sys::ImpellerParagraphStyleSetLocale(self.0, locale.as_ptr());
+        }
+        std::mem::drop(locale);
+    }
+}
+/// Represents a two-dimensional path that is immutable and graphics context
+/// agnostic.
+///
+/// Paths in Impeller consist of linear, cubic Bézier curve, and quadratic
+/// Bézier curve segments. All other shapes are approximations using these
+/// building blocks.
+///
+/// Paths are created using path builder that allow for the configuration of the
+/// path segments, how they are filled, and/or stroked.
+pub struct Path(sys::ImpellerPath);
+unsafe impl Send for Path {}
+unsafe impl Sync for Path {}
+impl Clone for Path {
+    fn clone(&self) -> Self {
+        unsafe {
+            sys::ImpellerPathRetain(self.0);
+        }
+        Self(self.0)
+    }
+}
+impl Drop for Path {
+    fn drop(&mut self) {
+        unsafe {
+            sys::ImpellerPathRelease(self.0);
+        }
+    }
+}
+
+/// Path builders allow for the incremental building up of paths.
+pub struct PathBuilder(sys::ImpellerPathBuilder);
+
+impl Clone for PathBuilder {
+    fn clone(&self) -> Self {
+        unsafe {
+            sys::ImpellerPathBuilderRetain(self.0);
+        }
+        Self(self.0)
+    }
+}
+impl Drop for PathBuilder {
+    fn drop(&mut self) {
+        unsafe {
+            sys::ImpellerPathBuilderRelease(self.0);
+        }
+    }
+}
+impl Default for PathBuilder {
+    /// Create a new path builder. Paths themselves are immutable.
+    /// A builder builds these immutable paths.
+    fn default() -> Self {
+        let p = unsafe { sys::ImpellerPathBuilderNew() };
+        assert!(!p.is_null());
+        Self(p)
+    }
+}
+impl PathBuilder {
+    /// Move the cursor to the specified location.
+    ///
+    /// -  location  The location.
+    pub fn move_to(&mut self, location: &sys::ImpellerPoint) {
+        unsafe {
+            sys::ImpellerPathBuilderMoveTo(self.0, location);
+        }
+    }
+    /// Add a line segment from the current cursor location to the given
+    /// location. The cursor location is updated to be at the endpoint.
+    ///
+    /// - location  The location.
+    pub fn line_to(&mut self, location: &sys::ImpellerPoint) {
+        unsafe {
+            sys::ImpellerPathBuilderLineTo(self.0, location);
+        }
+    }
+
+    /// Add a quadratic curve from whose start point is the cursor to
+    /// the specified end point using the a single control point.
+    ///
+    /// The new location of the cursor after this call is the end point.
+    ///
+    /// - control_point  The control point.
+    /// - end_point      The end point.
+    pub fn quadratic_curve_to(
+        &mut self,
+        control_point: &sys::ImpellerPoint,
+        end_point: &sys::ImpellerPoint,
+    ) {
+        unsafe {
+            sys::ImpellerPathBuilderQuadraticCurveTo(self.0, control_point, end_point);
+        }
+    }
+    /// Add a cubic curve whose start point is current cursor location
+    /// to the specified end point using the two specified control
+    /// points.
+    ///
+    /// The new location of the cursor after this call is the end point
+    /// supplied.
+    ///
+    /// - control_point_1  The control point 1
+    /// - control_point_2  The control point 2
+    /// - end_point        The end point
+    pub fn cubic_curve_to(
+        &mut self,
+        control_point_1: &sys::ImpellerPoint,
+        control_point_2: &sys::ImpellerPoint,
+        end_point: &sys::ImpellerPoint,
+    ) {
+        unsafe {
+            sys::ImpellerPathBuilderCubicCurveTo(
+                self.0,
+                control_point_1,
+                control_point_2,
+                end_point,
+            );
+        }
+    }
+    /// Adds a rectangle to the path.
+    ///
+    /// - rect     The rectangle.
+    pub fn add_rect(&mut self, rect: &sys::ImpellerRect) {
+        unsafe {
+            sys::ImpellerPathBuilderAddRect(self.0, rect);
+        }
+    }
+    /// Add an arc to the path.
+    ///
+    /// - oval_bounds          The oval bounds.
+    /// - start_angle_degrees  The start angle in degrees.
+    /// - end_angle_degrees    The end angle in degrees.
+    pub fn add_arc(
+        &mut self,
+        oval_bounds: &sys::ImpellerRect,
+        start_angle_degrees: f32,
+        end_angle_degrees: f32,
+    ) {
+        unsafe {
+            sys::ImpellerPathBuilderAddArc(
+                self.0,
+                oval_bounds,
+                start_angle_degrees,
+                end_angle_degrees,
+            );
+        }
+    }
+
+    /// Add an oval to the path.
+    ///
+    /// - oval_bounds  The oval bounds.
+    pub fn add_oval(&mut self, oval_bounds: &sys::ImpellerRect) {
+        unsafe {
+            sys::ImpellerPathBuilderAddOval(self.0, oval_bounds);
+        }
+    }
+    /// Add a rounded rect with potentially non-uniform radii to the path.
+    ///
+    /// - oval_bounds     The oval bounds.
+    /// - rounding_radii  The rounding radii.
+    pub fn add_rounded_rect(
+        &mut self,
+        oval_bounds: &sys::ImpellerRect,
+        rounding_radii: &sys::ImpellerRoundingRadii,
+    ) {
+        unsafe {
+            sys::ImpellerPathBuilderAddRoundedRect(self.0, oval_bounds, rounding_radii);
+        }
+    }
+    /// Close the path.
+    pub fn close(&mut self) {
+        unsafe {
+            sys::ImpellerPathBuilderClose(self.0);
+        }
+    }
+
+    /// Create a new path by copying the existing built-up path. The
+    /// existing path can continue being added to.
+    ///
+    /// - fill  The fill.
+    ///
+    /// @return     The impeller path.
+    pub fn copy_path_new(&mut self, fill: sys::FillType) -> Path {
+        let p = unsafe { sys::ImpellerPathBuilderCopyPathNew(self.0, fill) };
+        assert!(!p.is_null());
+        Path(p)
+    }
+    /// Create a new path using the existing built-up path. The existing
+    /// path builder now contains an empty path.
+    ///
+    /// - fill  The fill.
+    ///
+    /// @return     The impeller path.
+    pub fn take_path_new(&mut self, fill: sys::FillType) -> Path {
+        let p = unsafe { sys::ImpellerPathBuilderTakePathNew(self.0, fill) };
+        assert!(!p.is_null());
+        Path(p)
+    }
+}
+/// A surface represents a render target for Impeller to direct the rendering
+/// intent specified the form of display lists to.
+///
+/// Render targets are how Impeller API users perform Window System Integration
+/// (WSI). Users wrap swapchain images as surfaces and draw display lists onto
+/// these surfaces to present content.
+///
+/// Creating surfaces is typically platform and client-rendering-API specific.
+pub struct Surface(sys::ImpellerSurface);
+
+// impl Clone for Surface {
+//     fn clone(&self) -> Self {
+//         unsafe {
+//             sys::ImpellerSurfaceRetain(self.0);
+//         }
+//         Self(self.0)
+//     }
+// }
+impl Drop for Surface {
+    fn drop(&mut self) {
+        unsafe {
+            sys::ImpellerSurfaceRelease(self.0);
+        }
+    }
+}
+
+impl Surface {
+    /// Draw a display list onto the surface. The same display list can
+    /// be drawn multiple times to different surfaces.
+    ///
+    /// @warning    In the OpenGL backend, Impeller will not make an effort to
+    ///             preserve the OpenGL state that is current in the context.
+    ///             Embedders that perform additional OpenGL operations in the
+    ///             context should expect the reset state after control transitions
+    ///             back to them. Key state to watch out for would be the viewports,
+    ///             stencil rects, test toggles, resource (texture, framebuffer,
+    ///             buffer) bindings, etc...
+    ///
+    /// - display_list  The display list to draw onto the surface.
+    ///
+    /// @return     If the display list could be drawn onto the surface.
+    pub fn draw_display_list(&self, display_list: &DisplayList) -> Result<(), &'static str> {
+        unsafe { sys::ImpellerSurfaceDrawDisplayList(self.0, display_list.0) }
+            .then_some(())
+            .ok_or("failed to draw to surface")
+    }
+    /// Present the surface to the underlying window system.
+    ///
+    /// @return     Ok if the surface could be presented.
+    pub fn present(self) -> Result<(), &'static str> {
+        unsafe { sys::ImpellerSurfacePresent(self.0) }
+            .then_some(())
+            .ok_or("failed to present surface")
+    }
+}
+/// A reference to a texture whose data is resident on the GPU. These can be
+/// referenced in draw calls and paints.
+///
+/// Creating textures is extremely expensive. Creating a single one can
+/// typically comfortably blow the frame budget of an application. Textures
+/// should be created on background threads.
+///
+/// @warning    While textures themselves are thread safe, some context types
+///             (like OpenGL) may need extra configuration to be able to operate
+///             from multiple threads.
+pub struct Texture(sys::ImpellerTexture);
+unsafe impl Sync for Texture {}
+unsafe impl Send for Texture {}
+impl Clone for Texture {
+    fn clone(&self) -> Self {
+        unsafe {
+            sys::ImpellerTextureRetain(self.0);
+        }
+        Self(self.0)
+    }
+}
+impl Drop for Texture {
+    fn drop(&mut self) {
+        unsafe {
+            sys::ImpellerTextureRelease(self.0);
+        }
+    }
+}
+impl Texture {
+    /// Get the OpenGL handle associated with this texture. If this is
+    /// not an OpenGL texture, this method will always return 0.
+    ///
+    /// OpenGL handles are lazily created, this method will return
+    /// GL_NONE is no OpenGL handle is available. To ensure that this
+    /// call eagerly creates an OpenGL texture, call this on a thread
+    /// where Impeller knows there is an OpenGL context available.
+    ///
+    /// @return     The OpenGL handle if one is available, GL_NONE otherwise.
+    ///
+    /// # Safety
+    /// READ the docs that it may return GL_NONE (which may not be zero).
+    /// use opengl constants to compare the return value properly.
+    ///
+    pub fn get_opengl_handle(&self) -> u64 {
+        unsafe { sys::ImpellerTextureGetOpenGLHandle(self.0) }
+    }
+}
+
+impl sys::ImpellerSize {
+    pub const fn new(width: f32, height: f32) -> Self {
+        Self { width, height }
+    }
+    pub const ZERO: Self = Self {
+        width: 0.0,
+        height: 0.0,
+    };
+    pub const INF: Self = Self {
+        width: f32::INFINITY,
+        height: f32::INFINITY,
+    };
+    /// based on the size, it will calculate a suitable mipcount.
+    /// This function skips 1x1 mip levels because that's what flutter does.
+    pub fn mip_count(self) -> u32 {
+        // https://github.com/flutter/engine/blob/main/impeller/geometry/size.h#L134
+
+        let mut result = self.width.log2().ceil().max(self.height.log2().ceil()) as u32;
+        // This check avoids creating 1x1 mip levels, which are both pointless
+        // and cause rendering problems on some Adreno GPUs.
+        // See:
+        //      * https://github.com/flutter/flutter/issues/160441
+        //      * https://github.com/flutter/flutter/issues/159876
+        //      * https://github.com/flutter/flutter/issues/160587
+        if result > 1 {
+            result -= 1;
+        }
+        std::cmp::max(result, 1)
+    }
+}

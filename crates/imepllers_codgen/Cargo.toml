@@ -1,0 +1,12 @@
+[package]
+name = "impellers_codegen"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+bindgen = {version = "0.71"}
+anyhow = {version = "1"}
+tracing = {version = "0.1"}
+tracing-subscriber = {version = "0.3", features = ["fmt", "env-filter"]}
+serde_json = {version = "1"}

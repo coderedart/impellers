@@ -1,0 +1,29 @@
+on:
+    push:
+      branches:
+        - static_lib
+name: Check Rust Crate
+# This just runs the rust crate example to verify that it builds (no undefined references error)
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      matrix:
+        os: [ubuntu, windows, macos]
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Install Glfw on Ubuntu
+      if: matrix.os == 'ubuntu'
+      # based on glfw/glfw's workflow
+      run: sudo apt install -y libglfw3-dev libglfw3 libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev libwayland-dev libxkbcommon-dev
+    - name: Host Build
+      if: matrix.os != 'macos'
+      shell: bash
+      run: |
+        cargo run -vv --example=empty --no-default-features --features=download_binaries,static_link
+        cargo run -vv --example=empty --no-default-features --features=download_binaries
+        cargo run -vv --example=empty --no-default-features --features=download_binaries,static_link --release
+        cargo run -vv --example=empty --no-default-features --features=download_binaries --release
+

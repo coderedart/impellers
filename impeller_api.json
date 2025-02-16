@@ -1,0 +1,2721 @@
+{
+  "enums": {
+    "ImpellerFillType": [
+      "kImpellerFillTypeNonZero",
+      "kImpellerFillTypeOdd"
+    ],
+    "ImpellerClipOperation": [
+      "kImpellerClipOperationDifference",
+      "kImpellerClipOperationIntersect"
+    ],
+    "ImpellerBlendMode": [
+      "kImpellerBlendModeClear",
+      "kImpellerBlendModeSource",
+      "kImpellerBlendModeDestination",
+      "kImpellerBlendModeSourceOver",
+      "kImpellerBlendModeDestinationOver",
+      "kImpellerBlendModeSourceIn",
+      "kImpellerBlendModeDestinationIn",
+      "kImpellerBlendModeSourceOut",
+      "kImpellerBlendModeDestinationOut",
+      "kImpellerBlendModeSourceATop",
+      "kImpellerBlendModeDestinationATop",
+      "kImpellerBlendModeXor",
+      "kImpellerBlendModePlus",
+      "kImpellerBlendModeModulate",
+      "kImpellerBlendModeScreen",
+      "kImpellerBlendModeOverlay",
+      "kImpellerBlendModeDarken",
+      "kImpellerBlendModeLighten",
+      "kImpellerBlendModeColorDodge",
+      "kImpellerBlendModeColorBurn",
+      "kImpellerBlendModeHardLight",
+      "kImpellerBlendModeSoftLight",
+      "kImpellerBlendModeDifference",
+      "kImpellerBlendModeExclusion",
+      "kImpellerBlendModeMultiply",
+      "kImpellerBlendModeHue",
+      "kImpellerBlendModeSaturation",
+      "kImpellerBlendModeColor",
+      "kImpellerBlendModeLuminosity"
+    ],
+    "ImpellerDrawStyle": [
+      "kImpellerDrawStyleFill",
+      "kImpellerDrawStyleStroke",
+      "kImpellerDrawStyleStrokeAndFill"
+    ],
+    "ImpellerStrokeCap": [
+      "kImpellerStrokeCapButt",
+      "kImpellerStrokeCapRound",
+      "kImpellerStrokeCapSquare"
+    ],
+    "ImpellerStrokeJoin": [
+      "kImpellerStrokeJoinMiter",
+      "kImpellerStrokeJoinRound",
+      "kImpellerStrokeJoinBevel"
+    ],
+    "ImpellerPixelFormat": [
+      "kImpellerPixelFormatRGBA8888"
+    ],
+    "ImpellerTextureSampling": [
+      "kImpellerTextureSamplingNearestNeighbor",
+      "kImpellerTextureSamplingLinear"
+    ],
+    "ImpellerTileMode": [
+      "kImpellerTileModeClamp",
+      "kImpellerTileModeRepeat",
+      "kImpellerTileModeMirror",
+      "kImpellerTileModeDecal"
+    ],
+    "ImpellerBlurStyle": [
+      "kImpellerBlurStyleNormal",
+      "kImpellerBlurStyleSolid",
+      "kImpellerBlurStyleOuter",
+      "kImpellerBlurStyleInner"
+    ],
+    "ImpellerColorSpace": [
+      "kImpellerColorSpaceSRGB",
+      "kImpellerColorSpaceExtendedSRGB",
+      "kImpellerColorSpaceDisplayP3"
+    ],
+    "ImpellerFontWeight": [
+      "kImpellerFontWeight100",
+      "kImpellerFontWeight200",
+      "kImpellerFontWeight300",
+      "kImpellerFontWeight400",
+      "kImpellerFontWeight500",
+      "kImpellerFontWeight600",
+      "kImpellerFontWeight700",
+      "kImpellerFontWeight800",
+      "kImpellerFontWeight900"
+    ],
+    "ImpellerFontStyle": [
+      "kImpellerFontStyleNormal",
+      "kImpellerFontStyleItalic"
+    ],
+    "ImpellerTextAlignment": [
+      "kImpellerTextAlignmentLeft",
+      "kImpellerTextAlignmentRight",
+      "kImpellerTextAlignmentCenter",
+      "kImpellerTextAlignmentJustify",
+      "kImpellerTextAlignmentStart",
+      "kImpellerTextAlignmentEnd"
+    ],
+    "ImpellerTextDirection": [
+      "kImpellerTextDirectionRTL",
+      "kImpellerTextDirectionLTR"
+    ]
+  },
+  "handles": {
+    "ImpellerContext": "/// An Impeller graphics context. Contexts are platform and client-rendering-API\n/// specific.\n///\n/// Contexts are thread-safe objects that are expensive to create. Most\n/// applications will only ever create a single context during their lifetimes.\n/// Once setup, Impeller is ready to render frames as performantly as possible.\n///\n/// During setup, context create the underlying graphics pipelines, allocators,\n/// worker threads, etc...\n///\n/// The general guidance is to create as few contexts as possible (typically\n/// just one) and share them as much as possible.\n///",
+    "ImpellerDisplayList": "/// Display lists represent encoded rendering intent. These objects are\n/// immutable, reusable, thread-safe, and context-agnostic.\n///\n/// While it is perfectly fine to create new display lists per frame, there may\n/// be opportunities for optimization when display lists are reused multiple\n/// times.\n///",
+    "ImpellerDisplayListBuilder": "/// Display list builders allow for the incremental creation of display lists.\n///\n/// Display list builders are context-agnostic.\n///",
+    "ImpellerPaint": "/// Paints control the behavior of draw calls encoded in a display list.\n///\n/// Like display lists, paints are context-agnostic.\n///",
+    "ImpellerColorFilter": "/// Color filters are functions that take two colors and mix them to produce a\n/// single color. This color is then merged with the destination during\n/// blending.\n///",
+    "ImpellerColorSource": "/// Color sources are functions that generate colors for each texture element\n/// covered by a draw call. The colors for each element can be generated using a\n/// mathematical function (to produce gradients for example) or sampled from a\n/// texture.\n///",
+    "ImpellerImageFilter": "/// Image filters are functions that are applied regions of a texture to produce\n/// a single color. Contrast this with color filters that operate independently\n/// on a per-pixel basis. The generated color is then merged with the\n/// destination during blending.\n///",
+    "ImpellerMaskFilter": "/// Mask filters are functions that are applied over a shape after it has been\n/// drawn but before it has been blended into the final image.\n///",
+    "ImpellerTypographyContext": "/// Typography contexts allow for the layout and rendering of text.\n///\n/// These are typically expensive to create and applications will only ever need\n/// to create a single one of these during their lifetimes.\n///\n/// Unlike graphics context, typograhy contexts are not thread-safe. These must\n/// be created, used, and collected on a single thread.\n///",
+    "ImpellerParagraph": "/// An immutable, fully laid out paragraph.\n///",
+    "ImpellerParagraphBuilder": "/// Paragraph builders allow for the creation of fully laid out paragraphs\n/// (which themselves are immutable).\n///\n/// To build a paragraph, users push/pop paragraph styles onto a stack then add\n/// UTF-8 encoded text. The properties on the top of paragraph style stack when\n/// the text is added are used to layout and shape that subset of the paragraph.\n///\n/// @see      `ImpellerParagraphStyle`\n///",
+    "ImpellerParagraphStyle": "/// Specified when building a paragraph, paragraph styles are managed in a stack\n/// with specify text properties to apply to text that is added to the paragraph\n/// builder.\n///",
+    "ImpellerPath": "/// Represents a two-dimensional path that is immutable and graphics context\n/// agnostic.\n///\n/// Paths in Impeller consist of linear, cubic B\u00e9zier curve, and quadratic\n/// B\u00e9zier curve segments. All other shapes are approximations using these\n/// building blocks.\n///\n/// Paths are created using path builder that allow for the configuration of the\n/// path segments, how they are filled, and/or stroked.\n///",
+    "ImpellerPathBuilder": "/// Path builders allow for the incremental building up of paths.\n///",
+    "ImpellerSurface": "/// A surface represents a render target for Impeller to direct the rendering\n/// intent specified the form of display lists to.\n///\n/// Render targets are how Impeller API users perform Window System Integration\n/// (WSI). Users wrap swapchain images as surfaces and draw display lists onto\n/// these surfaces to present content.\n///\n/// Creating surfaces is typically platform and client-rendering-API specific.\n///",
+    "ImpellerTexture": "/// A reference to a texture whose data is resident on the GPU. These can be\n/// referenced in draw calls and paints.\n///\n/// Creating textures is extremely expensive. Creating a single one can\n/// typically comfortably blow the frame budget of an application. Textures\n/// should be created on background threads.\n///\n/// @warning    While textures themselves are thread safe, some context types\n///             (like OpenGL) may need extra configuration to be able to operate\n///             from multiple threads.\n///",
+    "ImpellerVulkanSwapchain": "/// The primary form of WSI when using a Vulkan context, these swapchains use\n/// the `VK_KHR_surface` Vulkan extension.\n///\n/// Creating a swapchain is extremely expensive. One must be created at\n/// application startup and re-used throughout the application lifecycle.\n///\n/// Swapchains are resilient to the underlying surfaces being resized. The\n/// swapchain images will be re-created as necessary on-demand.\n///"
+  },
+  "functions": {
+    "ImpellerGetVersion": {
+      "return_ty": {
+        "ty": "uint32_t"
+      },
+      "args": []
+    },
+    "ImpellerContextCreateOpenGLESNew": {
+      "return_ty": {
+        "ty": "ImpellerContext",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "version",
+          "ty": "uint32_t"
+        },
+        {
+          "name": "gl_proc_address_callback",
+          "ty": "ImpellerProcAddressCallback",
+          "nonnull": true
+        },
+        {
+          "name": "gl_proc_address_callback_user_data",
+          "ty": "void*"
+        }
+      ]
+    },
+    "ImpellerContextCreateMetalNew": {
+      "return_ty": {
+        "ty": "ImpellerContext",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "version",
+          "ty": "uint32_t"
+        }
+      ]
+    },
+    "ImpellerContextCreateVulkanNew": {
+      "return_ty": {
+        "ty": "ImpellerContext",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "version",
+          "ty": "uint32_t"
+        },
+        {
+          "name": "settings",
+          "ty": "const ImpellerContextVulkanSettings*",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerContextRetain": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "context",
+          "ty": "ImpellerContext"
+        }
+      ]
+    },
+    "ImpellerContextRelease": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "context",
+          "ty": "ImpellerContext"
+        }
+      ]
+    },
+    "ImpellerContextGetVulkanInfo": {
+      "return_ty": {
+        "ty": "bool"
+      },
+      "args": [
+        {
+          "name": "context",
+          "ty": "ImpellerContext",
+          "nonnull": true
+        },
+        {
+          "name": "out_vulkan_info",
+          "ty": "ImpellerContextVulkanInfo*",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerVulkanSwapchainCreateNew": {
+      "return_ty": {
+        "ty": "ImpellerVulkanSwapchain",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "context",
+          "ty": "ImpellerContext",
+          "nonnull": true
+        },
+        {
+          "name": "vulkan_surface_khr",
+          "ty": "void*",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerVulkanSwapchainRetain": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "swapchain",
+          "ty": "ImpellerVulkanSwapchain"
+        }
+      ]
+    },
+    "ImpellerVulkanSwapchainRelease": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "swapchain",
+          "ty": "ImpellerVulkanSwapchain"
+        }
+      ]
+    },
+    "ImpellerVulkanSwapchainAcquireNextSurfaceNew": {
+      "return_ty": {
+        "ty": "ImpellerSurface",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "swapchain",
+          "ty": "ImpellerVulkanSwapchain",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerSurfaceCreateWrappedFBONew": {
+      "return_ty": {
+        "ty": "ImpellerSurface",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "context",
+          "ty": "ImpellerContext",
+          "nonnull": true
+        },
+        {
+          "name": "fbo",
+          "ty": "uint64_t"
+        },
+        {
+          "name": "format",
+          "ty": "ImpellerPixelFormat"
+        },
+        {
+          "name": "size",
+          "ty": "const ImpellerISize*",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerSurfaceCreateWrappedMetalDrawableNew": {
+      "return_ty": {
+        "ty": "ImpellerSurface",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "context",
+          "ty": "ImpellerContext",
+          "nonnull": true
+        },
+        {
+          "name": "metal_drawable",
+          "ty": "void*",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerSurfaceRetain": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "surface",
+          "ty": "ImpellerSurface"
+        }
+      ]
+    },
+    "ImpellerSurfaceRelease": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "surface",
+          "ty": "ImpellerSurface"
+        }
+      ]
+    },
+    "ImpellerSurfaceDrawDisplayList": {
+      "return_ty": {
+        "ty": "bool"
+      },
+      "args": [
+        {
+          "name": "surface",
+          "ty": "ImpellerSurface",
+          "nonnull": true
+        },
+        {
+          "name": "display_list",
+          "ty": "ImpellerDisplayList",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerSurfacePresent": {
+      "return_ty": {
+        "ty": "bool"
+      },
+      "args": [
+        {
+          "name": "surface",
+          "ty": "ImpellerSurface",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerPathRetain": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "path",
+          "ty": "ImpellerPath"
+        }
+      ]
+    },
+    "ImpellerPathRelease": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "path",
+          "ty": "ImpellerPath"
+        }
+      ]
+    },
+    "ImpellerPathBuilderNew": {
+      "return_ty": {
+        "ty": "ImpellerPathBuilder",
+        "nodiscard": true
+      },
+      "args": []
+    },
+    "ImpellerPathBuilderRetain": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerPathBuilder"
+        }
+      ]
+    },
+    "ImpellerPathBuilderRelease": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerPathBuilder"
+        }
+      ]
+    },
+    "ImpellerPathBuilderMoveTo": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerPathBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "location",
+          "ty": "const ImpellerPoint*",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerPathBuilderLineTo": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerPathBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "location",
+          "ty": "const ImpellerPoint*",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerPathBuilderQuadraticCurveTo": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerPathBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "control_point",
+          "ty": "const ImpellerPoint*",
+          "nonnull": true
+        },
+        {
+          "name": "end_point",
+          "ty": "const ImpellerPoint*",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerPathBuilderCubicCurveTo": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerPathBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "control_point_1",
+          "ty": "const ImpellerPoint*",
+          "nonnull": true
+        },
+        {
+          "name": "control_point_2",
+          "ty": "const ImpellerPoint*",
+          "nonnull": true
+        },
+        {
+          "name": "end_point",
+          "ty": "const ImpellerPoint*",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerPathBuilderAddRect": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerPathBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "rect",
+          "ty": "const ImpellerRect*",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerPathBuilderAddArc": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerPathBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "oval_bounds",
+          "ty": "const ImpellerRect*",
+          "nonnull": true
+        },
+        {
+          "name": "start_angle_degrees",
+          "ty": "float"
+        },
+        {
+          "name": "end_angle_degrees",
+          "ty": "float"
+        }
+      ]
+    },
+    "ImpellerPathBuilderAddOval": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerPathBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "oval_bounds",
+          "ty": "const ImpellerRect*",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerPathBuilderAddRoundedRect": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerPathBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "rect",
+          "ty": "const ImpellerRect*",
+          "nonnull": true
+        },
+        {
+          "name": "rounding_radii",
+          "ty": "const ImpellerRoundingRadii*",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerPathBuilderClose": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerPathBuilder",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerPathBuilderCopyPathNew": {
+      "return_ty": {
+        "ty": "ImpellerPath",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerPathBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "fill",
+          "ty": "ImpellerFillType"
+        }
+      ]
+    },
+    "ImpellerPathBuilderTakePathNew": {
+      "return_ty": {
+        "ty": "ImpellerPath",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerPathBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "fill",
+          "ty": "ImpellerFillType"
+        }
+      ]
+    },
+    "ImpellerPaintNew": {
+      "return_ty": {
+        "ty": "ImpellerPaint",
+        "nodiscard": true
+      },
+      "args": []
+    },
+    "ImpellerPaintRetain": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paint",
+          "ty": "ImpellerPaint"
+        }
+      ]
+    },
+    "ImpellerPaintRelease": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paint",
+          "ty": "ImpellerPaint"
+        }
+      ]
+    },
+    "ImpellerPaintSetColor": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paint",
+          "ty": "ImpellerPaint",
+          "nonnull": true
+        },
+        {
+          "name": "color",
+          "ty": "const ImpellerColor*",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerPaintSetBlendMode": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paint",
+          "ty": "ImpellerPaint",
+          "nonnull": true
+        },
+        {
+          "name": "mode",
+          "ty": "ImpellerBlendMode"
+        }
+      ]
+    },
+    "ImpellerPaintSetDrawStyle": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paint",
+          "ty": "ImpellerPaint",
+          "nonnull": true
+        },
+        {
+          "name": "style",
+          "ty": "ImpellerDrawStyle"
+        }
+      ]
+    },
+    "ImpellerPaintSetStrokeCap": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paint",
+          "ty": "ImpellerPaint",
+          "nonnull": true
+        },
+        {
+          "name": "cap",
+          "ty": "ImpellerStrokeCap"
+        }
+      ]
+    },
+    "ImpellerPaintSetStrokeJoin": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paint",
+          "ty": "ImpellerPaint",
+          "nonnull": true
+        },
+        {
+          "name": "join",
+          "ty": "ImpellerStrokeJoin"
+        }
+      ]
+    },
+    "ImpellerPaintSetStrokeWidth": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paint",
+          "ty": "ImpellerPaint",
+          "nonnull": true
+        },
+        {
+          "name": "width",
+          "ty": "float"
+        }
+      ]
+    },
+    "ImpellerPaintSetStrokeMiter": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paint",
+          "ty": "ImpellerPaint",
+          "nonnull": true
+        },
+        {
+          "name": "miter",
+          "ty": "float"
+        }
+      ]
+    },
+    "ImpellerPaintSetColorFilter": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paint",
+          "ty": "ImpellerPaint",
+          "nonnull": true
+        },
+        {
+          "name": "color_filter",
+          "ty": "ImpellerColorFilter",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerPaintSetColorSource": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paint",
+          "ty": "ImpellerPaint",
+          "nonnull": true
+        },
+        {
+          "name": "color_source",
+          "ty": "ImpellerColorSource",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerPaintSetImageFilter": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paint",
+          "ty": "ImpellerPaint",
+          "nonnull": true
+        },
+        {
+          "name": "image_filter",
+          "ty": "ImpellerImageFilter",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerPaintSetMaskFilter": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paint",
+          "ty": "ImpellerPaint",
+          "nonnull": true
+        },
+        {
+          "name": "mask_filter",
+          "ty": "ImpellerMaskFilter",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerTextureCreateWithContentsNew": {
+      "return_ty": {
+        "ty": "ImpellerTexture",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "context",
+          "ty": "ImpellerContext",
+          "nonnull": true
+        },
+        {
+          "name": "descriptor",
+          "ty": "const ImpellerTextureDescriptor*",
+          "nonnull": true
+        },
+        {
+          "name": "contents",
+          "ty": "const ImpellerMapping*",
+          "nonnull": true
+        },
+        {
+          "name": "contents_on_release_user_data",
+          "ty": "void*"
+        }
+      ]
+    },
+    "ImpellerTextureCreateWithOpenGLTextureHandleNew": {
+      "return_ty": {
+        "ty": "ImpellerTexture",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "context",
+          "ty": "ImpellerContext",
+          "nonnull": true
+        },
+        {
+          "name": "descriptor",
+          "ty": "const ImpellerTextureDescriptor*",
+          "nonnull": true
+        },
+        {
+          "name": "handle",
+          "ty": "uint64_t"
+        }
+      ]
+    },
+    "ImpellerTextureRetain": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "texture",
+          "ty": "ImpellerTexture"
+        }
+      ]
+    },
+    "ImpellerTextureRelease": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "texture",
+          "ty": "ImpellerTexture"
+        }
+      ]
+    },
+    "ImpellerTextureGetOpenGLHandle": {
+      "return_ty": {
+        "ty": "uint64_t"
+      },
+      "args": [
+        {
+          "name": "texture",
+          "ty": "ImpellerTexture",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerColorSourceRetain": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "color_source",
+          "ty": "ImpellerColorSource"
+        }
+      ]
+    },
+    "ImpellerColorSourceRelease": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "color_source",
+          "ty": "ImpellerColorSource"
+        }
+      ]
+    },
+    "ImpellerColorSourceCreateLinearGradientNew": {
+      "return_ty": {
+        "ty": "ImpellerColorSource",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "start_point",
+          "ty": "const ImpellerPoint*",
+          "nonnull": true
+        },
+        {
+          "name": "end_point",
+          "ty": "const ImpellerPoint*",
+          "nonnull": true
+        },
+        {
+          "name": "stop_count",
+          "ty": "uint32_t"
+        },
+        {
+          "name": "colors",
+          "ty": "const ImpellerColor*",
+          "nonnull": true
+        },
+        {
+          "name": "stops",
+          "ty": "const float*",
+          "nonnull": true
+        },
+        {
+          "name": "tile_mode",
+          "ty": "ImpellerTileMode"
+        },
+        {
+          "name": "transformation",
+          "ty": "const ImpellerMatrix*"
+        }
+      ]
+    },
+    "ImpellerColorSourceCreateRadialGradientNew": {
+      "return_ty": {
+        "ty": "ImpellerColorSource",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "center",
+          "ty": "const ImpellerPoint*",
+          "nonnull": true
+        },
+        {
+          "name": "radius",
+          "ty": "float"
+        },
+        {
+          "name": "stop_count",
+          "ty": "uint32_t"
+        },
+        {
+          "name": "colors",
+          "ty": "const ImpellerColor*",
+          "nonnull": true
+        },
+        {
+          "name": "stops",
+          "ty": "const float*",
+          "nonnull": true
+        },
+        {
+          "name": "tile_mode",
+          "ty": "ImpellerTileMode"
+        },
+        {
+          "name": "transformation",
+          "ty": "const ImpellerMatrix*"
+        }
+      ]
+    },
+    "ImpellerColorSourceCreateConicalGradientNew": {
+      "return_ty": {
+        "ty": "ImpellerColorSource",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "start_center",
+          "ty": "const ImpellerPoint*",
+          "nonnull": true
+        },
+        {
+          "name": "start_radius",
+          "ty": "float"
+        },
+        {
+          "name": "end_center",
+          "ty": "const ImpellerPoint*",
+          "nonnull": true
+        },
+        {
+          "name": "end_radius",
+          "ty": "float"
+        },
+        {
+          "name": "stop_count",
+          "ty": "uint32_t"
+        },
+        {
+          "name": "colors",
+          "ty": "const ImpellerColor*",
+          "nonnull": true
+        },
+        {
+          "name": "stops",
+          "ty": "const float*",
+          "nonnull": true
+        },
+        {
+          "name": "tile_mode",
+          "ty": "ImpellerTileMode"
+        },
+        {
+          "name": "transformation",
+          "ty": "const ImpellerMatrix*"
+        }
+      ]
+    },
+    "ImpellerColorSourceCreateSweepGradientNew": {
+      "return_ty": {
+        "ty": "ImpellerColorSource",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "center",
+          "ty": "const ImpellerPoint*",
+          "nonnull": true
+        },
+        {
+          "name": "start",
+          "ty": "float"
+        },
+        {
+          "name": "end",
+          "ty": "float"
+        },
+        {
+          "name": "stop_count",
+          "ty": "uint32_t"
+        },
+        {
+          "name": "colors",
+          "ty": "const ImpellerColor*",
+          "nonnull": true
+        },
+        {
+          "name": "stops",
+          "ty": "const float*",
+          "nonnull": true
+        },
+        {
+          "name": "tile_mode",
+          "ty": "ImpellerTileMode"
+        },
+        {
+          "name": "transformation",
+          "ty": "const ImpellerMatrix*"
+        }
+      ]
+    },
+    "ImpellerColorSourceCreateImageNew": {
+      "return_ty": {
+        "ty": "ImpellerColorSource",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "image",
+          "ty": "ImpellerTexture",
+          "nonnull": true
+        },
+        {
+          "name": "horizontal_tile_mode",
+          "ty": "ImpellerTileMode"
+        },
+        {
+          "name": "vertical_tile_mode",
+          "ty": "ImpellerTileMode"
+        },
+        {
+          "name": "sampling",
+          "ty": "ImpellerTextureSampling"
+        },
+        {
+          "name": "transformation",
+          "ty": "const ImpellerMatrix*"
+        }
+      ]
+    },
+    "ImpellerColorFilterRetain": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "color_filter",
+          "ty": "ImpellerColorFilter"
+        }
+      ]
+    },
+    "ImpellerColorFilterRelease": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "color_filter",
+          "ty": "ImpellerColorFilter"
+        }
+      ]
+    },
+    "ImpellerColorFilterCreateBlendNew": {
+      "return_ty": {
+        "ty": "ImpellerColorFilter",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "color",
+          "ty": "const ImpellerColor*",
+          "nonnull": true
+        },
+        {
+          "name": "blend_mode",
+          "ty": "ImpellerBlendMode"
+        }
+      ]
+    },
+    "ImpellerColorFilterCreateColorMatrixNew": {
+      "return_ty": {
+        "ty": "ImpellerColorFilter",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "color_matrix",
+          "ty": "const ImpellerColorMatrix*",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerMaskFilterRetain": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "mask_filter",
+          "ty": "ImpellerMaskFilter"
+        }
+      ]
+    },
+    "ImpellerMaskFilterRelease": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "mask_filter",
+          "ty": "ImpellerMaskFilter"
+        }
+      ]
+    },
+    "ImpellerMaskFilterCreateBlurNew": {
+      "return_ty": {
+        "ty": "ImpellerMaskFilter",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "style",
+          "ty": "ImpellerBlurStyle"
+        },
+        {
+          "name": "sigma",
+          "ty": "float"
+        }
+      ]
+    },
+    "ImpellerImageFilterRetain": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "image_filter",
+          "ty": "ImpellerImageFilter"
+        }
+      ]
+    },
+    "ImpellerImageFilterRelease": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "image_filter",
+          "ty": "ImpellerImageFilter"
+        }
+      ]
+    },
+    "ImpellerImageFilterCreateBlurNew": {
+      "return_ty": {
+        "ty": "ImpellerImageFilter",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "x_sigma",
+          "ty": "float"
+        },
+        {
+          "name": "y_sigma",
+          "ty": "float"
+        },
+        {
+          "name": "tile_mode",
+          "ty": "ImpellerTileMode"
+        }
+      ]
+    },
+    "ImpellerImageFilterCreateDilateNew": {
+      "return_ty": {
+        "ty": "ImpellerImageFilter",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "x_radius",
+          "ty": "float"
+        },
+        {
+          "name": "y_radius",
+          "ty": "float"
+        }
+      ]
+    },
+    "ImpellerImageFilterCreateErodeNew": {
+      "return_ty": {
+        "ty": "ImpellerImageFilter",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "x_radius",
+          "ty": "float"
+        },
+        {
+          "name": "y_radius",
+          "ty": "float"
+        }
+      ]
+    },
+    "ImpellerImageFilterCreateMatrixNew": {
+      "return_ty": {
+        "ty": "ImpellerImageFilter",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "matrix",
+          "ty": "const ImpellerMatrix*",
+          "nonnull": true
+        },
+        {
+          "name": "sampling",
+          "ty": "ImpellerTextureSampling"
+        }
+      ]
+    },
+    "ImpellerImageFilterCreateComposeNew": {
+      "return_ty": {
+        "ty": "ImpellerImageFilter",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "outer",
+          "ty": "ImpellerImageFilter",
+          "nonnull": true
+        },
+        {
+          "name": "inner",
+          "ty": "ImpellerImageFilter",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerDisplayListRetain": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "display_list",
+          "ty": "ImpellerDisplayList"
+        }
+      ]
+    },
+    "ImpellerDisplayListRelease": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "display_list",
+          "ty": "ImpellerDisplayList"
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderNew": {
+      "return_ty": {
+        "ty": "ImpellerDisplayListBuilder",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "cull_rect",
+          "ty": "const ImpellerRect*"
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderRetain": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder"
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderRelease": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder"
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderCreateDisplayListNew": {
+      "return_ty": {
+        "ty": "ImpellerDisplayList",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderSave": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderSaveLayer": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "bounds",
+          "ty": "const ImpellerRect*",
+          "nonnull": true
+        },
+        {
+          "name": "paint",
+          "ty": "ImpellerPaint"
+        },
+        {
+          "name": "backdrop",
+          "ty": "ImpellerImageFilter"
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderRestore": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderScale": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "x_scale",
+          "ty": "float"
+        },
+        {
+          "name": "y_scale",
+          "ty": "float"
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderRotate": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "angle_degrees",
+          "ty": "float"
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderTranslate": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "x_translation",
+          "ty": "float"
+        },
+        {
+          "name": "y_translation",
+          "ty": "float"
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderTransform": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "transform",
+          "ty": "const ImpellerMatrix*",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderSetTransform": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "transform",
+          "ty": "const ImpellerMatrix*",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderGetTransform": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "out_transform",
+          "ty": "ImpellerMatrix*",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderResetTransform": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderGetSaveCount": {
+      "return_ty": {
+        "ty": "uint32_t"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderRestoreToCount": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "count",
+          "ty": "uint32_t"
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderClipRect": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "rect",
+          "ty": "const ImpellerRect*",
+          "nonnull": true
+        },
+        {
+          "name": "op",
+          "ty": "ImpellerClipOperation"
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderClipOval": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "oval_bounds",
+          "ty": "const ImpellerRect*",
+          "nonnull": true
+        },
+        {
+          "name": "op",
+          "ty": "ImpellerClipOperation"
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderClipRoundedRect": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "rect",
+          "ty": "const ImpellerRect*",
+          "nonnull": true
+        },
+        {
+          "name": "radii",
+          "ty": "const ImpellerRoundingRadii*",
+          "nonnull": true
+        },
+        {
+          "name": "op",
+          "ty": "ImpellerClipOperation"
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderClipPath": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "path",
+          "ty": "ImpellerPath",
+          "nonnull": true
+        },
+        {
+          "name": "op",
+          "ty": "ImpellerClipOperation"
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderDrawPaint": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "paint",
+          "ty": "ImpellerPaint",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderDrawLine": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "from",
+          "ty": "const ImpellerPoint*",
+          "nonnull": true
+        },
+        {
+          "name": "to",
+          "ty": "const ImpellerPoint*",
+          "nonnull": true
+        },
+        {
+          "name": "paint",
+          "ty": "ImpellerPaint",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderDrawDashedLine": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "from",
+          "ty": "const ImpellerPoint*",
+          "nonnull": true
+        },
+        {
+          "name": "to",
+          "ty": "const ImpellerPoint*",
+          "nonnull": true
+        },
+        {
+          "name": "on_length",
+          "ty": "float"
+        },
+        {
+          "name": "off_length",
+          "ty": "float"
+        },
+        {
+          "name": "paint",
+          "ty": "ImpellerPaint",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderDrawRect": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "rect",
+          "ty": "const ImpellerRect*",
+          "nonnull": true
+        },
+        {
+          "name": "paint",
+          "ty": "ImpellerPaint",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderDrawOval": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "oval_bounds",
+          "ty": "const ImpellerRect*",
+          "nonnull": true
+        },
+        {
+          "name": "paint",
+          "ty": "ImpellerPaint",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderDrawRoundedRect": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "rect",
+          "ty": "const ImpellerRect*",
+          "nonnull": true
+        },
+        {
+          "name": "radii",
+          "ty": "const ImpellerRoundingRadii*",
+          "nonnull": true
+        },
+        {
+          "name": "paint",
+          "ty": "ImpellerPaint",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderDrawRoundedRectDifference": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "outer_rect",
+          "ty": "const ImpellerRect*",
+          "nonnull": true
+        },
+        {
+          "name": "outer_radii",
+          "ty": "const ImpellerRoundingRadii*",
+          "nonnull": true
+        },
+        {
+          "name": "inner_rect",
+          "ty": "const ImpellerRect*",
+          "nonnull": true
+        },
+        {
+          "name": "inner_radii",
+          "ty": "const ImpellerRoundingRadii*",
+          "nonnull": true
+        },
+        {
+          "name": "paint",
+          "ty": "ImpellerPaint",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderDrawPath": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "path",
+          "ty": "ImpellerPath",
+          "nonnull": true
+        },
+        {
+          "name": "paint",
+          "ty": "ImpellerPaint",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderDrawDisplayList": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "display_list",
+          "ty": "ImpellerDisplayList",
+          "nonnull": true
+        },
+        {
+          "name": "opacity",
+          "ty": "float"
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderDrawParagraph": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "paragraph",
+          "ty": "ImpellerParagraph",
+          "nonnull": true
+        },
+        {
+          "name": "point",
+          "ty": "const ImpellerPoint*",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderDrawTexture": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "texture",
+          "ty": "ImpellerTexture",
+          "nonnull": true
+        },
+        {
+          "name": "point",
+          "ty": "const ImpellerPoint*",
+          "nonnull": true
+        },
+        {
+          "name": "sampling",
+          "ty": "ImpellerTextureSampling"
+        },
+        {
+          "name": "paint",
+          "ty": "ImpellerPaint"
+        }
+      ]
+    },
+    "ImpellerDisplayListBuilderDrawTextureRect": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "texture",
+          "ty": "ImpellerTexture",
+          "nonnull": true
+        },
+        {
+          "name": "src_rect",
+          "ty": "const ImpellerRect*",
+          "nonnull": true
+        },
+        {
+          "name": "dst_rect",
+          "ty": "const ImpellerRect*",
+          "nonnull": true
+        },
+        {
+          "name": "sampling",
+          "ty": "ImpellerTextureSampling"
+        },
+        {
+          "name": "paint",
+          "ty": "ImpellerPaint"
+        }
+      ]
+    },
+    "ImpellerTypographyContextNew": {
+      "return_ty": {
+        "ty": "ImpellerTypographyContext",
+        "nodiscard": true
+      },
+      "args": []
+    },
+    "ImpellerTypographyContextRetain": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "context",
+          "ty": "ImpellerTypographyContext"
+        }
+      ]
+    },
+    "ImpellerTypographyContextRelease": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "context",
+          "ty": "ImpellerTypographyContext"
+        }
+      ]
+    },
+    "ImpellerTypographyContextRegisterFont": {
+      "return_ty": {
+        "ty": "bool"
+      },
+      "args": [
+        {
+          "name": "context",
+          "ty": "ImpellerTypographyContext",
+          "nonnull": true
+        },
+        {
+          "name": "contents",
+          "ty": "const ImpellerMapping*",
+          "nonnull": true
+        },
+        {
+          "name": "contents_on_release_user_data",
+          "ty": "void*"
+        },
+        {
+          "name": "family_name_alias",
+          "ty": "const char*"
+        }
+      ]
+    },
+    "ImpellerParagraphStyleNew": {
+      "return_ty": {
+        "ty": "ImpellerParagraphStyle",
+        "nodiscard": true
+      },
+      "args": []
+    },
+    "ImpellerParagraphStyleRetain": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paragraph_style",
+          "ty": "ImpellerParagraphStyle"
+        }
+      ]
+    },
+    "ImpellerParagraphStyleRelease": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paragraph_style",
+          "ty": "ImpellerParagraphStyle"
+        }
+      ]
+    },
+    "ImpellerParagraphStyleSetForeground": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paragraph_style",
+          "ty": "ImpellerParagraphStyle",
+          "nonnull": true
+        },
+        {
+          "name": "paint",
+          "ty": "ImpellerPaint",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerParagraphStyleSetBackground": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paragraph_style",
+          "ty": "ImpellerParagraphStyle",
+          "nonnull": true
+        },
+        {
+          "name": "paint",
+          "ty": "ImpellerPaint",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerParagraphStyleSetFontWeight": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paragraph_style",
+          "ty": "ImpellerParagraphStyle",
+          "nonnull": true
+        },
+        {
+          "name": "weight",
+          "ty": "ImpellerFontWeight"
+        }
+      ]
+    },
+    "ImpellerParagraphStyleSetFontStyle": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paragraph_style",
+          "ty": "ImpellerParagraphStyle",
+          "nonnull": true
+        },
+        {
+          "name": "style",
+          "ty": "ImpellerFontStyle"
+        }
+      ]
+    },
+    "ImpellerParagraphStyleSetFontFamily": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paragraph_style",
+          "ty": "ImpellerParagraphStyle",
+          "nonnull": true
+        },
+        {
+          "name": "family_name",
+          "ty": "const char*",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerParagraphStyleSetFontSize": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paragraph_style",
+          "ty": "ImpellerParagraphStyle",
+          "nonnull": true
+        },
+        {
+          "name": "size",
+          "ty": "float"
+        }
+      ]
+    },
+    "ImpellerParagraphStyleSetHeight": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paragraph_style",
+          "ty": "ImpellerParagraphStyle",
+          "nonnull": true
+        },
+        {
+          "name": "height",
+          "ty": "float"
+        }
+      ]
+    },
+    "ImpellerParagraphStyleSetTextAlignment": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paragraph_style",
+          "ty": "ImpellerParagraphStyle",
+          "nonnull": true
+        },
+        {
+          "name": "align",
+          "ty": "ImpellerTextAlignment"
+        }
+      ]
+    },
+    "ImpellerParagraphStyleSetTextDirection": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paragraph_style",
+          "ty": "ImpellerParagraphStyle",
+          "nonnull": true
+        },
+        {
+          "name": "direction",
+          "ty": "ImpellerTextDirection"
+        }
+      ]
+    },
+    "ImpellerParagraphStyleSetMaxLines": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paragraph_style",
+          "ty": "ImpellerParagraphStyle",
+          "nonnull": true
+        },
+        {
+          "name": "max_lines",
+          "ty": "uint32_t"
+        }
+      ]
+    },
+    "ImpellerParagraphStyleSetLocale": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paragraph_style",
+          "ty": "ImpellerParagraphStyle",
+          "nonnull": true
+        },
+        {
+          "name": "locale",
+          "ty": "const char*",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerParagraphBuilderNew": {
+      "return_ty": {
+        "ty": "ImpellerParagraphBuilder",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "context",
+          "ty": "ImpellerTypographyContext",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerParagraphBuilderRetain": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paragraph_builder",
+          "ty": "ImpellerParagraphBuilder"
+        }
+      ]
+    },
+    "ImpellerParagraphBuilderRelease": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paragraph_builder",
+          "ty": "ImpellerParagraphBuilder"
+        }
+      ]
+    },
+    "ImpellerParagraphBuilderPushStyle": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paragraph_builder",
+          "ty": "ImpellerParagraphBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "style",
+          "ty": "ImpellerParagraphStyle",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerParagraphBuilderPopStyle": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paragraph_builder",
+          "ty": "ImpellerParagraphBuilder",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerParagraphBuilderAddText": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paragraph_builder",
+          "ty": "ImpellerParagraphBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "data",
+          "ty": "const uint8_t*"
+        },
+        {
+          "name": "length",
+          "ty": "uint32_t"
+        }
+      ]
+    },
+    "ImpellerParagraphBuilderBuildParagraphNew": {
+      "return_ty": {
+        "ty": "ImpellerParagraph",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "paragraph_builder",
+          "ty": "ImpellerParagraphBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "width",
+          "ty": "float"
+        }
+      ]
+    },
+    "ImpellerParagraphRetain": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paragraph",
+          "ty": "ImpellerParagraph"
+        }
+      ]
+    },
+    "ImpellerParagraphRelease": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paragraph",
+          "ty": "ImpellerParagraph"
+        }
+      ]
+    },
+    "ImpellerParagraphGetMaxWidth": {
+      "return_ty": {
+        "ty": "float"
+      },
+      "args": [
+        {
+          "name": "paragraph",
+          "ty": "ImpellerParagraph",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerParagraphGetHeight": {
+      "return_ty": {
+        "ty": "float"
+      },
+      "args": [
+        {
+          "name": "paragraph",
+          "ty": "ImpellerParagraph",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerParagraphGetLongestLineWidth": {
+      "return_ty": {
+        "ty": "float"
+      },
+      "args": [
+        {
+          "name": "paragraph",
+          "ty": "ImpellerParagraph",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerParagraphGetMinIntrinsicWidth": {
+      "return_ty": {
+        "ty": "float"
+      },
+      "args": [
+        {
+          "name": "paragraph",
+          "ty": "ImpellerParagraph",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerParagraphGetMaxIntrinsicWidth": {
+      "return_ty": {
+        "ty": "float"
+      },
+      "args": [
+        {
+          "name": "paragraph",
+          "ty": "ImpellerParagraph",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerParagraphGetIdeographicBaseline": {
+      "return_ty": {
+        "ty": "float"
+      },
+      "args": [
+        {
+          "name": "paragraph",
+          "ty": "ImpellerParagraph",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerParagraphGetAlphabeticBaseline": {
+      "return_ty": {
+        "ty": "float"
+      },
+      "args": [
+        {
+          "name": "paragraph",
+          "ty": "ImpellerParagraph",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerParagraphGetLineCount": {
+      "return_ty": {
+        "ty": "uint32_t"
+      },
+      "args": [
+        {
+          "name": "paragraph",
+          "ty": "ImpellerParagraph",
+          "nonnull": true
+        }
+      ]
+    }
+  },
+  "pod_structs": {
+    "ImpellerRect": {
+      "doc": "",
+      "fields": [
+        {
+          "name": "x",
+          "ty": "float"
+        },
+        {
+          "name": "y",
+          "ty": "float"
+        },
+        {
+          "name": "width",
+          "ty": "float"
+        },
+        {
+          "name": "height",
+          "ty": "float"
+        }
+      ]
+    },
+    "ImpellerPoint": {
+      "doc": "",
+      "fields": [
+        {
+          "name": "x",
+          "ty": "float"
+        },
+        {
+          "name": "y",
+          "ty": "float"
+        }
+      ]
+    },
+    "ImpellerSize": {
+      "doc": "",
+      "fields": [
+        {
+          "name": "width",
+          "ty": "float"
+        },
+        {
+          "name": "height",
+          "ty": "float"
+        }
+      ]
+    },
+    "ImpellerISize": {
+      "doc": "",
+      "fields": [
+        {
+          "name": "width",
+          "ty": "int64_t"
+        },
+        {
+          "name": "height",
+          "ty": "int64_t"
+        }
+      ]
+    },
+    "ImpellerMatrix": {
+      "doc": "/// A 4x4 transformation matrix using column-major storage.\n///\n/// ```\n/// | m[0] m[4] m[8]  m[12] |\n/// | m[1] m[5] m[9]  m[13] |\n/// | m[2] m[6] m[10] m[14] |\n/// | m[3] m[7] m[11] m[15] |\n/// ```\n///",
+      "fields": [
+        {
+          "name": "m",
+          "ty": "float",
+          "array_size": 16
+        }
+      ]
+    },
+    "ImpellerColorMatrix": {
+      "doc": "/// A 4x5 matrix using row-major storage used for transforming color values.\n///\n/// To transform color values, a 5x5 matrix is constructed with the 5th row\n/// being identity. Then the following transformation is performed:\n///\n/// ```\n/// | R' |   | m[0]  m[1]  m[2]  m[3]  m[4]  |   | R |\n/// | G' |   | m[5]  m[6]  m[7]  m[8]  m[9]  |   | G |\n/// | B' | = | m[10] m[11] m[12] m[13] m[14] | * | B |\n/// | A' |   | m[15] m[16] m[17] m[18] m[19] |   | A |\n/// | 1  |   | 0     0     0     0     1     |   | 1 |\n/// ```\n///\n/// The translation column (m[4], m[9], m[14], m[19]) must be specified in\n/// non-normalized 8-bit unsigned integer space (0 to 255). Values outside this\n/// range will produce undefined results.\n///\n/// The identity transformation is thus:\n///\n/// ```\n/// 1, 0, 0, 0, 0,\n/// 0, 1, 0, 0, 0,\n/// 0, 0, 1, 0, 0,\n/// 0, 0, 0, 1, 0,\n/// ```\n///\n/// Some examples:\n///\n/// To invert all colors:\n///\n/// ```\n/// -1,  0,  0, 0, 255,\n///  0, -1,  0, 0, 255,\n///  0,  0, -1, 0, 255,\n///  0,  0,  0, 1,   0,\n/// ```\n///\n/// To apply a sepia filter:\n///\n/// ```\n/// 0.393, 0.769, 0.189, 0, 0,\n/// 0.349, 0.686, 0.168, 0, 0,\n/// 0.272, 0.534, 0.131, 0, 0,\n/// 0,     0,     0,     1, 0,\n/// ```\n///\n/// To apply a grayscale conversion filter:\n///\n/// ```\n///  0.2126, 0.7152, 0.0722, 0, 0,\n///  0.2126, 0.7152, 0.0722, 0, 0,\n///  0.2126, 0.7152, 0.0722, 0, 0,\n///  0,      0,      0,      1, 0,\n/// ```\n///\n/// @see      ImpellerColorFilter\n///",
+      "fields": [
+        {
+          "name": "m",
+          "ty": "float",
+          "array_size": 20
+        }
+      ]
+    },
+    "ImpellerRoundingRadii": {
+      "doc": "",
+      "fields": [
+        {
+          "name": "top_left",
+          "ty": "ImpellerPoint"
+        },
+        {
+          "name": "bottom_left",
+          "ty": "ImpellerPoint"
+        },
+        {
+          "name": "top_right",
+          "ty": "ImpellerPoint"
+        },
+        {
+          "name": "bottom_right",
+          "ty": "ImpellerPoint"
+        }
+      ]
+    },
+    "ImpellerColor": {
+      "doc": "",
+      "fields": [
+        {
+          "name": "red",
+          "ty": "float"
+        },
+        {
+          "name": "green",
+          "ty": "float"
+        },
+        {
+          "name": "blue",
+          "ty": "float"
+        },
+        {
+          "name": "alpha",
+          "ty": "float"
+        },
+        {
+          "name": "color_space",
+          "ty": "ImpellerColorSpace"
+        }
+      ]
+    },
+    "ImpellerTextureDescriptor": {
+      "doc": "",
+      "fields": [
+        {
+          "name": "pixel_format",
+          "ty": "ImpellerPixelFormat"
+        },
+        {
+          "name": "size",
+          "ty": "ImpellerISize"
+        },
+        {
+          "name": "mip_count",
+          "ty": "uint32_t"
+        }
+      ]
+    },
+    "ImpellerMapping": {
+      "doc": "",
+      "fields": [
+        {
+          "name": "data",
+          "ty": "const uint8_t*",
+          "nonnull": true
+        },
+        {
+          "name": "length",
+          "ty": "uint64_t"
+        },
+        {
+          "name": "on_release",
+          "ty": "ImpellerCallback"
+        }
+      ]
+    },
+    "ImpellerContextVulkanSettings": {
+      "doc": "",
+      "fields": [
+        {
+          "name": "user_data",
+          "ty": "void*"
+        },
+        {
+          "name": "proc_address_callback",
+          "ty": "ImpellerVulkanProcAddressCallback",
+          "nonnull": true
+        },
+        {
+          "name": "enable_vulkan_validation",
+          "ty": "bool"
+        }
+      ]
+    },
+    "ImpellerContextVulkanInfo": {
+      "doc": "",
+      "fields": [
+        {
+          "name": "vk_instance",
+          "ty": "void*"
+        },
+        {
+          "name": "vk_physical_device",
+          "ty": "void*"
+        },
+        {
+          "name": "vk_logical_device",
+          "ty": "void*"
+        },
+        {
+          "name": "graphics_queue_family_index",
+          "ty": "uint32_t"
+        },
+        {
+          "name": "graphics_queue_index",
+          "ty": "uint32_t"
+        }
+      ]
+    }
+  },
+  "types": [
+    "ImpellerCallback",
+    "ImpellerProcAddressCallback",
+    "ImpellerVulkanProcAddressCallback",
+    "bool",
+    "const char*",
+    "const float*",
+    "const uint8_t*",
+    "float",
+    "int64_t",
+    "uint32_t",
+    "uint64_t",
+    "void",
+    "void*"
+  ]
+}

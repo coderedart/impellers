@@ -1,0 +1,9 @@
+impeller_component("library_static") {
+  target_type = "static_library"
+  complete_static_lib = true
+  output_name = "impeller"
+  deps = [ ":interop" ]
+  if (target_os != "win") {
+    deps += ["//flutter/third_party/libcxx"]
+  }
+}

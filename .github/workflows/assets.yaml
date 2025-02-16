@@ -1,0 +1,52 @@
+on:
+  push:
+    tags:
+      - "a_*"
+name: Release
+env:
+  DEPOT_TOOLS_WIN_TOOLCHAIN: 0
+  GYP_MSVS_VERSION: 2022
+  UPLOAD_DIR: ${{ github.workspace }}/assets
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      matrix:
+        os: [ubuntu, windows]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Ninja
+        uses: seanmiddleditch/gha-setup-ninja@master
+
+      - name: Install 7Zip and LLVM on Ubuntu
+        if: matrix.os == 'ubuntu'
+        run: sudo apt install -y 7zip llvm
+
+      - name: Download Depot Tools and Add it to PATH.
+        shell: bash
+        run: |
+          mkdir $UPLOAD_DIR
+          cd flutter
+          git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
+          export PATH=$GITHUB_WORKSPACE/depot_tools:$PATH
+          echo "$PATH"
+          cp engine/scripts/standard.gclient .gclient
+          gclient sync --delete_unversioned_trees --no-history --shallow
+          # add the library_static target to BUILD.gn
+          cat ../BUILD.gn.patch >> ./engine/src/flutter/impeller/toolkit/interop/BUILD.gn
+          ../build_impeller.sh release $UPLOAD_DIR
+          ../build_impeller.sh debug $UPLOAD_DIR
+
+
+      - name: Upload Assets
+        uses: xresloader/upload-to-github-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tags: true
+          draft: true
+          file: "${{ env.UPLOAD_DIR }}/*"
