@@ -22,7 +22,7 @@ pub fn generate_bindigns() -> anyhow::Result<()> {
 #![allow(rustdoc::invalid_rust_codeblocks)]
 #![allow(rustdoc::broken_intra_doc_links)]
     ";
-    std::fs::write("src/sys.rs", &format!("{prefix}{raw_bindings}")).context("failed to write")?;
+    std::fs::write("src/sys.rs", format!("{prefix}{raw_bindings}")).context("failed to write")?;
 
     Ok(())
 }
@@ -56,7 +56,7 @@ fn load_impeller_header(path: &str) -> anyhow::Result<String> {
             .display()
     );
     tracing::debug!("loading impeller header from {}", path);
-    Ok(std::fs::read_to_string(path).context("failed to read from impeller.h file")?)
+    std::fs::read_to_string(path).context("failed to read from impeller.h file")
 }
 #[derive(Debug)]
 struct ImpellerApiJson(serde_json::Value);
@@ -95,8 +95,7 @@ impl bindgen::callbacks::ParseCallbacks for ImpellerApiJson {
         }
         let Some(variant_name) = original_variant_name
             .strip_prefix("k")
-            .map(|s| s.strip_prefix(name))
-            .flatten()
+            .and_then(|s| s.strip_prefix(name))
         else {
             error!("enum variant {original_variant_name} of {name} has an invalid name after stripping k and enum name");
             return None;
@@ -150,5 +149,36 @@ impl bindgen::callbacks::ParseCallbacks for ImpellerApiJson {
             return Some(new_name.to_string());
         }
         None
+    }
+
+    fn process_comment(&self, comment: &str) -> Option<String> {
+        // comments with "```" cause doctest to fail, so we must replace them with "```ignore"
+        let mut new_comment = String::new();
+        new_comment.reserve(comment.len());
+        // we need to replace the ``` with ```ignore
+        // but only for the first of the pair (ignoring the second).
+        let mut replace = true;
+        for line in comment.lines() {
+            if line.trim() == "```" {
+                // got the first one of the pair
+                if replace {
+                    // lets leave all the formatting (like newlines) as is
+                    // and just replace the backticks
+                    let line = line.replace("```", "```ignore");
+                    new_comment.push_str(&line);
+                    replace = false; // the next one will be the second of the pair
+                    continue;
+                }
+                // found the second of the pair. just push new line like normal.
+                replace = true;
+            }
+            new_comment.push_str(line);
+            new_comment.push('\n');
+        }
+        if new_comment.is_empty() {
+            None
+        } else {
+            Some(new_comment)
+        }
     }
 }

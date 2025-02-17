@@ -18,10 +18,10 @@ pub fn main() {
     let itx = unsafe {
         let vk_proc_addr_fn = video_subsystem.vulkan_get_proc_address_function().unwrap();
         // very unsafe transmute, but we YOLO
-        let vk_proc_addr_fn = std::mem::transmute::<
-            _,
-            fn(*mut std::os::raw::c_void, *const std::os::raw::c_char) -> *mut std::os::raw::c_void,
-        >(vk_proc_addr_fn);
+        type ProcAddrFnTy =
+            fn(*mut std::os::raw::c_void, *const std::os::raw::c_char) -> *mut std::os::raw::c_void;
+        let vk_proc_addr_fn =
+            std::mem::transmute::<unsafe extern "C" fn(), ProcAddrFnTy>(vk_proc_addr_fn);
 
         // create context using callback
         Context::new_vulkan(false, |vk_instance, vk_proc_name| {
@@ -68,27 +68,19 @@ pub fn main() {
             // create a display list builder
             let builder = DisplayListBuilder::new(None);
             // paint controls the properties of draw commands
-            let mut paint = Paint::default();
+            let paint = Paint::default();
             // eg: lets set the color to black. So, any drawing command with this paint will use that color.
-            paint.set_color(&Color {
-                red: 0.0,
-                green: 0.0,
-                blue: 0.0,
-                alpha: 1.0,
-                color_space: ColorSpace::SRGB,
-            });
+            paint.set_color(Color::BLACK);
             // fill the bounds with a color (^^that we set above)
             builder.draw_paint(&paint);
             let current_time = sdl3::timer::ticks() as f64 / 1000.0; // time in seconds since start of the program
                                                                      // lets set the color to a color that changes with time.
                                                                      // sin/cos/tan will always be in the range of -1 to 1, so lets use abs to keep it in between 0 and 1.
-            paint.set_color(&Color {
-                red: current_time.sin().abs() as _,
-                green: current_time.cos().abs() as _,
-                blue: current_time.tan().abs() as _,
-                alpha: 1.0,
-                color_space: ColorSpace::SRGB,
-            });
+            paint.set_color(Color::new_srgb(
+                current_time.sin().abs() as _,
+                current_time.cos().abs() as _,
+                current_time.tan().abs() as _,
+            ));
             builder.draw_rect(
                 &Rect {
                     x: 0.0,

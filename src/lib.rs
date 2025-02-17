@@ -96,8 +96,11 @@
 //!
 //! NOTE: The crate currently has *very* little API for some structs like matrices or rects. Contributions welcome :)
 
+mod color;
+#[cfg(feature = "sys")]
 pub mod sys;
-
+#[cfg(not(feature = "sys"))]
+mod sys;
 // enums
 pub use sys::{
     BlendMode, BlurStyle, ClipOperation, ColorSpace, DrawStyle, FillType, FontStyle, FontWeight,
@@ -271,7 +274,7 @@ impl Context {
     /// restrictions. Till reactor workers can be used, using the
     /// context on a background thread will cause a stall of OpenGL
     /// operations.
-    #[must_use]
+    #[must_use = "opengl context has scary lifetime requirements. So, prefer dropping it explicitly with `std::mem:drop`"]
     pub unsafe fn new_opengl_es<F: FnMut(&str) -> *mut std::os::raw::c_void>(
         mut gl_proc_address: F,
     ) -> Result<Context, &'static str> {
@@ -456,9 +459,13 @@ impl Context {
     //------------------------------------------------------------------------------
     /// Create a Metal context using the system default Metal device.
     ///
+    /// # Safety
+    /// I don't know much about Metal, so I will
+    /// leave the work of figuring out the safety to users. good luck :)
+    ///
     /// @return     The Metal context or NULL if one cannot be created.
     #[doc(alias = "ImpellerContextCreateMetalNew")]
-    #[must_use]
+    #[must_use = "don't just drop a context like that. They usually have scary lifetimes, so prefer dropping them with an explicit `std::mem::drop`"]
     pub unsafe fn new_metal() -> Result<Context, &'static str> {
         if !ImpellerVersion::sanity_check() {
             return Err("ImpellerVersion::sanity_check failed");
@@ -483,7 +490,7 @@ impl Context {
     ///
     /// Just look at vulkan docs for how your proc_address_callback should work.
     /// Don't hold on to any pointers given to your closure (instance pointer or char pointer).
-    #[must_use]
+    #[must_use = "don't just drop vulkan context like that :( It's lifetimes are scary, so prefer dropping it explicitly using `std::mem::drop`"]
     #[doc(alias = "ImpellerContextCreateVulkanNew")]
     pub unsafe fn new_vulkan<
         F: FnMut(*mut std::os::raw::c_void, *const std::os::raw::c_char) -> *mut std::os::raw::c_void,
@@ -895,9 +902,9 @@ impl DisplayListBuilder {
     /// - to       The end point of the line.
     /// - paint    The paint.
     #[doc(alias = "sys::ImpellerDisplayListBuilderDrawLine")]
-    pub fn draw_line(&self, from: &Point, to: &Point, paint: &Paint) {
+    pub fn draw_line(&self, from: Point, to: Point, paint: &Paint) {
         unsafe {
-            sys::ImpellerDisplayListBuilderDrawLine(self.0, from, to, paint.0);
+            sys::ImpellerDisplayListBuilderDrawLine(self.0, &from, &to, paint.0);
         }
     }
 
@@ -912,15 +919,15 @@ impl DisplayListBuilder {
     #[doc(alias = "sys::ImpellerDisplayListBuilderDrawDashedLine")]
     pub fn draw_dashed_line(
         &self,
-        from: &Point,
-        to: &Point,
+        from: Point,
+        to: Point,
         on_length: f32,
         off_length: f32,
         paint: &Paint,
     ) {
         unsafe {
             sys::ImpellerDisplayListBuilderDrawDashedLine(
-                self.0, from, to, on_length, off_length, paint.0,
+                self.0, &from, &to, on_length, off_length, paint.0,
             );
         }
     }
@@ -1017,9 +1024,9 @@ impl DisplayListBuilder {
     /// paragraph  The paragraph.
     /// point      The point.
     #[doc(alias = "sys::ImpellerDisplayListBuilderDrawParagraph")]
-    pub fn draw_paragraph(&self, paragraph: &Paragraph, point: &Point) {
+    pub fn draw_paragraph(&self, paragraph: &Paragraph, point: Point) {
         unsafe {
-            sys::ImpellerDisplayListBuilderDrawParagraph(self.0, paragraph.0, point);
+            sys::ImpellerDisplayListBuilderDrawParagraph(self.0, paragraph.0, &point);
         }
     }
     //------------------------------------------------------------------------------
@@ -1037,12 +1044,14 @@ impl DisplayListBuilder {
     pub fn draw_texture(
         &self,
         texture: &Texture,
-        point: &Point,
+        point: Point,
         sampling: TextureSampling,
         paint: &Paint,
     ) {
         unsafe {
-            sys::ImpellerDisplayListBuilderDrawTexture(self.0, texture.0, point, sampling, paint.0);
+            sys::ImpellerDisplayListBuilderDrawTexture(
+                self.0, texture.0, &point, sampling, paint.0,
+            );
         }
     }
     //------------------------------------------------------------------------------
@@ -1107,9 +1116,9 @@ impl Paint {
     ///
     /// - color     The color.
     ///
-    pub fn set_color(&mut self, color: &sys::ImpellerColor) {
+    pub fn set_color(&self, color: sys::ImpellerColor) {
         unsafe {
-            sys::ImpellerPaintSetColor(self.0, color);
+            sys::ImpellerPaintSetColor(self.0, &color);
         }
     }
 
@@ -1119,7 +1128,7 @@ impl Paint {
     ///
     /// - mode      The mode.
     ///
-    pub fn set_blend_mode(&mut self, mode: sys::BlendMode) {
+    pub fn set_blend_mode(&self, mode: sys::BlendMode) {
         unsafe {
             sys::ImpellerPaintSetBlendMode(self.0, mode);
         }
@@ -1130,7 +1139,7 @@ impl Paint {
     ///
     /// - style     The style.
     ///
-    pub fn set_draw_style(&mut self, style: sys::DrawStyle) {
+    pub fn set_draw_style(&self, style: sys::DrawStyle) {
         unsafe {
             sys::ImpellerPaintSetDrawStyle(self.0, style);
         }
@@ -1140,7 +1149,7 @@ impl Paint {
     ///
     /// - cap       The stroke cap style.
     ///
-    pub fn set_stroke_cap(&mut self, cap: sys::StrokeCap) {
+    pub fn set_stroke_cap(&self, cap: sys::StrokeCap) {
         unsafe {
             sys::ImpellerPaintSetStrokeCap(self.0, cap);
         }
@@ -1150,7 +1159,7 @@ impl Paint {
     ///
     /// - join      The join.
     ///
-    pub fn set_stroke_join(&mut self, join: sys::StrokeJoin) {
+    pub fn set_stroke_join(&self, join: sys::StrokeJoin) {
         unsafe {
             sys::ImpellerPaintSetStrokeJoin(self.0, join);
         }
@@ -1160,7 +1169,7 @@ impl Paint {
     ///
     /// - width     The width.
     ///
-    pub fn set_stroke_width(&mut self, width: f32) {
+    pub fn set_stroke_width(&self, width: f32) {
         unsafe {
             sys::ImpellerPaintSetStrokeWidth(self.0, width);
         }
@@ -1170,7 +1179,7 @@ impl Paint {
     ///
     /// - miter     The miter limit.
     ///
-    pub fn set_stroke_miter(&mut self, miter: f32) {
+    pub fn set_stroke_miter(&self, miter: f32) {
         unsafe {
             sys::ImpellerPaintSetStrokeMiter(self.0, miter);
         }
@@ -1183,7 +1192,7 @@ impl Paint {
     /// the destination during blending.
     ///
     /// - color_filter  The color filter.
-    pub fn set_color_filter(&mut self, color_filter: &ColorFilter) {
+    pub fn set_color_filter(&self, color_filter: &ColorFilter) {
         unsafe {
             sys::ImpellerPaintSetColorFilter(self.0, color_filter.0);
         }
@@ -1195,7 +1204,7 @@ impl Paint {
     /// texture to produce a single color.
     ///
     /// - image_filter  The image filter.
-    pub fn set_image_filter(&mut self, image_filter: &ImageFilter) {
+    pub fn set_image_filter(&self, image_filter: &ImageFilter) {
         unsafe {
             sys::ImpellerPaintSetImageFilter(self.0, image_filter.0);
         }
@@ -1206,7 +1215,7 @@ impl Paint {
     /// texture element covered by a draw call.
     ///
     /// - color_source  The color source.
-    pub fn set_color_source(&mut self, color_source: &ColorSource) {
+    pub fn set_color_source(&self, color_source: &ColorSource) {
         unsafe {
             sys::ImpellerPaintSetColorSource(self.0, color_source.0);
         }
@@ -1218,7 +1227,7 @@ impl Paint {
     /// image.
     ///
     /// - mask_filter  The mask filter.
-    pub fn set_mask_filter(&mut self, mask_filter: &MaskFilter) {
+    pub fn set_mask_filter(&self, mask_filter: &MaskFilter) {
         unsafe {
             sys::ImpellerPaintSetMaskFilter(self.0, mask_filter.0);
         }
@@ -1255,8 +1264,8 @@ impl ColorFilter {
     ///
     /// @return     The color filter.
     #[must_use]
-    pub fn new_blend(color: &sys::ImpellerColor, blend_mode: sys::BlendMode) -> Self {
-        unsafe { Self(sys::ImpellerColorFilterCreateBlendNew(color, blend_mode)) }
+    pub fn new_blend(color: sys::ImpellerColor, blend_mode: sys::BlendMode) -> Self {
+        unsafe { Self(sys::ImpellerColorFilterCreateBlendNew(&color, blend_mode)) }
     }
 
     /// Create a color filter that transforms pixel color values
@@ -1266,8 +1275,8 @@ impl ColorFilter {
     ///
     /// @return     The color filter.
     #[must_use]
-    pub fn new_matrix(color_matrix: &sys::ImpellerColorMatrix) -> Self {
-        unsafe { Self(sys::ImpellerColorFilterCreateColorMatrixNew(color_matrix)) }
+    pub fn new_matrix(color_matrix: sys::ImpellerColorMatrix) -> Self {
+        unsafe { Self(sys::ImpellerColorFilterCreateColorMatrixNew(&color_matrix)) }
     }
 }
 /// Color sources are functions that generate colors for each texture element
@@ -1383,7 +1392,7 @@ impl ColorSource {
     /// - transformation  The transformation.
     ///
     /// @return     The color source.
-    #[must_use]
+    #[allow(clippy::too_many_arguments)]
     pub fn new_conical_gradient(
         start_center: &sys::ImpellerPoint,
         start_radius: f32,
@@ -1622,6 +1631,10 @@ impl MaskFilter {
 /// These are typically expensive to create and applications will only ever need
 /// to create a single one of these during their lifetimes.
 ///
+/// These basically hold the "font data". You can optionally register custom fonts.
+/// Or just user the fonts available on user's system.
+/// You configure which font to use for text with [ParagraphStyle].
+///
 /// Unlike graphics context, typograhy contexts are not thread-safe. These must
 /// be created, used, and collected on a single thread.
 pub struct TypographyContext(sys::ImpellerTypographyContext);
@@ -1738,16 +1751,16 @@ impl Paragraph {
     /// paragraph can occupy. But, it is not necessarily the actual
     ///             width of the paragraph after layout.
     #[doc(alias = "ImpellerParagraphGetMaxWidth")]
-    pub fn get_max_width(paragraph: &Paragraph) -> f32 {
-        unsafe { sys::ImpellerParagraphGetMaxWidth(paragraph.0) }
+    pub fn get_max_width(&self) -> f32 {
+        unsafe { sys::ImpellerParagraphGetMaxWidth(self.0) }
     }
     //------------------------------------------------------------------------------
     /// The height of the laid out paragraph. This is **not** a tight
     /// bounding box and some glyphs may not reach the minimum location
     /// they are allowed to reach.
     #[doc(alias = "ImpellerParagraphGetHeight")]
-    pub fn get_height(paragraph: &Paragraph) -> f32 {
-        unsafe { sys::ImpellerParagraphGetHeight(paragraph.0) }
+    pub fn get_height(&self) -> f32 {
+        unsafe { sys::ImpellerParagraphGetHeight(self.0) }
     }
     //------------------------------------------------------------------------------
     /// The length of the longest line in the paragraph. This is the
@@ -1755,8 +1768,8 @@ impl Paragraph {
     /// and the right edge of the rightmost glyph, in the longest line
     /// in the paragraph.
     #[doc(alias = "ImpellerParagraphGetLongestLineWidth")]
-    pub fn get_longest_line_width(paragraph: &Paragraph) -> f32 {
-        unsafe { sys::ImpellerParagraphGetLongestLineWidth(paragraph.0) }
+    pub fn get_longest_line_width(&self) -> f32 {
+        unsafe { sys::ImpellerParagraphGetLongestLineWidth(self.0) }
     }
     //------------------------------------------------------------------------------
     /// @see        [Self::get_max_width]
@@ -1765,37 +1778,37 @@ impl Paragraph {
     /// layout. This is expected to be less than or equal to
     /// [Self::get_max_width].
     #[doc(alias = "ImpellerParagraphGetMinIntrinsicWidth")]
-    pub fn get_min_intrinsic_width(paragraph: &Paragraph) -> f32 {
-        unsafe { sys::ImpellerParagraphGetMinIntrinsicWidth(paragraph.0) }
+    pub fn get_min_intrinsic_width(&self) -> f32 {
+        unsafe { sys::ImpellerParagraphGetMinIntrinsicWidth(self.0) }
     }
     //------------------------------------------------------------------------------
     /// The width of the paragraph without line breaking.
     #[doc(alias = "ImpellerParagraphGetMaxIntrinsicWidth")]
-    pub fn get_max_intrinsic_width(paragraph: &Paragraph) -> f32 {
-        unsafe { sys::ImpellerParagraphGetMaxIntrinsicWidth(paragraph.0) }
+    pub fn get_max_intrinsic_width(&self) -> f32 {
+        unsafe { sys::ImpellerParagraphGetMaxIntrinsicWidth(self.0) }
     }
     //------------------------------------------------------------------------------
     /// The distance from the top of the paragraph to the ideographic
     /// baseline of the first line when using ideographic fonts
     /// (Japanese, Korean, etc...).
     #[doc(alias = "ImpellerParagraphGetIdeographicBaseline")]
-    pub fn get_ideographic_baseline(paragraph: &Paragraph) -> f32 {
-        unsafe { sys::ImpellerParagraphGetIdeographicBaseline(paragraph.0) }
+    pub fn get_ideographic_baseline(&self) -> f32 {
+        unsafe { sys::ImpellerParagraphGetIdeographicBaseline(self.0) }
     }
     //------------------------------------------------------------------------------
     /// The distance from the top of the paragraph to the alphabetic
     /// baseline of the first line when using alphabetic fonts (A-Z,
     /// a-z, Greek, etc...).
     #[doc(alias = "ImpellerParagraphGetAlphabeticBaseline")]
-    pub fn get_alphabetic_baseline(paragraph: &Paragraph) -> f32 {
-        unsafe { sys::ImpellerParagraphGetAlphabeticBaseline(paragraph.0) }
+    pub fn get_alphabetic_baseline(&self) -> f32 {
+        unsafe { sys::ImpellerParagraphGetAlphabeticBaseline(self.0) }
     }
     //------------------------------------------------------------------------------
     /// The number of lines visible in the paragraph after line
     /// breaking.
     #[doc(alias = "ImpellerParagraphGetLineCount")]
-    pub fn get_line_count(paragraph: &Paragraph) -> u32 {
-        unsafe { sys::ImpellerParagraphGetLineCount(paragraph.0) }
+    pub fn get_line_count(&self) -> u32 {
+        unsafe { sys::ImpellerParagraphGetLineCount(self.0) }
     }
 }
 /// Paragraph builders allow for the creation of fully laid out paragraphs
@@ -1806,6 +1819,19 @@ impl Paragraph {
 /// the text is added are used to layout and shape that subset of the paragraph.
 ///
 /// @see      [ParagraphStyle]
+///
+/// ```
+/// // this contains the fonts from user's system (or you can add custom fonts)
+/// let fonts = TypographyContext::new();
+/// // style decides the appearance of the text
+/// let style = ParagraphStyle::new()
+/// style.set_font_family("Arial");
+/// style.set_font_size(12.0);
+/// let mut builder = ParagraphBuilder::new(&fonts);
+/// builder.push_style(&style); // DON'T forget to set the style before adding text
+/// builder.add_text("Hello, world!");
+/// let paragraph = builder.build().unwrap();
+/// ```
 pub struct ParagraphBuilder(sys::ImpellerParagraphBuilder);
 
 impl Clone for ParagraphBuilder {
@@ -1830,13 +1856,9 @@ impl ParagraphBuilder {
     ///
     /// @return     The paragraph builder.
     #[doc(alias = "ImpellerParagraphBuilderNew")]
-    pub fn new(context: &TypographyContext) -> Result<ParagraphBuilder, ()> {
+    pub fn new(context: &TypographyContext) -> Option<ParagraphBuilder> {
         let result = unsafe { sys::ImpellerParagraphBuilderNew(context.0) };
-        if result.is_null() {
-            Err(())
-        } else {
-            Ok(ParagraphBuilder(result))
-        }
+        (!result.is_null()).then_some(ParagraphBuilder(result))
     }
     //------------------------------------------------------------------------------
     /// Push a new paragraph style onto the paragraph style stack
@@ -1856,9 +1878,9 @@ impl ParagraphBuilder {
     ///
     /// - style              The style.
     #[doc(alias = "ImpellerParagraphBuilderPushStyle")]
-    pub fn push_style(paragraph_builder: &ParagraphBuilder, style: &ParagraphStyle) {
+    pub fn push_style(&self, style: &ParagraphStyle) {
         unsafe {
-            sys::ImpellerParagraphBuilderPushStyle(paragraph_builder.0, style.0);
+            sys::ImpellerParagraphBuilderPushStyle(self.0, style.0);
         }
     }
     //------------------------------------------------------------------------------
@@ -1866,9 +1888,9 @@ impl ParagraphBuilder {
     /// stack.
     ///
     #[doc(alias = "ImpellerParagraphBuilderPopStyle")]
-    pub fn pop_style(paragraph_builder: &ParagraphBuilder) {
+    pub fn pop_style(&self) {
         unsafe {
-            sys::ImpellerParagraphBuilderPopStyle(paragraph_builder.0);
+            sys::ImpellerParagraphBuilderPopStyle(self.0);
         }
     }
     //------------------------------------------------------------------------------
@@ -2100,7 +2122,7 @@ impl PathBuilder {
     /// Move the cursor to the specified location.
     ///
     /// -  location  The location.
-    pub fn move_to(&mut self, location: &sys::ImpellerPoint) {
+    pub fn move_to(&self, location: &sys::ImpellerPoint) {
         unsafe {
             sys::ImpellerPathBuilderMoveTo(self.0, location);
         }
@@ -2109,7 +2131,7 @@ impl PathBuilder {
     /// location. The cursor location is updated to be at the endpoint.
     ///
     /// - location  The location.
-    pub fn line_to(&mut self, location: &sys::ImpellerPoint) {
+    pub fn line_to(&self, location: &sys::ImpellerPoint) {
         unsafe {
             sys::ImpellerPathBuilderLineTo(self.0, location);
         }
@@ -2123,7 +2145,7 @@ impl PathBuilder {
     /// - control_point  The control point.
     /// - end_point      The end point.
     pub fn quadratic_curve_to(
-        &mut self,
+        &self,
         control_point: &sys::ImpellerPoint,
         end_point: &sys::ImpellerPoint,
     ) {
@@ -2142,7 +2164,7 @@ impl PathBuilder {
     /// - control_point_2  The control point 2
     /// - end_point        The end point
     pub fn cubic_curve_to(
-        &mut self,
+        &self,
         control_point_1: &sys::ImpellerPoint,
         control_point_2: &sys::ImpellerPoint,
         end_point: &sys::ImpellerPoint,
@@ -2159,7 +2181,7 @@ impl PathBuilder {
     /// Adds a rectangle to the path.
     ///
     /// - rect     The rectangle.
-    pub fn add_rect(&mut self, rect: &sys::ImpellerRect) {
+    pub fn add_rect(&self, rect: &sys::ImpellerRect) {
         unsafe {
             sys::ImpellerPathBuilderAddRect(self.0, rect);
         }
@@ -2170,7 +2192,7 @@ impl PathBuilder {
     /// - start_angle_degrees  The start angle in degrees.
     /// - end_angle_degrees    The end angle in degrees.
     pub fn add_arc(
-        &mut self,
+        &self,
         oval_bounds: &sys::ImpellerRect,
         start_angle_degrees: f32,
         end_angle_degrees: f32,
@@ -2188,7 +2210,7 @@ impl PathBuilder {
     /// Add an oval to the path.
     ///
     /// - oval_bounds  The oval bounds.
-    pub fn add_oval(&mut self, oval_bounds: &sys::ImpellerRect) {
+    pub fn add_oval(&self, oval_bounds: &sys::ImpellerRect) {
         unsafe {
             sys::ImpellerPathBuilderAddOval(self.0, oval_bounds);
         }
@@ -2198,7 +2220,7 @@ impl PathBuilder {
     /// - oval_bounds     The oval bounds.
     /// - rounding_radii  The rounding radii.
     pub fn add_rounded_rect(
-        &mut self,
+        &self,
         oval_bounds: &sys::ImpellerRect,
         rounding_radii: &sys::ImpellerRoundingRadii,
     ) {
@@ -2207,7 +2229,7 @@ impl PathBuilder {
         }
     }
     /// Close the path.
-    pub fn close(&mut self) {
+    pub fn close(&self) {
         unsafe {
             sys::ImpellerPathBuilderClose(self.0);
         }
@@ -2219,7 +2241,7 @@ impl PathBuilder {
     /// - fill  The fill.
     ///
     /// @return     The impeller path.
-    pub fn copy_path_new(&mut self, fill: sys::FillType) -> Path {
+    pub fn copy_path_new(&self, fill: sys::FillType) -> Path {
         let p = unsafe { sys::ImpellerPathBuilderCopyPathNew(self.0, fill) };
         assert!(!p.is_null());
         Path(p)
@@ -2230,7 +2252,7 @@ impl PathBuilder {
     /// - fill  The fill.
     ///
     /// @return     The impeller path.
-    pub fn take_path_new(&mut self, fill: sys::FillType) -> Path {
+    pub fn take_path_new(&self, fill: sys::FillType) -> Path {
         let p = unsafe { sys::ImpellerPathBuilderTakePathNew(self.0, fill) };
         assert!(!p.is_null());
         Path(p)
@@ -2367,5 +2389,20 @@ impl sys::ImpellerSize {
             result -= 1;
         }
         std::cmp::max(result, 1)
+    }
+}
+
+impl Color {
+    pub const fn new_srgb(red: f32, green: f32, blue: f32) -> Self {
+        Self::new_srgba(red, green, blue, 1.0)
+    }
+    pub const fn new_srgba(red: f32, green: f32, blue: f32, alpha: f32) -> Self {
+        Self {
+            red,
+            green,
+            blue,
+            alpha,
+            color_space: ColorSpace::SRGB,
+        }
     }
 }

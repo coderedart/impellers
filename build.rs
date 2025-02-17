@@ -6,9 +6,8 @@ fn main() {}
 #[cfg(feature = "prebuilt_libs")]*/
 fn main() {
     const STATIC_MAJOR: u32 = 0;
-    const STATIC_MINOR: u32 = 1;
-    const STATIC_PATCH: u32 = 2;
-    const ENGINE_SHA: &str = "c7047d33c4d23b8b97b183cce90d319521601f7e";
+    const STATIC_MINOR: u32 = 2;
+    const STATIC_PATCH: u32 = 0;
     // gather variables
     let out_dir = std::path::Path::new(&std::env::var("OUT_DIR").unwrap()).to_owned();
     let profile = cfg!(feature = "debug_static_link")
@@ -46,7 +45,11 @@ fn main() {
     } else {
         format!("{target_os}_{target_arch}",)
     };
-    let cache_dir = if cfg!(feature = "cache_binaries") {
+    let url = format!(
+        "https://github.com/coderedart/impellers/releases/download/a_{}.{}.{}/{build_name}.zip",
+        STATIC_MAJOR, STATIC_MINOR, STATIC_PATCH
+    );
+    let cache_dir = if cfg!(feature = "cache_libs") {
         get_zip_cache_dir(&out_dir, &build_name)
     } else {
         out_dir.clone()
@@ -85,14 +88,6 @@ fn main() {
         "libs don't exist in out dir yet, so we check if the archive is already downloaded or not"
     );
 
-    let url = if static_link {
-        format!(
-            "https://github.com/coderedart/impellers/releases/download/a_{}.{}.{}/{build_name}.zip",
-            STATIC_MAJOR, STATIC_MINOR, STATIC_PATCH
-        )
-    } else {
-        format!("https://storage.googleapis.com/flutter_infra_release/flutter/{ENGINE_SHA}/{target_os}-{target_arch}/impeller_sdk.zip")
-    };
     download_if_not_exists(&url, &cache_dir);
     extract_if_libs_dir_not_exists(&cache_dir);
 
@@ -136,7 +131,7 @@ fn extract_if_libs_dir_not_exists(cache_dir: &Path) {
         };
         let tar_status = command
             .arg(LOCAL_IMPELLER_ARCHIVE_NAME)
-            .current_dir(&cache_dir)
+            .current_dir(cache_dir)
             .status();
         assert!(
             tar_status
@@ -154,12 +149,12 @@ fn download_if_not_exists(url: &str, cache_dir: &Path) {
         println!("skipping download. found cached impeller library in {cache_dir:?}");
     } else {
         let curl_status = std::process::Command::new("curl")
-            .current_dir(&cache_dir)
+            .current_dir(cache_dir)
             .args([
                 "--progress-bar",
                 "--fail",
                 "-L",
-                &url,
+                url,
                 "-o",
                 LOCAL_IMPELLER_ARCHIVE_NAME,
             ])
@@ -173,7 +168,7 @@ fn download_if_not_exists(url: &str, cache_dir: &Path) {
 }
 const LOCAL_IMPELLER_ARCHIVE_NAME: &str = "impeller_sdk.zip";
 
-fn get_zip_cache_dir(out_dir: &PathBuf, build_name: &str) -> PathBuf {
+fn get_zip_cache_dir(out_dir: &Path, build_name: &str) -> PathBuf {
     let impeller_cache_dir = get_cache_directory(out_dir);
     let zip_cache_dir = impeller_cache_dir.join(build_name);
     std::fs::create_dir_all(&zip_cache_dir).expect("failed to create zip cache dir");
@@ -181,7 +176,7 @@ fn get_zip_cache_dir(out_dir: &PathBuf, build_name: &str) -> PathBuf {
 }
 /// This will get/create cache directory. If the current version doesn't match the version stored in
 /// directory, it will remove the directory and create a new one to discard all the old artefacts.
-fn get_cache_directory(out_dir: &PathBuf) -> PathBuf {
+fn get_cache_directory(out_dir: &Path) -> PathBuf {
     // assuming cargo's target directory is located in the current directory.
     let impeller_cache_dir = out_dir // ./target/release/build/impeller_a2142341/out
         .parent()
@@ -204,5 +199,5 @@ fn get_cache_directory(out_dir: &PathBuf) -> PathBuf {
         std::fs::create_dir_all(&impeller_cache_dir).expect("failed to create impeller cache dir");
         std::fs::write(&impeller_cache_version_path, impeller_version).unwrap();
     }
-    return impeller_cache_dir;
+    impeller_cache_dir
 }

@@ -1,6 +1,6 @@
 [package]
 name = "impellers"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/coderedart/flutter"
@@ -10,23 +10,27 @@ description = "Bindings to Flutter's 2D vector graphics renderer"
 
 [features]
 default = []
+sys = []
 # This downloads and links the prebuilt-libs of impeller using curl and tar.
 prebuilt_libs = []
 static_link = ["prebuilt_libs"] # enables static linking with stripped libs (only on linux or windows x64)
 debug_static_link = ["static_link"] # static links prebuilt libs that have debug info (only on linux or windows x64)
 # will create a .impeller_cache beside target directory and stores the downloaded libraries
 # Will skip redownloading libs if they can be found in .impeller_cache. please add the directory to .gitignore
-cache_binaries = ["prebuilt_libs"]
+cache_libs = ["prebuilt_libs"]
 
 
 [dependencies]
 tracing = {version = "0.1", default-features = false, features = ["std"]}
 
-
 [dev-dependencies]
-# glfw = {version = "0.59"} # glfw fails to compile for hours on github windows ci, so we stick to sdl for now
-sdl3 = {version = "0.14"}
+sdl3 = {version = "*"}
 
-
+[[example]]
+name = "empty"
+required-features = ["sys"]
+[[example]]
+name = "common"
+crate-type = ["staticlib"]
 [workspace]
 members = ["crates/*"]

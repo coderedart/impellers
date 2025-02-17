@@ -44,7 +44,11 @@ jobs:
           ../build_impeller.sh release $UPLOAD_DIR
           ../build_impeller.sh debug $UPLOAD_DIR
 
-
+      - name: Download Flutter's artefacts
+        shell: bash
+        if: matrix.os == 'ubuntu'
+        run: ./download_flutter_artefacts.sh "$UPLOAD_DIR"
+          
       - name: Upload Assets
         uses: xresloader/upload-to-github-release@v1
         env:

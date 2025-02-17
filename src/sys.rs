@@ -1,4 +1,3 @@
-
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
@@ -555,7 +554,7 @@ const _: () = {
     ["Offset of field: ImpellerISize::height"]
         [::std::mem::offset_of!(ImpellerISize, height) - 8usize];
 };
-#[doc = " A 4x4 transformation matrix using column-major storage.\n\n ```\n | m[0] m[4] m[8]  m[12] |\n | m[1] m[5] m[9]  m[13] |\n | m[2] m[6] m[10] m[14] |\n | m[3] m[7] m[11] m[15] |\n ```\n"]
+#[doc = " A 4x4 transformation matrix using column-major storage.\n\n ```ignore | m[0] m[4] m[8]  m[12] |\n | m[1] m[5] m[9]  m[13] |\n | m[2] m[6] m[10] m[14] |\n | m[3] m[7] m[11] m[15] |\n ```\n"]
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct ImpellerMatrix {
@@ -567,7 +566,7 @@ const _: () = {
     ["Alignment of ImpellerMatrix"][::std::mem::align_of::<ImpellerMatrix>() - 4usize];
     ["Offset of field: ImpellerMatrix::m"][::std::mem::offset_of!(ImpellerMatrix, m) - 0usize];
 };
-#[doc = " A 4x5 matrix using row-major storage used for transforming color values.\n\n To transform color values, a 5x5 matrix is constructed with the 5th row\n being identity. Then the following transformation is performed:\n\n ```\n | R' |   | m[0]  m[1]  m[2]  m[3]  m[4]  |   | R |\n | G' |   | m[5]  m[6]  m[7]  m[8]  m[9]  |   | G |\n | B' | = | m[10] m[11] m[12] m[13] m[14] | * | B |\n | A' |   | m[15] m[16] m[17] m[18] m[19] |   | A |\n | 1  |   | 0     0     0     0     1     |   | 1 |\n ```\n\n The translation column (m[4], m[9], m[14], m[19]) must be specified in\n non-normalized 8-bit unsigned integer space (0 to 255). Values outside this\n range will produce undefined results.\n\n The identity transformation is thus:\n\n ```\n 1, 0, 0, 0, 0,\n 0, 1, 0, 0, 0,\n 0, 0, 1, 0, 0,\n 0, 0, 0, 1, 0,\n ```\n\n Some examples:\n\n To invert all colors:\n\n ```\n -1,  0,  0, 0, 255,\n  0, -1,  0, 0, 255,\n  0,  0, -1, 0, 255,\n  0,  0,  0, 1,   0,\n ```\n\n To apply a sepia filter:\n\n ```\n 0.393, 0.769, 0.189, 0, 0,\n 0.349, 0.686, 0.168, 0, 0,\n 0.272, 0.534, 0.131, 0, 0,\n 0,     0,     0,     1, 0,\n ```\n\n To apply a grayscale conversion filter:\n\n ```\n  0.2126, 0.7152, 0.0722, 0, 0,\n  0.2126, 0.7152, 0.0722, 0, 0,\n  0.2126, 0.7152, 0.0722, 0, 0,\n  0,      0,      0,      1, 0,\n ```\n\n @see      ImpellerColorFilter\n"]
+#[doc = " A 4x5 matrix using row-major storage used for transforming color values.\n\n To transform color values, a 5x5 matrix is constructed with the 5th row\n being identity. Then the following transformation is performed:\n\n ```ignore | R' |   | m[0]  m[1]  m[2]  m[3]  m[4]  |   | R |\n | G' |   | m[5]  m[6]  m[7]  m[8]  m[9]  |   | G |\n | B' | = | m[10] m[11] m[12] m[13] m[14] | * | B |\n | A' |   | m[15] m[16] m[17] m[18] m[19] |   | A |\n | 1  |   | 0     0     0     0     1     |   | 1 |\n ```\n\n The translation column (m[4], m[9], m[14], m[19]) must be specified in\n non-normalized 8-bit unsigned integer space (0 to 255). Values outside this\n range will produce undefined results.\n\n The identity transformation is thus:\n\n ```ignore 1, 0, 0, 0, 0,\n 0, 1, 0, 0, 0,\n 0, 0, 1, 0, 0,\n 0, 0, 0, 1, 0,\n ```\n\n Some examples:\n\n To invert all colors:\n\n ```ignore -1,  0,  0, 0, 255,\n  0, -1,  0, 0, 255,\n  0,  0, -1, 0, 255,\n  0,  0,  0, 1,   0,\n ```\n\n To apply a sepia filter:\n\n ```ignore 0.393, 0.769, 0.189, 0, 0,\n 0.349, 0.686, 0.168, 0, 0,\n 0.272, 0.534, 0.131, 0, 0,\n 0,     0,     0,     1, 0,\n ```\n\n To apply a grayscale conversion filter:\n\n ```ignore  0.2126, 0.7152, 0.0722, 0, 0,\n  0.2126, 0.7152, 0.0722, 0, 0,\n  0.2126, 0.7152, 0.0722, 0, 0,\n  0,      0,      0,      1, 0,\n ```\n\n @see      ImpellerColorFilter\n"]
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct ImpellerColorMatrix {
@@ -1013,7 +1012,7 @@ unsafe extern "C" {
         matrix: *const ImpellerMatrix,
         sampling: TextureSampling,
     ) -> ImpellerImageFilter;
-    #[doc = " @brief      Creates a composed filter that when applied is identical to\n             subsequently applying the inner and then the outer filters.\n\n             ```\n             destination = outer_filter(inner_filter(source))\n             ```\n\n @param[in]  outer  The outer image filter.\n @param[in]  inner  The inner image filter.\n\n @return     The combined image filter.\n"]
+    #[doc = " @brief      Creates a composed filter that when applied is identical to\n             subsequently applying the inner and then the outer filters.\n\n             ```ignore             destination = outer_filter(inner_filter(source))\n             ```\n\n @param[in]  outer  The outer image filter.\n @param[in]  inner  The inner image filter.\n\n @return     The combined image filter.\n"]
     pub fn ImpellerImageFilterCreateComposeNew(
         outer: ImpellerImageFilter,
         inner: ImpellerImageFilter,
