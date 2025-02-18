@@ -23,13 +23,13 @@ cache_libs = ["prebuilt_libs"]
 
 [dependencies]
 euclid = {version = "0.22", features = ["bytemuck"]}
-bytemuck = {version = "*"}
+bytemuck = {version = "1"}
 
 [dev-dependencies]
-glfw = {version = "*", features = ["vulkan"]}
-ash = {version = "*"}
+glfw = {version = "0.59", features = ["vulkan"]}
+ash = {version = "0.38"}
 glow = {version = "0.16"}
-image = {version  = "*", default-features = false, features = ["jpeg"]}
+image = {version  = "0.25", default-features = false, features = ["jpeg"]}
 
 [[example]]
 name = "empty"
