@@ -13,7 +13,8 @@ fn main() {
     let profile = cfg!(feature = "debug_static_link")
         .then_some("debug")
         .unwrap_or("release");
-    let target_os = match std::env::var("CARGO_CFG_TARGET_OS").unwrap().as_str() {
+    let cargo_target_os = std::env::var("CARGO_CFG_TARGET_OS").unwrap();
+    let target_os = match cargo_target_os.as_str() {
         "windows" => "windows",
         "macos" => "darwin",
         "linux" => "linux",
@@ -29,15 +30,17 @@ fn main() {
     };
     let static_link = cfg!(feature = "static_link");
     let required_libs: &[&'static str] = if static_link {
-        match target_os {
+        match cargo_target_os {
             "windows" => &["impeller.lib"],
-            _ => &["libimpeller.a"],
+            "macos" | "linux" | "android" => &["libimpeller.a"],
+            rest => panic!("unsupported target OS: {rest}"),
         }
     } else {
-        match target_os {
+        match cargo_target_os {
             "windows" => &["impeller.dll", "impeller.dll.lib"],
             "macos" => &["libimpeller.dylib"],
-            _ => &["libimpeller.so"],
+            "linux" | "android" => &["libimpeller.so"],
+            rest => panic!("unsupported target OS: {rest}"),
         }
     };
     let build_name = if static_link {
