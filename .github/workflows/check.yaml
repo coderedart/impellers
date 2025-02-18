@@ -1,7 +1,7 @@
 on:
     push:
       branches:
-        - static_lib
+        - master
 name: Check Rust Crate
 # This just runs the rust crate example to verify that it builds (no undefined references error)
 jobs:
