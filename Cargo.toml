@@ -25,7 +25,8 @@ euclid = {version = "0.22", features = ["bytemuck"]}
 bytemuck = {version = "*"}
 
 [dev-dependencies]
-sdl3 = {version = "0.14"}
+glfw = {version = "*", features = ["vulkan"]}
+ash = {version = "*"}
 glow = {version = "0.16"}
 image = {version  = "*", default-features = false, features = ["jpeg"]}
 

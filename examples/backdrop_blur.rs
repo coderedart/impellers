@@ -3,11 +3,15 @@ use impellers::*;
 
 fn main() {
     let framework = common::SdlGlImpellerFrameWork::new();
-    let (width, height) = framework.window.size_in_pixels();
+    let (width, height) = framework.window.get_framebuffer_size();
     //  we resize the image so that it fits within our window
     let pixels = image::load_from_memory(common::DOG_BYTES)
         .unwrap()
-        .resize(width, height, image::imageops::FilterType::Triangle)
+        .resize(
+            width as _,
+            height as _,
+            image::imageops::FilterType::Triangle,
+        )
         .into_rgba8();
 
     let (width, height) = pixels.dimensions();

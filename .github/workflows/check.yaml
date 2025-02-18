@@ -18,13 +18,16 @@ jobs:
       if: matrix.os == 'ubuntu'
       # based on glfw/glfw's workflow
       run: sudo apt install -y libglfw3-dev libglfw3 libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev libwayland-dev libxkbcommon-dev
+    
     - name: Shared Build
       shell: bash
       run: |
-        cargo run --example=empty --features=prebuilt_libs,sys
+        cargo run --example=empty --features=prebuilt_libs,sys,cache_libs
+        cargo build --examples --features=prebuilt_libs,sys,cache_libs
 
     - name: Static Build
       shell: bash
       if: matrix.os != 'macos'
       run: |
-        cargo run --example=empty --features=prebuilt_libs,sys,static_link
+        cargo run --example=empty --features=prebuilt_libs,sys,debug_static_link
+        # windows release statics don't work with llvm-strip --strip-unneeded. we should try --strip-debug

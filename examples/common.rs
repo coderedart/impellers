@@ -1,15 +1,17 @@
+use glfw::*;
 use glow::HasContext;
 use impellers::*;
-use sdl3::event::Event;
-use sdl3::keyboard::Keycode;
+
 #[allow(unused)]
 pub struct SdlGlImpellerFrameWork {
-    pub itx: Context,
+    pub ttx: TypographyContext,
+    pub style: ParagraphStyle,
+    pub itx: impellers::Context,
     pub glow_ctx: glow::Context,
-    pub gl_ctx: sdl3::video::GLContext,
-    pub window: sdl3::video::Window,
-    pub event_pump: sdl3::EventPump,
-    pub events: Vec<Event>,
+    pub receiver: GlfwReceiver<(f64, WindowEvent)>,
+    pub window: PWindow,
+    pub gtx: Glfw,
+    pub events: Vec<WindowEvent>,
 }
 impl Default for SdlGlImpellerFrameWork {
     fn default() -> Self {
@@ -23,51 +25,44 @@ type UserCallback = Box<dyn FnMut(&mut SdlGlImpellerFrameWork) -> Option<Display
 impl SdlGlImpellerFrameWork {
     pub fn new() -> Self {
         // initialize window
-        let sdl_context = sdl3::init().unwrap();
-        let video_subsystem = sdl_context.video().unwrap();
-        let gl_attr = video_subsystem.gl_attr();
-        gl_attr.set_context_major_version(4);
-        gl_attr.set_context_profile(sdl3::video::GLProfile::Core);
-        gl_attr.set_framebuffer_srgb_compatible(true);
-        gl_attr.set_stencil_size(8);
-        // gl_attr.set_multisample_buffers(1);
-        // gl_attr.set_multisample_samples(4);
-        let window = video_subsystem
-            .window("rust-sdl3-impeller demo", 800, 600)
-            .position_centered()
-            .opengl()
-            .resizable()
-            .build()
-            .unwrap();
+        let mut gtx = init(fail_on_errors).expect("failed to init glfw");
+        gtx.window_hint(WindowHint::ContextVersionMajor(4));
+        gtx.window_hint(WindowHint::OpenGlProfile(OpenGlProfileHint::Core));
+        gtx.window_hint(WindowHint::SRgbCapable(true));
+        gtx.window_hint(WindowHint::StencilBits(Some(8)));
+        gtx.window_hint(WindowHint::ScaleToMonitor(true));
 
-        let event_pump = sdl_context.event_pump().unwrap();
-        let gl_ctx = window.gl_create_context().unwrap();
-        window.gl_set_context_to_current().unwrap();
+        let (mut window, ev_receiver) = gtx
+            .create_window(800, 600, "glfw opengl impeller", WindowMode::Windowed)
+            .unwrap();
+        window.make_current();
+        window.set_all_polling(true);
 
         // initialize impeller context using opengl fn pointers
-        let itx = unsafe {
-            Context::new_opengl_es(|s| {
-                video_subsystem
-                    .gl_get_proc_address(s)
-                    .map(|p| p as *mut _)
-                    .unwrap_or(std::ptr::null_mut())
-            })
+        let itx = unsafe { impellers::Context::new_opengl_es(|s| window.get_proc_address(s) as _) }
+            .unwrap();
+        let glow_ctx =
+            unsafe { glow::Context::from_loader_function(|s| window.get_proc_address(s) as _) };
+        unsafe {
+            let (width, height) = window.get_framebuffer_size();
+            glow_ctx.viewport(0, 0, width, height);
         }
-        .unwrap();
-        let glow_ctx = unsafe {
-            glow::Context::from_loader_function(|s| {
-                video_subsystem
-                    .gl_get_proc_address(s)
-                    .map(|p| p as *mut _)
-                    .unwrap_or(std::ptr::null_mut())
-            })
-        };
+        let ttx = TypographyContext::default();
+        let style = ParagraphStyle::default();
+        style.set_font_size(24.0);
+        style.set_font_family("Roboto");
+        style.set_font_weight(FontWeight::Bold);
+        let paint = Paint::default();
+        paint.set_color(Color::LIGHT_SKY_BLUE);
+        style.set_foreground(&paint);
         Self {
+            ttx,
+            style,
             glow_ctx,
             itx,
-            gl_ctx,
             window,
-            event_pump,
+            receiver: ev_receiver,
+            gtx,
             events: vec![],
         }
     }
@@ -82,39 +77,51 @@ impl SdlGlImpellerFrameWork {
         dl: Option<DisplayList>,
         mut user_callback: Option<UserCallback>,
     ) {
+        let mut previous_instant = std::time::Instant::now();
+        let mut current_frame = 0;
+        let mut fps = 0;
+        let mut vsync = true;
         // enter event loop
-        loop {
-            let mut quit = false;
+        while !self.window.should_close() {
+            {
+                // record fps
+                if previous_instant.elapsed().as_secs_f64() >= 1.0 {
+                    fps = current_frame;
+                    current_frame = 0;
+                    previous_instant = std::time::Instant::now();
+                }
+                current_frame += 1;
+            }
             self.events.clear();
             // check events
-            for event in self.event_pump.poll_iter() {
-                match event {
-                    Event::Quit { .. }
-                    | Event::KeyDown {
-                        keycode: Some(Keycode::Escape),
-                        ..
-                    } => {
-                        quit = true;
+            self.gtx.poll_events();
+            for (_, event) in flush_messages(&self.receiver) {
+                match &event {
+                    WindowEvent::Close => {
+                        self.window.set_should_close(true);
                     }
-                    ev => {
-                        if let Event::Window {
-                            win_event: sdl3::event::WindowEvent::Resized(w, h),
-                            ..
-                        } = &ev
-                        {
-                            unsafe {
-                                self.glow_ctx.viewport(0, 0, *w, *h);
-                            }
-                            println!("window resized to {}x{}", w, h);
+                    WindowEvent::FramebufferSize(w, h) => {
+                        unsafe {
+                            self.glow_ctx.viewport(0, 0, *w, *h);
                         }
-                        self.events.push(ev);
+                        println!("window resized to {}x{}", w, h);
                     }
+                    WindowEvent::Key(Key::Space, _, Action::Release, _) => {
+                        vsync = !vsync;
+                        println!("setting vsync to {vsync}");
+
+                        self.gtx.set_swap_interval(if vsync {
+                            SwapInterval::Sync(1)
+                        } else {
+                            SwapInterval::None
+                        });
+                    }
+                    _ => {}
                 }
+                self.events.push(event);
             }
-            if quit {
-                break;
-            }
-            let (width, height) = self.window.size_in_pixels();
+
+            let (width, height) = self.window.get_framebuffer_size();
             // init surface by wrapping default framebuffer (fbo = 0)
             let surface = unsafe {
                 self.itx.wrap_fbo(
@@ -124,22 +131,36 @@ impl SdlGlImpellerFrameWork {
                 )
             }
             .expect("failed to wrap window's framebuffer");
+            let dl_builder = DisplayListBuilder::new(Some(&Rect::from_size(
+                [width as f32, height as f32].into(),
+            )));
+
             if let Some(dl) = dl.as_ref() {
-                surface.draw_display_list(dl).unwrap();
+                dl_builder.draw_display_list(dl, 1.0);
             }
             // call user callback
             if let Some(cb) = user_callback.as_mut() {
                 if let Some(display_list) = cb(&mut self) {
-                    surface.draw_display_list(&display_list).unwrap();
+                    dl_builder.draw_display_list(&display_list, 1.0);
                 }
             }
+            {
+                let para_builder = ParagraphBuilder::new(&self.ttx).unwrap();
+                para_builder.push_style(&self.style);
+                para_builder.add_text(&format!("avg fps: {fps}"));
+                let para = para_builder.build(1000.0).unwrap();
+                dl_builder.draw_paragraph(&para, Point::origin());
+            }
+            surface
+                .draw_display_list(&dl_builder.build().unwrap())
+                .unwrap();
 
             // submit frame and wait for vsync
-            self.window.gl_swap_window();
+            self.window.swap_buffers();
         }
-
-        // drop the window/sdl or whatever
     }
+
+    // drop the window/sdl or whatever
 }
 
 #[allow(unused)]

@@ -199,8 +199,10 @@ fn main() {
             std::fs::read_to_string(&impeller_cache_version_path).unwrap_or_default();
         if version_in_file != impeller_version {
             println!("cargo:warning=impeller cache directory is out of date {impeller_version} vs {version_in_file}");
-            std::fs::remove_dir_all(&impeller_cache_dir)
-                .expect("failed to remove impeller cache dir");
+            if impeller_cache_dir.exists() {
+                std::fs::remove_dir_all(&impeller_cache_dir)
+                    .expect("failed to remove impeller cache dir");
+            }
             std::fs::create_dir_all(&impeller_cache_dir)
                 .expect("failed to create impeller cache dir");
             std::fs::write(&impeller_cache_version_path, impeller_version).unwrap();

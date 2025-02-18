@@ -1,31 +1,26 @@
+use ash::vk::Handle;
+use glfw::*;
 use impellers::*;
-use sdl3::event::Event;
-use sdl3::keyboard::Keycode;
-pub fn main() {
-    // initialize window
-    let sdl_context = sdl3::init().unwrap();
-    let video_subsystem = sdl_context.video().unwrap();
-    let window = video_subsystem
-        .window("rust-sdl3-impeller-vk demo", 800, 600)
-        .position_centered()
-        .vulkan()
-        .build()
-        .unwrap();
 
-    let mut event_pump = sdl_context.event_pump().unwrap();
+pub fn main() {
+    let mut gtx = init(fail_on_errors).unwrap();
+    gtx.window_hint(WindowHint::ClientApi(ClientApiHint::NoApi));
+    gtx.window_hint(WindowHint::ScaleToMonitor(true));
+    let (mut window, ev_receiver) = gtx
+        .create_window(800, 600, "rust-glfw-impeller demo", WindowMode::Windowed)
+        .expect("failed to create window");
+    window.set_all_polling(true);
 
     // initialize impeller context by loading vulkan fn pointers
     let itx = unsafe {
-        let vk_proc_addr_fn = video_subsystem.vulkan_get_proc_address_function().unwrap();
-        // very unsafe transmute, but we YOLO
-        type ProcAddrFnTy =
-            fn(*mut std::os::raw::c_void, *const std::os::raw::c_char) -> *mut std::os::raw::c_void;
-        let vk_proc_addr_fn =
-            std::mem::transmute::<unsafe extern "C" fn(), ProcAddrFnTy>(vk_proc_addr_fn);
-
+        assert!(gtx.vulkan_supported());
         // create context using callback
-        Context::new_vulkan(false, |vk_instance, vk_proc_name| {
-            vk_proc_addr_fn(vk_instance, vk_proc_name)
+        impellers::Context::new_vulkan(false, |vk_instance, vk_proc_name| {
+            let proc_name = std::ffi::CStr::from_ptr(vk_proc_name).to_str().unwrap();
+            gtx.get_instance_proc_address_raw(
+                ash::vk::Instance::from_raw(vk_instance as _),
+                proc_name,
+            ) as _
         })
     }
     .expect("failed to create impeller context");
@@ -36,31 +31,31 @@ pub fn main() {
         !vk_info.vk_instance.is_null(),
         "instance pointer from vulkan info is null"
     );
-    let vulkan_surface_khr = window
-        .vulkan_create_surface(vk_info.vk_instance as _)
+
+    let mut vulkan_surface_khr: ash::vk::SurfaceKHR = ash::vk::SurfaceKHR::null();
+    window
+        .create_window_surface(
+            ash::vk::Instance::from_raw(vk_info.vk_instance as _),
+            std::ptr::null(),
+            &raw mut vulkan_surface_khr,
+        )
+        .result()
         .expect("failed to create vk surface khr");
     assert!(!vulkan_surface_khr.is_null(), "surface pointer is null");
-    let vk_swapchain = unsafe { itx.create_new_vulkan_swapchain(vulkan_surface_khr as _) }
+    let vk_swapchain = unsafe { itx.create_new_vulkan_swapchain(vulkan_surface_khr.as_raw() as _) }
         .expect("failed to create vk swapchain");
 
     // enter event loop
-    loop {
-        let mut quit = false;
+    while !window.should_close() {
         // check events
-        for event in event_pump.poll_iter() {
+        gtx.poll_events();
+        for (_, event) in flush_messages(&ev_receiver) {
             match event {
-                Event::Quit { .. }
-                | Event::KeyDown {
-                    keycode: Some(Keycode::Escape),
-                    ..
-                } => {
-                    quit = true;
+                WindowEvent::Close => {
+                    window.set_should_close(true);
                 }
                 _ => {}
             }
-        }
-        if quit {
-            break;
         }
 
         // create a display list
@@ -70,21 +65,22 @@ pub fn main() {
             // paint controls the properties of draw commands
             let paint = Paint::default();
             // eg: lets set the color to black. So, any drawing command with this paint will use that color.
-            paint.set_color(Color::BLACK);
+            paint.set_color(Color::ACAPULCO);
             // fill the bounds with a color (^^that we set above)
             builder.draw_paint(&paint);
-            let current_time = sdl3::timer::ticks() as f64 / 1000.0; // time in seconds since start of the program
-                                                                     // lets set the color to a color that changes with time.
-                                                                     // sin/cos/tan will always be in the range of -1 to 1, so lets use abs to keep it in between 0 and 1.
+            let current_time = gtx.get_time(); // time in seconds since start of the program
+                                               // lets set the color to a color that changes with time.
+                                               // sin/cos/tan will always be in the range of -1 to 1, so lets use abs to keep it in between 0 and 1.
             paint.set_color(Color::new_srgb(
                 current_time.sin().abs() as _,
                 current_time.cos().abs() as _,
                 current_time.tan().abs() as _,
             ));
-            builder.draw_rect(&Rect::from_size([200.0, 200.0].into()), &paint);
+            builder.draw_rect(&Rect::from_size(Size::new(200.0, 200.0)), &paint);
             // finish recording the drawing commands. This is only a "list" and we haven't drawn anything yet.
             builder.build().expect("failed to build a display_list")
         };
+
         let surface = vk_swapchain.acquire_next_surface_new().unwrap();
         // Now, draw the display_list on the surface. All the commands we recorded in the display_list will be drawn.
         // you can redraw the display_list multiple times to animate it on any number of surfaces.

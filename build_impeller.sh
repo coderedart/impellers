@@ -21,7 +21,7 @@ rm -rf tmp && mkdir tmp && mkdir tmp/lib
 cp "$OUT_DIR"/obj/flutter/impeller/toolkit/interop/"$LIB_NAME" tmp/lib
 ls -lh tmp/lib
 if [[ "$PROFILE" == "release" ]]; then
-    llvm-strip --strip-unneeded tmp/lib/* && ls -lh tmp/lib 
+    llvm-strip --strip-debug tmp/lib/* && ls -lh tmp/lib 
 fi
 cd tmp
 7z a ../"$STATIC_ZIP_NAME" *
