@@ -18,7 +18,6 @@ pub fn main() {
     let mut event_pump = sdl_context.event_pump().unwrap();
     let _gl_ctx = window.gl_create_context().unwrap();
     window.gl_set_context_to_current().unwrap();
-    let (width, height) = window.size_in_pixels();
 
     // initialize impeller context using opengl fn pointers
     let itx = unsafe {
@@ -30,18 +29,6 @@ pub fn main() {
         })
     }
     .unwrap();
-    // init surface by wrapping default framebuffer (fbo = 0)
-    let surface = unsafe {
-        itx.wrap_fbo(
-            0,
-            PixelFormat::RGBA8888,
-            &ISize {
-                width: width.into(),
-                height: height.into(),
-            },
-        )
-    }
-    .expect("failed to wrap window's framebuffer");
 
     // enter event loop
     loop {
@@ -63,6 +50,15 @@ pub fn main() {
             break;
         }
 
+        let (width, height) = window.size_in_pixels();
+        let surface = unsafe {
+            itx.wrap_fbo(
+                0,
+                PixelFormat::RGBA8888,
+                ISize::new(width.into(), height.into()),
+            )
+        }
+        .expect("failed to wrap window's framebuffer");
         // create a display list
         let display_list = {
             // create a display list builder
@@ -81,15 +77,7 @@ pub fn main() {
                 current_time.cos().abs() as _,
                 current_time.tan().abs() as _,
             ));
-            builder.draw_rect(
-                &Rect {
-                    x: 0.0,
-                    y: 0.0,
-                    width: 200.0,
-                    height: 200.0,
-                },
-                &paint,
-            );
+            builder.draw_rect(&Rect::from_size(Size::new(200.0, 200.0)), &paint);
             // finish recording the drawing commands. This is only a "list" and we haven't drawn anything yet.
             builder.build().expect("failed to build a display_list")
         };

@@ -81,15 +81,7 @@ pub fn main() {
                 current_time.cos().abs() as _,
                 current_time.tan().abs() as _,
             ));
-            builder.draw_rect(
-                &Rect {
-                    x: 0.0,
-                    y: 0.0,
-                    width: 200.0,
-                    height: 200.0,
-                },
-                &paint,
-            );
+            builder.draw_rect(&Rect::from_size([200.0, 200.0].into()), &paint);
             // finish recording the drawing commands. This is only a "list" and we haven't drawn anything yet.
             builder.build().expect("failed to build a display_list")
         };

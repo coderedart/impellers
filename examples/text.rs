@@ -24,7 +24,7 @@ fn main() {
 
         paint.set_color(Color::BLACK); // clear with black first
         builder.draw_paint(&paint);
-        builder.draw_paragraph(&paragraph, Point { x: 100.0, y: 100.0 });
+        builder.draw_paragraph(&paragraph, Point::new(100.0, 100.0));
         builder.build().unwrap()
     };
     framework.enter_event_loop(Some(dl), None);

@@ -10,43 +10,31 @@
 //!     or create a metal [Surface] (using a drawable).
 //! 2. create a texture from raw pixel data or adopt an opengl texture
 //!
-//! The [Surface] only has one function to draw things on it. i.e. [Surface::draw_display_list]
+//! The [Surface] allows you to draw things on it i.e. [Surface::draw_display_list]
+//! and preset it using [Surface::present] .
 //!
 //! ### Display Lists
 //! The [DisplayListBuilder] is used to record drawing commands like [DisplayListBuilder::draw_rect].
 //! Then, you call [DisplayListBuilder::build] to create a [DisplayList].
 //! [DisplayList] is an immutable and reusable copy of draw commands that you can
-//! execute on to a surface (or another display list builder).
-//!
-//! Think of the builder as writing a function by composing instructions and the build "compiles" it.
-//! Then, you just call the compiled function to replay those instructions as many times as you want.
+//! execute on to a surface (or add it to another [DisplayListBuilder]).
 //!
 //! The builder maintains an internal "stack" of transformation matrices and clip rects.
-//! This works very well with how UI widgets generally work. For example, you may have a parent widget
-//! and a child widget.
 //!
-//! - The parent pushes a new transformation matrix and clip rect with [DisplayListBuilder::save]
-//! - The parent calls [DisplayListBuilder::transform] or [DisplayListBuilder::clip_rect] to modify the top of the stack
-//!   - The parent draws the background. calls the child to draw its content.
-//!   - The child pushes a new transformation matrix and clip rect with [DisplayListBuilder::save]
-//!     - just like its parent, the child calls [DisplayListBuilder::transform] or [DisplayListBuilder::clip_rect] to modify the top of the stack
-//!     - it issues its draw commands.
-//!   - the child calls [DisplayListBuilder::restore] to pop its clip/transform off the stack.
-//!       The top is now parent's clip/transform.
-//!   - The parent draws any overlay/foreground content
-//! - The parent pops its clip/transform off the stack with [DisplayListBuilder::restore]
+//! You can push and pop them using [DisplayListBuilder::save] and [DisplayListBuilder::restore].
 //!
-//! This allows each child to be "relative" to its parent (also known as "local to parent" or existing in parent's coordinate space).
-//! The child doesn't care about where it exists globally on the screen. It just cares about where it exists relative to its parent.
+//! You can use these to [scale](DisplayListBuilder::scale), [translate](DisplayListBuilder::translate),
+//! [rotate](DisplayListBuilder::rotate) and [clip](DisplayListBuilder::clip_rect) your draw commands.
 //!
+//! You can use [DisplayListBuilder::clip_path] to do custom clipping. eg: A star shaped clip or a circle clip (for profile pictures)
 //! ### Paint
 //! A [Paint] is used to configure the details of draw commands.
 //!
 //! For example, if you draw a rectangle using [DisplayListBuilder::draw_rect],
 //! the paint argument controls the details of the command like:
 //! * Color, Transparency, Blend mode
-//! * Draw style (filled rect or a stroked rect)
-//! * Blur effects and so on
+//! * Draw style (filled rect or a stroked rect), width of the stroke
+//! * Filters for blurs, color tinting etc..
 //!
 //! To affect sizes/positions etc., use [DisplayListBuilder::transform]
 //!
@@ -71,7 +59,7 @@
 //! you can also use [ImageFilter] or [ColorFilter] of the [Paint] object to apply fancy effects.
 //!
 //! ### Filters/Sources etc..
-//! The other objects are there mostly to add fancy effects like blur/shadows etc..
+//! The other objects are there mostly to add fancy effects like blur, color tint, color gradients etc..
 //! Read the respective docs for more details.
 //!
 //! ### LifeCycle
@@ -101,17 +89,68 @@ mod color;
 pub mod sys;
 #[cfg(not(feature = "sys"))]
 mod sys;
+use bytemuck::cast;
+use bytemuck::cast_ref;
 // enums
-pub use sys::{
-    BlendMode, BlurStyle, ClipOperation, ColorSpace, DrawStyle, FillType, FontStyle, FontWeight,
-    PixelFormat, StrokeCap, StrokeJoin, TextAlignment, TextDirection, TextureSampling, TileMode,
-};
-pub use sys::{
-    ImpellerColor as Color, ImpellerColorMatrix as ColorMatrix, ImpellerISize as ISize,
-    ImpellerMatrix as Matrix, ImpellerPoint as Point, ImpellerRect as Rect,
-    ImpellerRoundingRadii as RoundingRadii, ImpellerSize as Size,
-};
+/// <https://api.flutter.dev/flutter/dart-ui/BlendMode.html>
+///
+/// <https://learn.microsoft.com/en-us/previous-versions/xamarin/xamarin-forms/user-interface/graphics/skiasharp/effects/blend-modes/>
+pub use sys::BlendMode;
+/// <https://api.flutter.dev/flutter/dart-ui/BlurStyle.html>
+///
+/// <https://shopify.github.io/react-native-skia/docs/mask-filters#example>
+pub use sys::BlurStyle;
+/// Layout of color components of the pixels
+pub use sys::PixelFormat;
 
+/// <https://api.flutter.dev/flutter/dart-ui/ClipOp.html>
+pub use sys::ClipOperation;
+
+/// <https://api.flutter.dev/flutter/dart-ui/ColorSpace.html>
+pub use sys::ColorSpace;
+
+/// <https://api.flutter.dev/flutter/dart-ui/PaintingStyle.html>
+pub use sys::DrawStyle;
+
+/// <https://api.flutter.dev/flutter/dart-ui/PathFillType.html>
+///
+/// <https://shopify.github.io/react-native-skia/docs/shapes/path#fill-type>
+///
+/// <https://learn.microsoft.com/en-us/previous-versions/xamarin/xamarin-forms/user-interface/graphics/skiasharp/paths/fill-types>
+pub use sys::FillType;
+
+/// <https://api.flutter.dev/flutter/dart-ui/FontStyle.html>
+pub use sys::FontStyle;
+
+/// <https://api.flutter.dev/flutter/dart-ui/FontWeight-class.html>
+pub use sys::FontWeight;
+
+/// <https://api.flutter.dev/flutter/dart-ui/StrokeCap.html>
+pub use sys::StrokeCap;
+
+/// <https://api.flutter.dev/flutter/dart-ui/StrokeJoin.html>
+pub use sys::StrokeJoin;
+
+/// <https://api.flutter.dev/flutter/dart-ui/TextAlign.html>
+pub use sys::TextAlignment;
+
+/// <https://api.flutter.dev/flutter/dart-ui/TextDirection.html>
+pub use sys::TextDirection;
+
+/// The sampling mode to use when drawing a texture.
+pub use sys::TextureSampling;
+
+/// <https://api.flutter.dev/flutter/dart-ui/TileMode.html>
+pub use sys::TileMode;
+pub use sys::{
+    ImpellerColor as Color, ImpellerColorMatrix as ColorMatrix,
+    ImpellerRoundingRadii as RoundingRadii,
+};
+pub type Rect = euclid::Rect<f32, euclid::UnknownUnit>;
+pub type Point = euclid::Point2D<f32, euclid::UnknownUnit>;
+pub type ISize = euclid::Size2D<i64, euclid::UnknownUnit>;
+pub type Size = euclid::Size2D<f32, euclid::UnknownUnit>;
+pub type Matrix = euclid::Transform3D<f32, euclid::UnknownUnit, euclid::UnknownUnit>;
 //------------------------------------------------------------------------------
 /// The current Impeller API version.
 ///
@@ -235,10 +274,13 @@ unsafe extern "C" fn wrap_gl_proc_address<F: FnMut(&str) -> *mut std::os::raw::c
     name: *const std::os::raw::c_char,
     user_data: *mut std::os::raw::c_void,
 ) -> *mut std::os::raw::c_void {
-    let name = unsafe { std::ffi::CStr::from_ptr(name) };
+    let name = if name.is_null() {
+        c""
+    } else {
+        unsafe { std::ffi::CStr::from_ptr(name) }
+    };
     let Ok(name) = name.to_str() else {
-        tracing::error!("inside wrap_gl_proc_address, name is not valid utf8");
-        return std::ptr::null_mut();
+        panic!("Invalid GL function name: {}", name.to_string_lossy());
     };
     (*(user_data as *mut F))(name)
 }
@@ -308,13 +350,10 @@ impl Context {
     /// `glCheckFramebufferStatus`. The framebuffer is still owned by
     /// the caller and it must be collected once the surface is
     /// collected.
-    pub unsafe fn wrap_fbo(
-        &self,
-        fbo: u64,
-        format: PixelFormat,
-        size: &sys::ImpellerISize,
-    ) -> Option<Surface> {
-        let surface = unsafe { sys::ImpellerSurfaceCreateWrappedFBONew(self.0, fbo, format, size) };
+    pub unsafe fn wrap_fbo(&self, fbo: u64, format: PixelFormat, size: ISize) -> Option<Surface> {
+        let surface = unsafe {
+            sys::ImpellerSurfaceCreateWrappedFBONew(self.0, fbo, format, cast_ref(&size))
+        };
         if surface.is_null() {
             None
         } else {
@@ -370,25 +409,15 @@ impl Context {
         // we know this is 4 byte per pixel
         let total_bytes = width as usize * height as usize * 4;
         if contents.len() != total_bytes {
-            tracing::error!(
-                "provided buffer size does not match expected size of {} bytes",
-                total_bytes
-            );
             return Err("provided buffer size does not match expected size");
         }
-        let mip_count = sys::ImpellerSize {
-            width: width as f32,
-            height: height as f32,
-        }
-        .mip_count();
+        let mip_count = flutter_mip_count(width as f32, height as f32);
+
         let t = unsafe {
             sys::ImpellerTextureCreateWithContentsNew(
                 self.0,
                 &sys::ImpellerTextureDescriptor {
-                    size: sys::ImpellerISize {
-                        width: width.into(),
-                        height: height.into(),
-                    },
+                    size: cast(ISize::new(width.into(), height.into())),
                     pixel_format: PixelFormat::RGBA8888,
                     mip_count,
                 },
@@ -618,6 +647,75 @@ impl Drop for DisplayList {
 /// Display list builders allow for the incremental creation of display lists.
 ///
 /// Display list builders are context-agnostic.
+///
+/// ### Recorder Semantics
+///
+/// This is a mix of skia's Canvas and PictureRecorder. You basically call functions
+/// to draw things, but technically, you are just queuing draw commands.
+/// Think of it as pushing elements into a Vec.
+///
+/// And when you are done recording, you use [Self::build] to create an immutable
+/// [DisplayList]. Think of this as taking a [Vec] and turning it into a
+/// [std::sync::Arc] containing a immutable slice.
+///
+/// Just like you can extend a [Vec] with [Vec::extend_from_slice], you can
+/// push use [Self::draw_display_list] to add draw commands from a built [DisplayList].
+///
+/// Finally, you take a [Surface] and "replay" all the draw commands
+/// on that surface with [Surface::draw_display_list].
+///
+/// <https://api.flutter.dev/flutter/dart-ui/Canvas-class.html>
+///
+/// <https://learn.microsoft.com/en-us/dotnet/api/skiasharp.skcanvas?view=skiasharp-2.88>
+///
+/// ### Transformation And Clip Stack
+///
+/// Internally, this maintains a stack of transformation matrices and clip rects.
+/// All draw commands are affected by the all the transformations in the stack.
+///
+/// You push a new transformation or clip on to the stack using [Self::save]
+/// and pop one off [Self::restore].
+///
+/// You can check the current size of the stack with [Self::get_save_count].
+/// You can use this and pop off all elements upot this point using [Self::restore_to_count].
+///
+/// <https://learn.microsoft.com/en-us/dotnet/api/skiasharp.skcanvas?view=skiasharp-2.88#clipping-and-state>
+///
+/// ### Save Layer
+///
+/// [Self::save_layer] can be used to basically create an offscreen layer and redirect
+/// all the subsequent draw commands to this layer. Then, finally, you can blend
+/// this offscreen layer back onto the parent layer using [Self::restore].
+///
+/// Here, you get to add effects that affect the whole offscreen layer.
+/// For example, make the entire layer more transparent. Or add a backdrop blur.
+///
+/// ### Transforms
+///
+/// You can apply transforms to the canvas using [Self::translate], [Self::scale], [Self::rotate] and [Self::transform].
+/// This allows you to affect the size/positions of the subsequent draw commands (until you pop off the transform from stack).
+///
+/// On hidpi screens, you might want to scale your canvas by scale factor of the screen.
+/// This will ensure that the rest of the application can just draw normally and still be the right size.
+///
+/// Remember that the transforms `combine`. So, if you scale by 2.0, save stack, scale by 2.0, you
+/// are now scaling by 4.0 (2.0 from first transform and 2.0 from current transform).
+///
+/// <https://learn.microsoft.com/en-us/dotnet/api/skiasharp.skcanvas?view=skiasharp-2.88#transformations>
+///
+/// ### Clipping
+///
+/// Clipping simply ignores all the draws outside of its shape. While [Self::clip_rect]
+/// is used often, you can use [Self::clip_path] to do arbitrary shaped clipping.
+///
+/// ### Paint
+///
+/// [Paint] is the most commonly used object and store the configuration
+/// for draw commands.
+///
+/// For example, [Self::draw_rect] draws a rectangle. But whether it is a filled rect or just
+/// a stroked (bordered) rect is decided by the paint's [Paint::set_draw_style].
+///
 pub struct DisplayListBuilder(sys::ImpellerDisplayListBuilder);
 
 impl Clone for DisplayListBuilder {
@@ -650,7 +748,7 @@ impl DisplayListBuilder {
     #[doc(alias = "sys::ImpellerDisplayListBuilderNew")]
     pub fn new(cull_rect: Option<&Rect>) -> Self {
         let result = unsafe {
-            sys::ImpellerDisplayListBuilderNew(cull_rect.map_or(std::ptr::null(), |r| r))
+            sys::ImpellerDisplayListBuilderNew(cull_rect.map_or(std::ptr::null(), |r| cast_ref(r)))
         };
         assert!(!result.is_null(), "Failed to create display list builder");
         Self(result)
@@ -692,21 +790,20 @@ impl DisplayListBuilder {
     /// and blend modes will be used to composite the offscreen contents
     /// back onto the display display list.
     ///
+    /// <https://api.flutter.dev/flutter/dart-ui/Canvas/saveLayer.html>
+    ///
+    /// <https://shopify.github.io/react-native-skia/docs/group#layer-effects>
+    ///
     /// - bounds    The bounds.
     /// - paint     The paint.
     /// - backdrop  The backdrop.
     ///
     #[doc(alias = "sys::ImpellerDisplayListBuilderSaveLayer")]
-    pub fn save_layer(
-        &self,
-        bounds: &sys::ImpellerRect,
-        paint: Option<&Paint>,
-        backdrop: Option<&ImageFilter>,
-    ) {
+    pub fn save_layer(&self, bounds: &Rect, paint: Option<&Paint>, backdrop: Option<&ImageFilter>) {
         unsafe {
             sys::ImpellerDisplayListBuilderSaveLayer(
                 self.0,
-                bounds,
+                cast_ref(bounds),
                 paint.map_or(std::ptr::null_mut(), |p| p.0),
                 backdrop.map_or(std::ptr::null_mut(), |b| b.0),
             );
@@ -726,6 +823,8 @@ impl DisplayListBuilder {
     /// Apply a scale to the transformation matrix currently on top of
     /// the save stack.
     ///
+    /// <https://learn.microsoft.com/en-us/previous-versions/xamarin/xamarin-forms/user-interface/graphics/skiasharp/transforms/scale>
+    ///
     /// - x_scale  The x scale.
     /// - y_scale  The y scale.
     #[doc(alias = "sys::ImpellerDisplayListBuilderScale")]
@@ -738,6 +837,8 @@ impl DisplayListBuilder {
     /// Apply a clockwise rotation to the transformation matrix
     /// currently on top of the save stack.
     ///
+    /// <https://learn.microsoft.com/en-us/previous-versions/xamarin/xamarin-forms/user-interface/graphics/skiasharp/transforms/rotate>
+    ///
     /// - angle_degrees  The angle in degrees.
     #[doc(alias = "sys::ImpellerDisplayListBuilderRotate")]
     pub fn rotate(&self, angle_degrees: f32) {
@@ -747,6 +848,8 @@ impl DisplayListBuilder {
     }
     /// Apply a translation to the transformation matrix currently on
     /// top of the save stack.
+    ///
+    /// <https://learn.microsoft.com/en-us/previous-versions/xamarin/xamarin-forms/user-interface/graphics/skiasharp/transforms/translate>
     ///
     /// - x_translation  The x translation.
     /// - y_translation  The y translation.
@@ -760,11 +863,13 @@ impl DisplayListBuilder {
     /// Appends the the provided transformation to the transformation
     /// already on the save stack.
     ///
+    /// <https://learn.microsoft.com/en-us/previous-versions/xamarin/xamarin-forms/user-interface/graphics/skiasharp/transforms/matrix>
+    ///
     /// - transform  The transform to append.
     #[doc(alias = "sys::ImpellerDisplayListBuilderTransform")]
-    pub fn transform(&self, transform: &sys::ImpellerMatrix) {
+    pub fn transform(&self, transform: &Matrix) {
         unsafe {
-            sys::ImpellerDisplayListBuilderTransform(self.0, transform);
+            sys::ImpellerDisplayListBuilderTransform(self.0, cast_ref(transform));
         }
     }
 
@@ -772,16 +877,22 @@ impl DisplayListBuilder {
     /// Clear the transformation on top of the save stack and replace it
     /// with a new value.
     ///
+    /// <https://shopify.github.io/react-native-skia/docs/group/#transformations>
+    ///
+    /// <https://learn.microsoft.com/en-us/previous-versions/xamarin/xamarin-forms/user-interface/graphics/skiasharp/transforms/matrix>
+    ///
     /// - transform  The new transform.
     #[doc(alias = "sys::ImpellerDisplayListBuilderSetTransform")]
-    pub fn set_transform(&self, transform: &sys::ImpellerMatrix) {
+    pub fn set_transform(&self, transform: &Matrix) {
         unsafe {
-            sys::ImpellerDisplayListBuilderSetTransform(self.0, transform);
+            sys::ImpellerDisplayListBuilderSetTransform(self.0, cast_ref(transform));
         }
     }
     //------------------------------------------------------------------------------
     /// Get the transformation currently built up on the top of the
     /// transformation stack.
+    ///
+    /// @see [Self::set_transform] and [Self::transform]
     ///
     /// @return The transform.
     #[doc(alias = "sys::ImpellerDisplayListBuilderGetTransform")]
@@ -796,6 +907,8 @@ impl DisplayListBuilder {
     //------------------------------------------------------------------------------
     /// Reset the transformation on top of the transformation stack to
     /// identity.
+    ///
+    /// @see [Self::set_transform], [Self::transform] and [Self::get_transform]
     #[doc(alias = "sys::ImpellerDisplayListBuilderResetTransform")]
     pub fn reset_transform(&self) {
         unsafe {
@@ -805,6 +918,8 @@ impl DisplayListBuilder {
     //------------------------------------------------------------------------------
     /// Get the current size of the save stack.
     ///
+    /// @see [Self::save], [Self::save_layer], [Self::restore] and [Self::restore_to_count]
+    ///
     /// @return     The save stack size.
     #[doc(alias = "sys::ImpellerDisplayListBuilderGetSaveCount")]
     pub fn get_save_count(&self) -> u32 {
@@ -813,6 +928,8 @@ impl DisplayListBuilder {
     //------------------------------------------------------------------------------
     /// Effectively calls ImpellerDisplayListBuilderRestore till the
     /// size of the save stack becomes a specified count.
+    ///
+    /// @see [Self::save], [Self::save_layer], [Self::restore] and [Self::get_save_count]
     ///
     /// - count    The count.
     #[doc(alias = "sys::ImpellerDisplayListBuilderRestoreToCount")]
@@ -829,12 +946,16 @@ impl DisplayListBuilder {
     /// Reduces the clip region to the intersection of the current clip
     /// and the given rectangle taking into account the clip operation.
     ///
+    /// <https://api.flutter.dev/flutter/dart-ui/Canvas/clipRect.html>
+    ///
+    /// <https://shopify.github.io/react-native-skia/docs/group/#clip-rectangle>
+    ///
     /// - rect     The rectangle.
     /// - op       The operation.
     #[doc(alias = "sys::ImpellerDisplayListBuilderClipRect")]
-    pub fn clip_rect(&self, rect: &sys::ImpellerRect, op: sys::ClipOperation) {
+    pub fn clip_rect(&self, rect: &Rect, op: ClipOperation) {
         unsafe {
-            sys::ImpellerDisplayListBuilderClipRect(self.0, rect, op);
+            sys::ImpellerDisplayListBuilderClipRect(self.0, cast_ref(rect), op);
         }
     }
 
@@ -845,9 +966,9 @@ impl DisplayListBuilder {
     /// - oval_bounds  The oval bounds.
     /// - op           The operation.
     #[doc(alias = "sys::ImpellerDisplayListBuilderClipOval")]
-    pub fn clip_oval(&self, oval_bounds: &sys::ImpellerRect, op: sys::ClipOperation) {
+    pub fn clip_oval(&self, oval_bounds: &Rect, op: ClipOperation) {
         unsafe {
-            sys::ImpellerDisplayListBuilderClipOval(self.0, oval_bounds, op);
+            sys::ImpellerDisplayListBuilderClipOval(self.0, cast_ref(oval_bounds), op);
         }
     }
     //------------------------------------------------------------------------------
@@ -855,28 +976,33 @@ impl DisplayListBuilder {
     /// and the given rounded rectangle taking into account the clip
     /// operation.
     ///
+    /// <https://shopify.github.io/react-native-skia/docs/group/#clip-rounded-rectangle>
+    ///
+    /// <https://api.flutter.dev/flutter/dart-ui/Canvas/clipRRect.html>
+    ///
     /// - rect     The rectangle.
     /// - radii    The radii.
     /// - op       The operation.
     #[doc(alias = "sys::ImpellerDisplayListBuilderClipRoundedRect")]
-    pub fn clip_rounded_rect(
-        &self,
-        rect: &sys::ImpellerRect,
-        radii: &sys::ImpellerRoundingRadii,
-        op: sys::ClipOperation,
-    ) {
+    pub fn clip_rounded_rect(&self, rect: &Rect, radii: &RoundingRadii, op: ClipOperation) {
         unsafe {
-            sys::ImpellerDisplayListBuilderClipRoundedRect(self.0, rect, radii, op);
+            sys::ImpellerDisplayListBuilderClipRoundedRect(self.0, cast_ref(rect), radii, op);
         }
     }
     //------------------------------------------------------------------------------
     /// Reduces the clip region to the intersection of the current clip
     /// and the given path taking into account the clip operation.
     ///
+    /// <https://api.flutter.dev/flutter/dart-ui/Canvas/clipPath.html>
+    ///
+    /// <https://learn.microsoft.com/en-us/previous-versions/xamarin/xamarin-forms/user-interface/graphics/skiasharp/curves/clipping>
+    ///
+    /// <https://shopify.github.io/react-native-skia/docs/group#clip-path>
+    ///
     /// - path     The path.
     /// - op       The operation.
     #[doc(alias = "sys::ImpellerDisplayListBuilderClipPath")]
-    pub fn clip_path(&self, path: &Path, op: sys::ClipOperation) {
+    pub fn clip_path(&self, path: &Path, op: ClipOperation) {
         unsafe {
             sys::ImpellerDisplayListBuilderClipPath(self.0, path.0, op);
         }
@@ -898,13 +1024,22 @@ impl DisplayListBuilder {
     //------------------------------------------------------------------------------
     /// Draws a line segment.
     ///
+    /// <https://api.flutter.dev/flutter/dart-ui/Canvas/drawLine.html>
+    ///
+    /// <https://learn.microsoft.com/en-us/previous-versions/xamarin/xamarin-forms/user-interface/graphics/skiasharp/paths/lines>
+    ///
     /// - from     The starting point of the line.
     /// - to       The end point of the line.
     /// - paint    The paint.
     #[doc(alias = "sys::ImpellerDisplayListBuilderDrawLine")]
     pub fn draw_line(&self, from: Point, to: Point, paint: &Paint) {
         unsafe {
-            sys::ImpellerDisplayListBuilderDrawLine(self.0, &from, &to, paint.0);
+            sys::ImpellerDisplayListBuilderDrawLine(
+                self.0,
+                cast_ref(&from),
+                cast_ref(&to),
+                paint.0,
+            );
         }
     }
 
@@ -927,7 +1062,12 @@ impl DisplayListBuilder {
     ) {
         unsafe {
             sys::ImpellerDisplayListBuilderDrawDashedLine(
-                self.0, &from, &to, on_length, off_length, paint.0,
+                self.0,
+                cast_ref(&from),
+                cast_ref(&to),
+                on_length,
+                off_length,
+                paint.0,
             );
         }
     }
@@ -935,27 +1075,37 @@ impl DisplayListBuilder {
     //------------------------------------------------------------------------------
     /// Draws a rectangle.
     ///
+    /// <https://api.flutter.dev/flutter/dart-ui/Canvas/drawRect.html>
+    ///
     /// - rect     The rectangle.
     /// - paint    The paint.
     #[doc(alias = "sys::ImpellerDisplayListBuilderDrawRect")]
     pub fn draw_rect(&self, rect: &Rect, paint: &Paint) {
         unsafe {
-            sys::ImpellerDisplayListBuilderDrawRect(self.0, rect, paint.0);
+            sys::ImpellerDisplayListBuilderDrawRect(self.0, cast_ref(rect), paint.0);
         }
     }
     //------------------------------------------------------------------------------
     /// Draws an oval.
+    ///
+    /// <https://shopify.github.io/react-native-skia/docs/shapes/ellipses#oval>
+    ///
+    /// <https://api.flutter.dev/flutter/dart-ui/Canvas/drawOval.html>
     ///
     /// - oval_bounds  The oval bounds.
     /// - paint        The paint.
     #[doc(alias = "sys::ImpellerDisplayListBuilderDrawOval")]
     pub fn draw_oval(&self, oval_bounds: &Rect, paint: &Paint) {
         unsafe {
-            sys::ImpellerDisplayListBuilderDrawOval(self.0, oval_bounds, paint.0);
+            sys::ImpellerDisplayListBuilderDrawOval(self.0, cast_ref(oval_bounds), paint.0);
         }
     }
     //------------------------------------------------------------------------------
     /// Draws a rounded rect.
+    ///
+    /// <https://api.flutter.dev/flutter/dart-ui/Canvas/drawRRect.html>
+    ///
+    /// <https://shopify.github.io/react-native-skia/docs/shapes/polygons#using-custom-radii>
     ///
     /// - rect     The rectangle.
     /// - radii    The radii.
@@ -963,12 +1113,14 @@ impl DisplayListBuilder {
     #[doc(alias = "sys::ImpellerDisplayListBuilderDrawRoundedRect")]
     pub fn draw_rounded_rect(&self, rect: &Rect, radii: &RoundingRadii, paint: &Paint) {
         unsafe {
-            sys::ImpellerDisplayListBuilderDrawRoundedRect(self.0, rect, radii, paint.0);
+            sys::ImpellerDisplayListBuilderDrawRoundedRect(self.0, cast_ref(rect), radii, paint.0);
         }
     }
     //------------------------------------------------------------------------------
     /// Draws a shape that is the different between the specified
     /// rectangles (each with configurable corner radii).
+    ///
+    /// <https://shopify.github.io/react-native-skia/docs/shapes/polygons#diffrect>
     ///
     /// - outer_rect   The outer rectangle.
     /// - outer_radii  The outer radii.
@@ -987,9 +1139,9 @@ impl DisplayListBuilder {
         unsafe {
             sys::ImpellerDisplayListBuilderDrawRoundedRectDifference(
                 self.0,
-                outer_rect,
+                cast_ref(outer_rect),
                 outer_radii,
-                inner_rect,
+                cast_ref(inner_rect),
                 inner_radii,
                 paint.0,
             );
@@ -997,6 +1149,8 @@ impl DisplayListBuilder {
     }
     //------------------------------------------------------------------------------
     /// Draws the specified path shape.
+    ///
+    /// @see [Path] and [PathBuilder]
     ///
     /// - path     The path.
     /// - paint    The paint.
@@ -1010,6 +1164,10 @@ impl DisplayListBuilder {
     /// Flattens the contents of another display list into the one
     /// currently being built.
     ///
+    /// In skia, display lists are often called `Pictures`.
+    ///
+    /// <https://shopify.github.io/react-native-skia/docs/shapes/pictures>
+    ///
     /// - display_list  The display list.
     /// - opacity       The opacity.
     #[doc(alias = "sys::ImpellerDisplayListBuilderDrawDisplayList")]
@@ -1019,14 +1177,18 @@ impl DisplayListBuilder {
         }
     }
     //------------------------------------------------------------------------------
-    /// @brief      Draw a paragraph at the specified point.
+    /// Draw a paragraph at the specified point.
     ///
-    /// paragraph  The paragraph.
-    /// point      The point.
+    /// <https://api.flutter.dev/flutter/dart-ui/Canvas/drawParagraph.html>
+    ///
+    /// @see [Paragraph], [ParagraphBuilder] and [ParagraphStyle]
+    ///
+    /// - paragraph  The paragraph.
+    /// - point      The point where to draw the paragraph. (offset)
     #[doc(alias = "sys::ImpellerDisplayListBuilderDrawParagraph")]
     pub fn draw_paragraph(&self, paragraph: &Paragraph, point: Point) {
         unsafe {
-            sys::ImpellerDisplayListBuilderDrawParagraph(self.0, paragraph.0, &point);
+            sys::ImpellerDisplayListBuilderDrawParagraph(self.0, paragraph.0, cast_ref(&point));
         }
     }
     //------------------------------------------------------------------------------
@@ -1035,6 +1197,14 @@ impl DisplayListBuilder {
 
     //------------------------------------------------------------------------------
     /// Draw a texture at the specified point.
+    ///
+    /// When you draw a texture, you draw it in its full size.
+    /// To adjust the size, you can use [DisplayListBuilder::scale].
+    /// eg: if you wanted to draw a 500x500 texture as 250x250, just scale by 0.5
+    ///     Make sure to use the same scale for both x and y, or you will stretch/compress the image.
+    ///
+    /// Another way to draw a texture is to use [DisplayListBuilder::draw_texture_rect],
+    /// which allows you to choose a source rect (part of image) and draw it to any rect on canvas.
     ///
     /// - texture   The texture.
     /// - point     The point.
@@ -1050,12 +1220,23 @@ impl DisplayListBuilder {
     ) {
         unsafe {
             sys::ImpellerDisplayListBuilderDrawTexture(
-                self.0, texture.0, &point, sampling, paint.0,
+                self.0,
+                texture.0,
+                cast_ref(&point),
+                sampling,
+                paint.0,
             );
         }
     }
     //------------------------------------------------------------------------------
     /// Draw a portion of texture at the specified location.
+    ///
+    /// This function takes a portion (src_rect) of the texture
+    /// and draws it at dst_rect on canvas. It will do the necessary
+    /// scaling to make sure that the src_rect will fit onto dst_rect exactly.
+    ///
+    /// Look at [Paint] struct for how you can customize the drawing.
+    /// eg: blurring the image or adding a color tint.
     ///
     /// - texture   The texture.
     /// - src_rect  The source rectangle.
@@ -1075,8 +1256,8 @@ impl DisplayListBuilder {
             sys::ImpellerDisplayListBuilderDrawTextureRect(
                 self.0,
                 texture.0,
-                src_rect,
-                dst_rect,
+                cast_ref(src_rect),
+                cast_ref(dst_rect),
                 sampling,
                 paint.map_or(std::ptr::null_mut(), |p| p.0),
             );
@@ -1086,6 +1267,16 @@ impl DisplayListBuilder {
 /// Paints control the behavior of draw calls encoded in a display list.
 ///
 /// Like display lists, paints are context-agnostic.
+///
+/// NOTE: If you understand this struct, then you understand Impeller.
+///
+/// <https://api.flutter.dev/flutter/dart-ui/Paint-class.html>
+///
+/// <https://shopify.github.io/react-native-skia/docs/paint/overview>
+///
+/// <https://shopify.github.io/react-native-skia/docs/paint/properties>
+///
+/// <https://learn.microsoft.com/en-us/dotnet/api/skiasharp.skpaint?view=skiasharp-2.88>
 pub struct Paint(sys::ImpellerPaint);
 
 impl Clone for Paint {
@@ -1112,11 +1303,13 @@ impl Default for Paint {
     }
 }
 impl Paint {
-    /// Set the paint color.
+    /// Set the paint color for stroking or filling.
+    ///
+    /// <https://api.flutter.dev/flutter/dart-ui/Paint/color.html>
     ///
     /// - color     The color.
     ///
-    pub fn set_color(&self, color: sys::ImpellerColor) {
+    pub fn set_color(&self, color: Color) {
         unsafe {
             sys::ImpellerPaintSetColor(self.0, &color);
         }
@@ -1128,7 +1321,7 @@ impl Paint {
     ///
     /// - mode      The mode.
     ///
-    pub fn set_blend_mode(&self, mode: sys::BlendMode) {
+    pub fn set_blend_mode(&self, mode: BlendMode) {
         unsafe {
             sys::ImpellerPaintSetBlendMode(self.0, mode);
         }
@@ -1139,7 +1332,7 @@ impl Paint {
     ///
     /// - style     The style.
     ///
-    pub fn set_draw_style(&self, style: sys::DrawStyle) {
+    pub fn set_draw_style(&self, style: DrawStyle) {
         unsafe {
             sys::ImpellerPaintSetDrawStyle(self.0, style);
         }
@@ -1149,7 +1342,7 @@ impl Paint {
     ///
     /// - cap       The stroke cap style.
     ///
-    pub fn set_stroke_cap(&self, cap: sys::StrokeCap) {
+    pub fn set_stroke_cap(&self, cap: StrokeCap) {
         unsafe {
             sys::ImpellerPaintSetStrokeCap(self.0, cap);
         }
@@ -1157,9 +1350,11 @@ impl Paint {
 
     /// Sets how strokes rendered using this paint are joined.
     ///
+    /// <https://api.flutter.dev/flutter/dart-ui/Paint/strokeJoin.html>
+    ///
     /// - join      The join.
     ///
-    pub fn set_stroke_join(&self, join: sys::StrokeJoin) {
+    pub fn set_stroke_join(&self, join: StrokeJoin) {
         unsafe {
             sys::ImpellerPaintSetStrokeJoin(self.0, join);
         }
@@ -1176,6 +1371,8 @@ impl Paint {
     }
 
     /// Set the miter limit of the strokes rendered using this paint.
+    ///
+    /// <https://api.flutter.dev/flutter/dart-ui/Paint/strokeMiterLimit.html>
     ///
     /// - miter     The miter limit.
     ///
@@ -1236,6 +1433,12 @@ impl Paint {
 /// Color filters are functions that take two colors and mix them to produce a
 /// single color. This color is then merged with the destination during
 /// blending.
+///
+/// <https://learn.microsoft.com/en-us/previous-versions/xamarin/xamarin-forms/user-interface/graphics/skiasharp/effects/color-filters>
+///
+/// <https://api.flutter.dev/flutter/dart-ui/ColorFilter-class.html>
+///
+/// <https://shopify.github.io/react-native-skia/docs/color-filters>
 pub struct ColorFilter(sys::ImpellerColorFilter);
 unsafe impl Send for ColorFilter {}
 unsafe impl Sync for ColorFilter {}
@@ -1259,23 +1462,32 @@ impl ColorFilter {
     /// Create a color filter that performs blending of pixel values
     /// independently.
     ///
+    /// <https://api.flutter.dev/flutter/dart-ui/ColorFilter/ColorFilter.mode.html>
+    ///
+    /// <https://shopify.github.io/react-native-skia/docs/color-filters#blendcolor>
+    ///
+    ///
     /// - color       The color.
     /// - blend_mode  The blend mode.
     ///
     /// @return     The color filter.
     #[must_use]
-    pub fn new_blend(color: sys::ImpellerColor, blend_mode: sys::BlendMode) -> Self {
+    pub fn new_blend(color: Color, blend_mode: BlendMode) -> Self {
         unsafe { Self(sys::ImpellerColorFilterCreateBlendNew(&color, blend_mode)) }
     }
 
     /// Create a color filter that transforms pixel color values
     /// independently.
     ///
-    /// - color_matrix  The color matrix.
+    /// <https://api.flutter.dev/flutter/dart-ui/ColorFilter/ColorFilter.matrix.html>
     ///
-    /// @return     The color filter.
+    /// <https://shopify.github.io/react-native-skia/docs/color-filters#color-matrix>
+    ///
+    /// playground to play with matrices: <https://fecolormatrix.com/>
+    ///
+    /// read more in struct docs [ColorFilter]
     #[must_use]
-    pub fn new_matrix(color_matrix: sys::ImpellerColorMatrix) -> Self {
+    pub fn new_matrix(color_matrix: ColorMatrix) -> Self {
         unsafe { Self(sys::ImpellerColorFilterCreateColorMatrixNew(&color_matrix)) }
     }
 }
@@ -1283,6 +1495,11 @@ impl ColorFilter {
 /// covered by a draw call. The colors for each element can be generated using a
 /// mathematical function (to produce gradients for example) or sampled from a
 /// texture.
+///
+/// <https://api.flutter.dev/flutter/dart-ui/Gradient-class.html>
+///
+/// <https://learn.microsoft.com/en-us/previous-versions/xamarin/xamarin-forms/user-interface/graphics/skiasharp/effects/shaders/>
+///
 pub struct ColorSource(sys::ImpellerColorSource);
 unsafe impl Send for ColorSource {}
 unsafe impl Sync for ColorSource {}
@@ -1306,6 +1523,14 @@ impl ColorSource {
     //------------------------------------------------------------------------------
     /// Create a color source that forms a linear gradient.
     ///
+    /// <https://api.flutter.dev/flutter/dart-ui/Gradient/Gradient.linear.html>
+    ///
+    /// <https://api.flutter.dev/flutter/painting/LinearGradient-class.html>
+    ///
+    /// <https://shopify.github.io/react-native-skia/docs/shaders/gradients#linear-gradient>
+    ///
+    /// <https://learn.microsoft.com/en-us/previous-versions/xamarin/xamarin-forms/user-interface/graphics/skiasharp/effects/shaders/linear-gradient>
+    ///
     /// - start_point     The start point.
     /// - end_point       The end point.
     /// - colors          The colors.
@@ -1316,24 +1541,24 @@ impl ColorSource {
     /// @return     The color source.
     #[must_use]
     pub fn new_linear_gradient(
-        start: &sys::ImpellerPoint,
-        end: &sys::ImpellerPoint,
-        colors: &[sys::ImpellerColor],
+        start: Point,
+        end: Point,
+        colors: &[Color],
         stops: &[f32],
-        tile_mode: sys::TileMode,
-        transformation: Option<&sys::ImpellerMatrix>,
+        tile_mode: TileMode,
+        transformation: Option<&Matrix>,
     ) -> Self {
         assert_eq!(colors.len(), stops.len());
         assert!(!colors.is_empty());
         let result = unsafe {
             sys::ImpellerColorSourceCreateLinearGradientNew(
-                start,
-                end,
+                cast_ref(&start),
+                cast_ref(&end),
                 stops.len() as _,
                 colors.as_ptr(),
                 stops.as_ptr(),
                 tile_mode,
-                transformation.map_or(std::ptr::null(), |m| m),
+                transformation.map_or(std::ptr::null(), |m| cast_ref(m)),
             )
         };
         assert!(!result.is_null());
@@ -1342,6 +1567,14 @@ impl ColorSource {
 
     //------------------------------------------------------------------------------
     /// Create a color source that forms a radial gradient.
+    ///
+    /// <https://api.flutter.dev/flutter/dart-ui/Gradient/Gradient.radial.html>
+    ///
+    /// <https://api.flutter.dev/flutter/painting/RadialGradient-class.html>
+    ///
+    /// <https://learn.microsoft.com/en-us/previous-versions/xamarin/xamarin-forms/user-interface/graphics/skiasharp/effects/shaders/circular-gradients#the-radial-gradient>
+    ///
+    /// <https://shopify.github.io/react-native-skia/docs/shaders/gradients#radial-gradient>
     ///
     /// - center          The center.
     /// - radius          The radius.
@@ -1354,24 +1587,24 @@ impl ColorSource {
     /// @return     The color source.
     #[must_use]
     pub fn new_radial_gradient(
-        center: &sys::ImpellerPoint,
+        center: Point,
         radius: f32,
-        colors: &[sys::ImpellerColor],
+        colors: &[Color],
         stops: &[f32],
-        tile_mode: sys::TileMode,
-        transformation: Option<&sys::ImpellerMatrix>,
+        tile_mode: TileMode,
+        transformation: Option<&Matrix>,
     ) -> Self {
         assert_eq!(colors.len(), stops.len());
         assert!(!colors.is_empty());
         let result = unsafe {
             sys::ImpellerColorSourceCreateRadialGradientNew(
-                center,
+                cast_ref(&center),
                 radius,
                 stops.len() as _,
                 colors.as_ptr(),
                 stops.as_ptr(),
                 tile_mode,
-                transformation.map_or(std::ptr::null(), |m| m),
+                transformation.map_or(std::ptr::null(), |m| cast_ref(m)),
             )
         };
         assert!(!result.is_null());
@@ -1380,6 +1613,10 @@ impl ColorSource {
 
     //------------------------------------------------------------------------------
     /// Create a color source that forms a conical gradient.
+    ///
+    /// <https://learn.microsoft.com/en-us/previous-versions/xamarin/xamarin-forms/user-interface/graphics/skiasharp/effects/shaders/circular-gradients#the-two-point-conical-gradient>
+    ///
+    /// <https://shopify.github.io/react-native-skia/docs/shaders/gradients#two-point-conical-gradient>
     ///
     /// - start_center    The start center.
     /// - start_radius    The start radius.
@@ -1394,28 +1631,28 @@ impl ColorSource {
     /// @return     The color source.
     #[allow(clippy::too_many_arguments)]
     pub fn new_conical_gradient(
-        start_center: &sys::ImpellerPoint,
+        start_center: Point,
         start_radius: f32,
-        end_center: &sys::ImpellerPoint,
+        end_center: Point,
         end_radius: f32,
-        colors: &[sys::ImpellerColor],
+        colors: &[Color],
         stops: &[f32],
-        tile_mode: sys::TileMode,
-        transformation: Option<&sys::ImpellerMatrix>,
+        tile_mode: TileMode,
+        transformation: Option<&Matrix>,
     ) -> Self {
         assert_eq!(colors.len(), stops.len());
         assert!(!colors.is_empty());
         let result = unsafe {
             sys::ImpellerColorSourceCreateConicalGradientNew(
-                start_center,
+                cast_ref(&start_center),
                 start_radius,
-                end_center,
+                cast_ref(&end_center),
                 end_radius,
                 stops.len() as _,
                 colors.as_ptr(),
                 stops.as_ptr(),
                 tile_mode,
-                transformation.map_or(std::ptr::null(), |m| m),
+                transformation.map_or(std::ptr::null(), |m| cast_ref(m)),
             )
         };
         assert!(!result.is_null());
@@ -1424,6 +1661,14 @@ impl ColorSource {
 
     //------------------------------------------------------------------------------
     /// Create a color source that forms a sweep gradient.
+    ///
+    /// <https://api.flutter.dev/flutter/dart-ui/Gradient/Gradient.sweep.html>
+    ///
+    /// <https://api.flutter.dev/flutter/painting/SweepGradient-class.html>
+    ///
+    /// <https://learn.microsoft.com/en-us/previous-versions/xamarin/xamarin-forms/user-interface/graphics/skiasharp/effects/shaders/circular-gradients#the-sweep-gradient>
+    ///
+    /// <https://shopify.github.io/react-native-skia/docs/shaders/gradients#sweep-gradient>
     ///
     /// - center          The center.
     /// - start           The start.
@@ -1437,32 +1682,38 @@ impl ColorSource {
     /// @return     The color source.
     #[must_use]
     pub fn new_sweep_gradient(
-        center: &sys::ImpellerPoint,
+        center: Point,
         start: f32,
         end: f32,
-        colors: &[sys::ImpellerColor],
+        colors: &[Color],
         stops: &[f32],
-        tile_mode: sys::TileMode,
-        transformation: Option<&sys::ImpellerMatrix>,
+        tile_mode: TileMode,
+        transformation: Option<&Matrix>,
     ) -> Self {
         assert_eq!(colors.len(), stops.len());
         assert!(!colors.is_empty());
         let result = unsafe {
             sys::ImpellerColorSourceCreateSweepGradientNew(
-                center,
+                cast_ref(&center),
                 start,
                 end,
                 stops.len() as _,
                 colors.as_ptr(),
                 stops.as_ptr(),
                 tile_mode,
-                transformation.map_or(std::ptr::null(), |m| m),
+                transformation.map_or(std::ptr::null(), |m| cast_ref(m)),
             )
         };
         assert!(!result.is_null());
         Self(result)
     }
     /// Create a color source that samples from an image.
+    ///
+    /// <https://api.flutter.dev/flutter/dart-ui/ImageShader/ImageShader.html>
+    ///
+    /// <https://learn.microsoft.com/en-us/previous-versions/xamarin/xamarin-forms/user-interface/graphics/skiasharp/effects/shaders/bitmap-tiling>
+    ///
+    /// <https://shopify.github.io/react-native-skia/docs/shaders/images>
     ///
     /// - image                 The image.
     /// - horizontal_tile_mode  The horizontal tile mode.
@@ -1474,9 +1725,9 @@ impl ColorSource {
     #[must_use]
     pub fn new_image(
         image: &Texture,
-        horizontal_tile_mode: sys::TileMode,
-        vertical_tile_mode: sys::TileMode,
-        sampling: sys::TextureSampling,
+        horizontal_tile_mode: TileMode,
+        vertical_tile_mode: TileMode,
+        sampling: TextureSampling,
         transformation: Option<&sys::ImpellerMatrix>,
     ) -> Self {
         let result = unsafe {
@@ -1496,6 +1747,12 @@ impl ColorSource {
 /// a single color. Contrast this with color filters that operate independently
 /// on a per-pixel basis. The generated color is then merged with the
 /// destination during blending.
+///
+/// <https://api.flutter.dev/flutter/dart-ui/ImageFilter-class.html>
+///
+/// <https://shopify.github.io/react-native-skia/docs/image-filters/overview>
+///
+/// <https://learn.microsoft.com/en-us/previous-versions/xamarin/xamarin-forms/user-interface/graphics/skiasharp/effects/image-filters>
 pub struct ImageFilter(sys::ImpellerImageFilter);
 unsafe impl Send for ImageFilter {}
 unsafe impl Sync for ImageFilter {}
@@ -1520,6 +1777,9 @@ impl ImageFilter {
     /// The Gaussian blur applied may be an approximation for
     /// performance.
     ///
+    /// <https://learn.microsoft.com/en-us/previous-versions/xamarin/xamarin-forms/user-interface/graphics/skiasharp/effects/image-filters#blurring-vector-graphics-and-bitmaps>
+    ///
+    /// <https://shopify.github.io/react-native-skia/docs/image-filters/blur>
     ///
     /// - x_sigma    The x sigma.
     /// - y_sigma    The y sigma.
@@ -1527,13 +1787,15 @@ impl ImageFilter {
     ///
     /// @return     The image filter.
     #[must_use]
-    pub fn new_blur(x_sigma: f32, y_sigma: f32, tile_mode: sys::TileMode) -> Self {
+    pub fn new_blur(x_sigma: f32, y_sigma: f32, tile_mode: TileMode) -> Self {
         let result = unsafe { sys::ImpellerImageFilterCreateBlurNew(x_sigma, y_sigma, tile_mode) };
         assert!(!result.is_null());
         Self(result)
     }
     /// Creates an image filter that enhances the per-channel pixel
     /// values to the maximum value in a circle around the pixel.
+    ///
+    /// <https://shopify.github.io/react-native-skia/docs/image-filters/morphology>
     ///
     /// - x_radius  The x radius.
     /// - y_radius  The y radius.
@@ -1547,6 +1809,8 @@ impl ImageFilter {
     }
     /// Creates an image filter that dampens the per-channel pixel
     /// values to the minimum value in a circle around the pixel.
+    ///
+    /// <https://shopify.github.io/react-native-skia/docs/image-filters/morphology>
     ///
     /// - x_radius  The x radius.
     /// - y_radius  The y radius.
@@ -1566,8 +1830,8 @@ impl ImageFilter {
     ///
     /// @return     The image filter.
     #[must_use]
-    pub fn new_matrix(matrix: &sys::ImpellerMatrix, sampling: sys::TextureSampling) -> Self {
-        let result = unsafe { sys::ImpellerImageFilterCreateMatrixNew(matrix, sampling) };
+    pub fn new_matrix(matrix: &Matrix, sampling: TextureSampling) -> Self {
+        let result = unsafe { sys::ImpellerImageFilterCreateMatrixNew(cast_ref(matrix), sampling) };
         assert!(!result.is_null());
         Self(result)
     }
@@ -1579,6 +1843,8 @@ impl ImageFilter {
     /// ```ignore
     /// destination = outer_filter(inner_filter(source))
     /// ```
+    ///
+    /// <https://shopify.github.io/react-native-skia/docs/image-filters/overview#composing-filters>
     ///
     /// - outer  The outer image filter.
     /// - inner  The inner image filter.
@@ -1593,6 +1859,12 @@ impl ImageFilter {
 }
 /// Mask filters are functions that are applied over a shape after it has been
 /// drawn but before it has been blended into the final image.
+///
+/// <https://api.flutter.dev/flutter/dart-ui/MaskFilter-class.html>
+///
+/// <https://shopify.github.io/react-native-skia/docs/mask-filters>
+///
+/// <https://learn.microsoft.com/en-us/previous-versions/xamarin/xamarin-forms/user-interface/graphics/skiasharp/effects/mask-filters>
 pub struct MaskFilter(sys::ImpellerMaskFilter);
 unsafe impl Send for MaskFilter {}
 unsafe impl Sync for MaskFilter {}
@@ -1615,12 +1887,16 @@ impl MaskFilter {
     //------------------------------------------------------------------------------
     /// Create a mask filter that blurs contents in the masked shape.
     ///
+    /// <https://api.flutter.dev/flutter/dart-ui/MaskFilter/MaskFilter.blur.html>
+    ///
+    /// @see doc of struct [MaskFilter]
+    ///
     /// - style  The style.
     /// - sigma  The sigma.
     ///
     /// @return     The mask filter.
     #[must_use]
-    pub fn new_blur(style: sys::BlurStyle, sigma: f32) -> Self {
+    pub fn new_blur(style: BlurStyle, sigma: f32) -> Self {
         let result = unsafe { sys::ImpellerMaskFilterCreateBlurNew(style, sigma) };
         assert!(!result.is_null());
         Self(result)
@@ -1724,6 +2000,12 @@ impl TypographyContext {
 }
 
 /// An immutable, fully laid out paragraph.
+///
+///
+/// <https://shopify.github.io/react-native-skia/docs/text/paragraph>
+///
+/// @see [ParagraphStyle] and [ParagraphBuilder]
+///
 pub struct Paragraph(sys::ImpellerParagraph);
 unsafe impl Send for Paragraph {}
 unsafe impl Sync for Paragraph {}
@@ -1813,6 +2095,8 @@ impl Paragraph {
 }
 /// Paragraph builders allow for the creation of fully laid out paragraphs
 /// (which themselves are immutable).
+///
+/// <https://api.flutter.dev/flutter/dart-ui/ParagraphBuilder-class.html>
 ///
 /// To build a paragraph, users push/pop paragraph styles onto a stack then add
 /// UTF-8 encoded text. The properties on the top of paragraph style stack when
@@ -1923,6 +2207,13 @@ impl ParagraphBuilder {
 /// Specified when building a paragraph, paragraph styles are managed in a stack
 /// with specify text properties to apply to text that is added to the paragraph
 /// builder.
+///
+/// The below link should be considered a full reference of what's possible with text.
+///
+/// <https://api.flutter.dev/flutter/painting/TextStyle-class.html>
+///
+/// @see [Paragraph] and [ParagraphBuilder]
+///
 pub struct ParagraphStyle(sys::ImpellerParagraphStyle);
 
 impl Clone for ParagraphStyle {
@@ -1987,6 +2278,8 @@ impl ParagraphStyle {
     }
     /// Set the font family.
     ///
+    /// <https://api.flutter.dev/flutter/painting/TextStyle/fontFamily.html>
+    ///
     /// - family_name      The family name.
     #[doc(alias = "ImpellerParagraphStyleSetFontFamily")]
     pub fn set_font_family(&self, family_name: &str) {
@@ -1999,6 +2292,8 @@ impl ParagraphStyle {
     }
     /// Set the font size.
     ///
+    /// <https://api.flutter.dev/flutter/painting/TextStyle/fontSize.html>
+    ///
     /// - size             The size.
     #[doc(alias = "ImpellerParagraphStyleSetFontSize")]
     pub fn set_font_size(&self, size: f32) {
@@ -2007,6 +2302,8 @@ impl ParagraphStyle {
         }
     }
     /// The height of the text as a multiple of text size.
+    ///
+    /// <https://api.flutter.dev/flutter/painting/TextStyle/height.html>
     ///
     /// When height is 0.0, the line height will be determined by the
     /// font's metrics directly, which may differ from the font size.
@@ -2053,6 +2350,8 @@ impl ParagraphStyle {
     //------------------------------------------------------------------------------
     /// Set the paragraph locale.
     ///
+    /// <https://api.flutter.dev/flutter/painting/TextStyle/locale.html>
+    ///
     /// - locale           The locale.
     #[doc(alias = "ImpellerParagraphStyleSetLocale")]
     pub fn set_locale(&self, locale: &str) {
@@ -2065,6 +2364,12 @@ impl ParagraphStyle {
 }
 /// Represents a two-dimensional path that is immutable and graphics context
 /// agnostic.
+///
+/// <https://api.flutter.dev/flutter/dart-ui/Path-class.html>
+///
+/// <https://learn.microsoft.com/en-us/previous-versions/xamarin/xamarin-forms/user-interface/graphics/skiasharp/paths/paths>
+///
+/// <https://shopify.github.io/react-native-skia/docs/shapes/path>
 ///
 /// Paths in Impeller consist of linear, cubic Bézier curve, and quadratic
 /// Bézier curve segments. All other shapes are approximations using these
@@ -2092,6 +2397,8 @@ impl Drop for Path {
 }
 
 /// Path builders allow for the incremental building up of paths.
+///
+/// @see docs of [Path]
 pub struct PathBuilder(sys::ImpellerPathBuilder);
 
 impl Clone for PathBuilder {
@@ -2122,18 +2429,18 @@ impl PathBuilder {
     /// Move the cursor to the specified location.
     ///
     /// -  location  The location.
-    pub fn move_to(&self, location: &sys::ImpellerPoint) {
+    pub fn move_to(&self, location: Point) {
         unsafe {
-            sys::ImpellerPathBuilderMoveTo(self.0, location);
+            sys::ImpellerPathBuilderMoveTo(self.0, cast_ref(&location));
         }
     }
     /// Add a line segment from the current cursor location to the given
     /// location. The cursor location is updated to be at the endpoint.
     ///
     /// - location  The location.
-    pub fn line_to(&self, location: &sys::ImpellerPoint) {
+    pub fn line_to(&self, location: Point) {
         unsafe {
-            sys::ImpellerPathBuilderLineTo(self.0, location);
+            sys::ImpellerPathBuilderLineTo(self.0, cast_ref(&location));
         }
     }
 
@@ -2144,13 +2451,13 @@ impl PathBuilder {
     ///
     /// - control_point  The control point.
     /// - end_point      The end point.
-    pub fn quadratic_curve_to(
-        &self,
-        control_point: &sys::ImpellerPoint,
-        end_point: &sys::ImpellerPoint,
-    ) {
+    pub fn quadratic_curve_to(&self, control_point: Point, end_point: Point) {
         unsafe {
-            sys::ImpellerPathBuilderQuadraticCurveTo(self.0, control_point, end_point);
+            sys::ImpellerPathBuilderQuadraticCurveTo(
+                self.0,
+                cast_ref(&control_point),
+                cast_ref(&end_point),
+            );
         }
     }
     /// Add a cubic curve whose start point is current cursor location
@@ -2163,27 +2470,22 @@ impl PathBuilder {
     /// - control_point_1  The control point 1
     /// - control_point_2  The control point 2
     /// - end_point        The end point
-    pub fn cubic_curve_to(
-        &self,
-        control_point_1: &sys::ImpellerPoint,
-        control_point_2: &sys::ImpellerPoint,
-        end_point: &sys::ImpellerPoint,
-    ) {
+    pub fn cubic_curve_to(&self, control_point_1: Point, control_point_2: Point, end_point: Point) {
         unsafe {
             sys::ImpellerPathBuilderCubicCurveTo(
                 self.0,
-                control_point_1,
-                control_point_2,
-                end_point,
+                cast_ref(&control_point_1),
+                cast_ref(&control_point_2),
+                cast_ref(&end_point),
             );
         }
     }
     /// Adds a rectangle to the path.
     ///
     /// - rect     The rectangle.
-    pub fn add_rect(&self, rect: &sys::ImpellerRect) {
+    pub fn add_rect(&self, rect: &Rect) {
         unsafe {
-            sys::ImpellerPathBuilderAddRect(self.0, rect);
+            sys::ImpellerPathBuilderAddRect(self.0, cast_ref(rect));
         }
     }
     /// Add an arc to the path.
@@ -2191,16 +2493,11 @@ impl PathBuilder {
     /// - oval_bounds          The oval bounds.
     /// - start_angle_degrees  The start angle in degrees.
     /// - end_angle_degrees    The end angle in degrees.
-    pub fn add_arc(
-        &self,
-        oval_bounds: &sys::ImpellerRect,
-        start_angle_degrees: f32,
-        end_angle_degrees: f32,
-    ) {
+    pub fn add_arc(&self, oval_bounds: &Rect, start_angle_degrees: f32, end_angle_degrees: f32) {
         unsafe {
             sys::ImpellerPathBuilderAddArc(
                 self.0,
-                oval_bounds,
+                cast_ref(oval_bounds),
                 start_angle_degrees,
                 end_angle_degrees,
             );
@@ -2210,22 +2507,18 @@ impl PathBuilder {
     /// Add an oval to the path.
     ///
     /// - oval_bounds  The oval bounds.
-    pub fn add_oval(&self, oval_bounds: &sys::ImpellerRect) {
+    pub fn add_oval(&self, oval_bounds: &Rect) {
         unsafe {
-            sys::ImpellerPathBuilderAddOval(self.0, oval_bounds);
+            sys::ImpellerPathBuilderAddOval(self.0, cast_ref(oval_bounds));
         }
     }
     /// Add a rounded rect with potentially non-uniform radii to the path.
     ///
     /// - oval_bounds     The oval bounds.
     /// - rounding_radii  The rounding radii.
-    pub fn add_rounded_rect(
-        &self,
-        oval_bounds: &sys::ImpellerRect,
-        rounding_radii: &sys::ImpellerRoundingRadii,
-    ) {
+    pub fn add_rounded_rect(&self, oval_bounds: &Rect, rounding_radii: &RoundingRadii) {
         unsafe {
-            sys::ImpellerPathBuilderAddRoundedRect(self.0, oval_bounds, rounding_radii);
+            sys::ImpellerPathBuilderAddRoundedRect(self.0, cast_ref(oval_bounds), rounding_radii);
         }
     }
     /// Close the path.
@@ -2241,7 +2534,7 @@ impl PathBuilder {
     /// - fill  The fill.
     ///
     /// @return     The impeller path.
-    pub fn copy_path_new(&self, fill: sys::FillType) -> Path {
+    pub fn copy_path_new(&self, fill: FillType) -> Path {
         let p = unsafe { sys::ImpellerPathBuilderCopyPathNew(self.0, fill) };
         assert!(!p.is_null());
         Path(p)
@@ -2252,7 +2545,7 @@ impl PathBuilder {
     /// - fill  The fill.
     ///
     /// @return     The impeller path.
-    pub fn take_path_new(&self, fill: sys::FillType) -> Path {
+    pub fn take_path_new(&self, fill: FillType) -> Path {
         let p = unsafe { sys::ImpellerPathBuilderTakePathNew(self.0, fill) };
         assert!(!p.is_null());
         Path(p)
@@ -2266,6 +2559,9 @@ impl PathBuilder {
 /// these surfaces to present content.
 ///
 /// Creating surfaces is typically platform and client-rendering-API specific.
+///
+/// This is an inherently "temporary" object. Just create one every frame and
+/// destroy it after presenting.
 pub struct Surface(sys::ImpellerSurface);
 
 // impl Clone for Surface {
@@ -2306,6 +2602,10 @@ impl Surface {
     }
     /// Present the surface to the underlying window system.
     ///
+    /// This is for platforms like Vulkan which acquire a a surface from [VkSwapChain].
+    ///
+    /// For OpenGL, use your windowing library's `SwapBuffers`-like function.
+    ///
     /// @return     Ok if the surface could be presented.
     pub fn present(self) -> Result<(), &'static str> {
         unsafe { sys::ImpellerSurfacePresent(self.0) }
@@ -2319,6 +2619,7 @@ impl Surface {
 /// Creating textures is extremely expensive. Creating a single one can
 /// typically comfortably blow the frame budget of an application. Textures
 /// should be created on background threads.
+///
 ///
 /// @warning    While textures themselves are thread safe, some context types
 ///             (like OpenGL) may need extra configuration to be able to operate
@@ -2361,38 +2662,26 @@ impl Texture {
     }
 }
 
-impl sys::ImpellerSize {
-    pub const fn new(width: f32, height: f32) -> Self {
-        Self { width, height }
-    }
-    pub const ZERO: Self = Self {
-        width: 0.0,
-        height: 0.0,
-    };
-    pub const INF: Self = Self {
-        width: f32::INFINITY,
-        height: f32::INFINITY,
-    };
-    /// based on the size, it will calculate a suitable mipcount.
-    /// This function skips 1x1 mip levels because that's what flutter does.
-    pub fn mip_count(self) -> u32 {
-        // https://github.com/flutter/engine/blob/main/impeller/geometry/size.h#L134
+/// based on the size, it will calculate a suitable mipcount.
+/// This function skips 1x1 mip levels because that's what flutter does.
+pub fn flutter_mip_count(width: f32, height: f32) -> u32 {
+    // https://github.com/flutter/engine/blob/main/impeller/geometry/size.h#L134
 
-        let mut result = self.width.log2().ceil().max(self.height.log2().ceil()) as u32;
-        // This check avoids creating 1x1 mip levels, which are both pointless
-        // and cause rendering problems on some Adreno GPUs.
-        // See:
-        //      * https://github.com/flutter/flutter/issues/160441
-        //      * https://github.com/flutter/flutter/issues/159876
-        //      * https://github.com/flutter/flutter/issues/160587
-        if result > 1 {
-            result -= 1;
-        }
-        std::cmp::max(result, 1)
+    let mut result = width.log2().ceil().max(height.log2().ceil()) as u32;
+    // This check avoids creating 1x1 mip levels, which are both pointless
+    // and cause rendering problems on some Adreno GPUs.
+    // See:
+    //      * https://github.com/flutter/flutter/issues/160441
+    //      * https://github.com/flutter/flutter/issues/159876
+    //      * https://github.com/flutter/flutter/issues/160587
+    if result > 1 {
+        result -= 1;
     }
+    std::cmp::max(result, 1)
 }
 
 impl Color {
+    pub const TRANSPARENT: Self = Self::new_srgba(0.0, 0.0, 0.0, 0.0);
     pub const fn new_srgb(red: f32, green: f32, blue: f32) -> Self {
         Self::new_srgba(red, green, blue, 1.0)
     }
@@ -2405,4 +2694,17 @@ impl Color {
             color_space: ColorSpace::SRGB,
         }
     }
+    pub const fn with_alpha(self, alpha: f32) -> Self {
+        Self { alpha, ..self }
+    }
 }
+unsafe impl bytemuck::Zeroable for sys::ImpellerISize {}
+unsafe impl bytemuck::Pod for sys::ImpellerISize {}
+unsafe impl bytemuck::Zeroable for sys::ImpellerPoint {}
+unsafe impl bytemuck::Pod for sys::ImpellerPoint {}
+unsafe impl bytemuck::Zeroable for sys::ImpellerSize {}
+unsafe impl bytemuck::Pod for sys::ImpellerSize {}
+unsafe impl bytemuck::Zeroable for sys::ImpellerMatrix {}
+unsafe impl bytemuck::Pod for sys::ImpellerMatrix {}
+unsafe impl bytemuck::Zeroable for sys::ImpellerRect {}
+unsafe impl bytemuck::Pod for sys::ImpellerRect {}

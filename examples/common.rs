@@ -1,10 +1,11 @@
+use glow::HasContext;
 use impellers::*;
 use sdl3::event::Event;
 use sdl3::keyboard::Keycode;
 #[allow(unused)]
 pub struct SdlGlImpellerFrameWork {
-    pub surface: Surface,
     pub itx: Context,
+    pub glow_ctx: glow::Context,
     pub gl_ctx: sdl3::video::GLContext,
     pub window: sdl3::video::Window,
     pub event_pump: sdl3::EventPump,
@@ -15,6 +16,9 @@ impl Default for SdlGlImpellerFrameWork {
         Self::new()
     }
 }
+#[allow(unused)]
+pub const DOG_BYTES: &[u8] = include_bytes!("dog.jpg");
+
 type UserCallback = Box<dyn FnMut(&mut SdlGlImpellerFrameWork) -> Option<DisplayList>>;
 impl SdlGlImpellerFrameWork {
     pub fn new() -> Self {
@@ -24,17 +28,21 @@ impl SdlGlImpellerFrameWork {
         let gl_attr = video_subsystem.gl_attr();
         gl_attr.set_context_major_version(4);
         gl_attr.set_context_profile(sdl3::video::GLProfile::Core);
+        gl_attr.set_framebuffer_srgb_compatible(true);
+        gl_attr.set_stencil_size(8);
+        // gl_attr.set_multisample_buffers(1);
+        // gl_attr.set_multisample_samples(4);
         let window = video_subsystem
             .window("rust-sdl3-impeller demo", 800, 600)
             .position_centered()
             .opengl()
+            .resizable()
             .build()
             .unwrap();
 
         let event_pump = sdl_context.event_pump().unwrap();
         let gl_ctx = window.gl_create_context().unwrap();
         window.gl_set_context_to_current().unwrap();
-        let (width, height) = window.size_in_pixels();
 
         // initialize impeller context using opengl fn pointers
         let itx = unsafe {
@@ -46,20 +54,16 @@ impl SdlGlImpellerFrameWork {
             })
         }
         .unwrap();
-        // init surface by wrapping default framebuffer (fbo = 0)
-        let surface = unsafe {
-            itx.wrap_fbo(
-                0,
-                PixelFormat::RGBA8888,
-                &ISize {
-                    width: width.into(),
-                    height: height.into(),
-                },
-            )
-        }
-        .expect("failed to wrap window's framebuffer");
+        let glow_ctx = unsafe {
+            glow::Context::from_loader_function(|s| {
+                video_subsystem
+                    .gl_get_proc_address(s)
+                    .map(|p| p as *mut _)
+                    .unwrap_or(std::ptr::null_mut())
+            })
+        };
         Self {
-            surface,
+            glow_ctx,
             itx,
             gl_ctx,
             window,
@@ -92,19 +96,41 @@ impl SdlGlImpellerFrameWork {
                     } => {
                         quit = true;
                     }
-                    ev => self.events.push(ev),
+                    ev => {
+                        if let Event::Window {
+                            win_event: sdl3::event::WindowEvent::Resized(w, h),
+                            ..
+                        } = &ev
+                        {
+                            unsafe {
+                                self.glow_ctx.viewport(0, 0, *w, *h);
+                            }
+                            println!("window resized to {}x{}", w, h);
+                        }
+                        self.events.push(ev);
+                    }
                 }
             }
             if quit {
                 break;
             }
+            let (width, height) = self.window.size_in_pixels();
+            // init surface by wrapping default framebuffer (fbo = 0)
+            let surface = unsafe {
+                self.itx.wrap_fbo(
+                    0,
+                    PixelFormat::RGBA8888,
+                    ISize::new(width.into(), height.into()),
+                )
+            }
+            .expect("failed to wrap window's framebuffer");
             if let Some(dl) = dl.as_ref() {
-                self.surface.draw_display_list(dl).unwrap();
+                surface.draw_display_list(dl).unwrap();
             }
             // call user callback
             if let Some(cb) = user_callback.as_mut() {
                 if let Some(display_list) = cb(&mut self) {
-                    self.surface.draw_display_list(&display_list).unwrap();
+                    surface.draw_display_list(&display_list).unwrap();
                 }
             }
 

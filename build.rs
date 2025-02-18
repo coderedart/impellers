@@ -1,10 +1,10 @@
-use std::path::{Path, PathBuf};
-/*
 #[cfg(not(feature = "prebuilt_libs"))]
 fn main() {}
 
-#[cfg(feature = "prebuilt_libs")]*/
+#[cfg(feature = "prebuilt_libs")]
 fn main() {
+    use std::path::{Path, PathBuf};
+
     const STATIC_MAJOR: u32 = 0;
     const STATIC_MINOR: u32 = 2;
     const STATIC_PATCH: u32 = 0;
@@ -114,90 +114,94 @@ fn main() {
         )
     }
     println!("done");
-}
-fn extract_if_libs_dir_not_exists(cache_dir: &Path) {
-    if cache_dir.join("lib").exists() {
-        println!("skipping extraction. found extracted impeller library in {cache_dir:?}");
-    } else {
-        println!(
+
+    fn extract_if_libs_dir_not_exists(cache_dir: &Path) {
+        if cache_dir.join("lib").exists() {
+            println!("skipping extraction. found extracted impeller library in {cache_dir:?}. Please run cargo clean to remove this warning");
+        } else {
+            println!(
             "there's no extracted impeller library in {cache_dir:?}, so we extract it from archive"
         );
-        let mut command = if cfg!(unix) {
-            std::process::Command::new("unzip")
-        } else {
-            let mut command = std::process::Command::new("tar");
-            command.arg("-xvf");
-            command
-        };
-        let tar_status = command
-            .arg(LOCAL_IMPELLER_ARCHIVE_NAME)
-            .current_dir(cache_dir)
-            .status();
-        assert!(
-            tar_status
-                .expect("failed to run tar/unzip command")
-                .success(),
-            "tar failed to extract {LOCAL_IMPELLER_ARCHIVE_NAME} and store it in {cache_dir:?}"
-        );
-        println!(
+            let mut command = if cfg!(unix) {
+                std::process::Command::new("unzip")
+            } else {
+                let mut command = std::process::Command::new("tar");
+                command.arg("-xvf");
+                command
+            };
+            let tar_status = command
+                .arg(LOCAL_IMPELLER_ARCHIVE_NAME)
+                .current_dir(cache_dir)
+                .status();
+            assert!(
+                tar_status
+                    .expect("failed to run tar/unzip command")
+                    .success(),
+                "tar failed to extract {LOCAL_IMPELLER_ARCHIVE_NAME} and store it in {cache_dir:?}"
+            );
+            println!(
                 "extracted impeller library from {LOCAL_IMPELLER_ARCHIVE_NAME} and stored it in {cache_dir:?}"
             );
+        }
     }
-}
-fn download_if_not_exists(url: &str, cache_dir: &Path) {
-    if cache_dir.join(LOCAL_IMPELLER_ARCHIVE_NAME).exists() {
-        println!("skipping download. found cached impeller library in {cache_dir:?}");
-    } else {
-        let curl_status = std::process::Command::new("curl")
-            .current_dir(cache_dir)
-            .args([
-                "--progress-bar",
-                "--fail",
-                "-L",
-                url,
-                "-o",
-                LOCAL_IMPELLER_ARCHIVE_NAME,
-            ])
-            .status();
-        assert!(
-            curl_status.expect("failed to run curl command").success(),
-            "curl failed to download {url} and store it in {cache_dir:?}"
-        );
-        println!("downloaded impeller library from {url} and stored it in {cache_dir:?}");
+    fn download_if_not_exists(url: &str, cache_dir: &Path) {
+        if cache_dir.join(LOCAL_IMPELLER_ARCHIVE_NAME).exists() {
+            println!("skipping download. found cached impeller library in {cache_dir:?}");
+        } else {
+            let curl_status = std::process::Command::new("curl")
+                .current_dir(cache_dir)
+                .args([
+                    "--progress-bar",
+                    "--fail",
+                    "-L",
+                    url,
+                    "-o",
+                    LOCAL_IMPELLER_ARCHIVE_NAME,
+                ])
+                .status();
+            assert!(
+                curl_status.expect("failed to run curl command").success(),
+                "curl failed to download {url} and store it in {cache_dir:?}"
+            );
+            println!("downloaded impeller library from {url} and stored it in {cache_dir:?}");
+        }
     }
-}
-const LOCAL_IMPELLER_ARCHIVE_NAME: &str = "impeller_sdk.zip";
+    const LOCAL_IMPELLER_ARCHIVE_NAME: &str = "impeller_sdk.zip";
 
-fn get_zip_cache_dir(out_dir: &Path, build_name: &str) -> PathBuf {
-    let impeller_cache_dir = get_cache_directory(out_dir);
-    let zip_cache_dir = impeller_cache_dir.join(build_name);
-    std::fs::create_dir_all(&zip_cache_dir).expect("failed to create zip cache dir");
-    zip_cache_dir
-}
-/// This will get/create cache directory. If the current version doesn't match the version stored in
-/// directory, it will remove the directory and create a new one to discard all the old artefacts.
-fn get_cache_directory(out_dir: &Path) -> PathBuf {
-    // assuming cargo's target directory is located in the current directory.
-    let impeller_cache_dir = out_dir // ./target/release/build/impeller_a2142341/out
-        .parent()
-        .expect("failed to get out_dir parent") // ./target/release/build/impeller_a2142341
-        .parent()
-        .expect("failed to get out_dir's grandparent") // ./target/release/build
-        .parent()
-        .expect("failed to get profile directory") // ./target/release
-        .parent()
-        .expect("failed to get target directory") // ./target
-        .parent()
-        .expect("failed to get target directory's parent") // ./
-        .join(".impeller_cache"); // ./.impeller_cache
-    let impeller_cache_version_path = impeller_cache_dir.join("version.txt");
-    let impeller_version = std::env::var("CARGO_PKG_VERSION").unwrap();
-    let version_in_file = std::fs::read_to_string(&impeller_cache_version_path).unwrap_or_default();
-    if version_in_file != impeller_version {
-        println!("cargo:warning=impeller cache directory is out of date {impeller_version} vs {version_in_file}");
-        std::fs::remove_dir_all(&impeller_cache_dir).expect("failed to remove impeller cache dir");
-        std::fs::create_dir_all(&impeller_cache_dir).expect("failed to create impeller cache dir");
-        std::fs::write(&impeller_cache_version_path, impeller_version).unwrap();
+    fn get_zip_cache_dir(out_dir: &Path, build_name: &str) -> PathBuf {
+        let impeller_cache_dir = get_cache_directory(out_dir);
+        let zip_cache_dir = impeller_cache_dir.join(build_name);
+        std::fs::create_dir_all(&zip_cache_dir).expect("failed to create zip cache dir");
+        zip_cache_dir
     }
-    impeller_cache_dir
+    /// This will get/create cache directory. If the current version doesn't match the version stored in
+    /// directory, it will remove the directory and create a new one to discard all the old artefacts.
+    fn get_cache_directory(out_dir: &Path) -> PathBuf {
+        // assuming cargo's target directory is located in the current directory.
+        let impeller_cache_dir = out_dir // ./target/release/build/impeller_a2142341/out
+            .parent()
+            .expect("failed to get out_dir parent") // ./target/release/build/impeller_a2142341
+            .parent()
+            .expect("failed to get out_dir's grandparent") // ./target/release/build
+            .parent()
+            .expect("failed to get profile directory") // ./target/release
+            .parent()
+            .expect("failed to get target directory") // ./target
+            .parent()
+            .expect("failed to get target directory's parent") // ./
+            .join(".impeller_cache"); // ./.impeller_cache
+        let impeller_cache_version_path = impeller_cache_dir.join("version.txt");
+        let impeller_version = std::env::var("CARGO_PKG_VERSION").unwrap();
+        let version_in_file =
+            std::fs::read_to_string(&impeller_cache_version_path).unwrap_or_default();
+        if version_in_file != impeller_version {
+            println!("cargo:warning=impeller cache directory is out of date {impeller_version} vs {version_in_file}");
+            std::fs::remove_dir_all(&impeller_cache_dir)
+                .expect("failed to remove impeller cache dir");
+            std::fs::create_dir_all(&impeller_cache_dir)
+                .expect("failed to create impeller cache dir");
+            std::fs::write(&impeller_cache_version_path, impeller_version).unwrap();
+        }
+        impeller_cache_dir
+    }
 }

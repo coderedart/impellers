@@ -1,6 +1,6 @@
 [package]
 name = "impellers"
-version = "0.1.2"
+version = "0.2.0"
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/coderedart/flutter"
@@ -21,16 +21,22 @@ cache_libs = ["prebuilt_libs"]
 
 
 [dependencies]
-tracing = {version = "0.1", default-features = false, features = ["std"]}
+euclid = {version = "0.22", features = ["bytemuck"]}
+bytemuck = {version = "*"}
 
 [dev-dependencies]
-sdl3 = {version = "*"}
+sdl3 = {version = "0.14"}
+glow = {version = "0.16"}
+image = {version  = "*", default-features = false, features = ["jpeg"]}
 
 [[example]]
 name = "empty"
-required-features = ["sys"]
+required-features = ["sys", "prebuilt_libs"]
+
 [[example]]
 name = "common"
 crate-type = ["staticlib"]
+
+
 [workspace]
 members = ["crates/*"]

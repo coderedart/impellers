@@ -18,12 +18,13 @@ jobs:
       if: matrix.os == 'ubuntu'
       # based on glfw/glfw's workflow
       run: sudo apt install -y libglfw3-dev libglfw3 libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev libwayland-dev libxkbcommon-dev
-    - name: Host Build
-      if: matrix.os != 'macos'
+    - name: Shared Build
       shell: bash
       run: |
-        cargo run -vv --example=empty --no-default-features --features=download_binaries,static_link
-        cargo run -vv --example=empty --no-default-features --features=download_binaries
-        cargo run -vv --example=empty --no-default-features --features=download_binaries,static_link --release
-        cargo run -vv --example=empty --no-default-features --features=download_binaries --release
+        cargo run --example=empty --features=prebuilt_libs,sys
 
+    - name: Static Build
+      shell: bash
+      if: matrix.os != 'macos'
+      run: |
+        cargo run --example=empty --features=prebuilt_libs,sys,static_link

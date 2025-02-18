@@ -1,4 +1,4 @@
-use impellers::{Color, DisplayListBuilder, Paint, Rect};
+use impellers::{Color, DisplayListBuilder, Paint, Point, Rect, Size};
 
 mod common;
 
@@ -14,12 +14,7 @@ fn main() {
         builder.draw_paint(&paint);
         paint.set_color(Color::AIR_FORCE_BLUE);
         builder.draw_rect(
-            &Rect {
-                x: 100.0,
-                y: 100.0,
-                width: 250.0,
-                height: 250.0,
-            },
+            &Rect::new(Point::new(100.0, 100.0), Size::new(250.0, 250.0)),
             &paint,
         );
         builder.build().unwrap()

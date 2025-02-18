@@ -18,12 +18,7 @@ fn main() {
         paint.set_mask_filter(&blur_filter);
 
         builder.draw_rect(
-            &Rect {
-                x: 100.0,
-                y: 100.0,
-                width: 250.0,
-                height: 250.0,
-            },
+            &Rect::new(Point::new(100.0, 100.0), Size::new(250.0, 250.0)),
             &paint,
         );
         builder.build().unwrap()
