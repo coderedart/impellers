@@ -30,13 +30,13 @@ fn main() {
     };
     let static_link = cfg!(feature = "static_link");
     let required_libs: &[&'static str] = if static_link {
-        match cargo_target_os {
+        match cargo_target_os.as_str() {
             "windows" => &["impeller.lib"],
             "macos" | "linux" | "android" => &["libimpeller.a"],
             rest => panic!("unsupported target OS: {rest}"),
         }
     } else {
-        match cargo_target_os {
+        match cargo_target_os.as_str() {
             "windows" => &["impeller.dll", "impeller.dll.lib"],
             "macos" => &["libimpeller.dylib"],
             "linux" | "android" => &["libimpeller.so"],
