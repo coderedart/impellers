@@ -38,7 +38,13 @@ required-features = ["sys", "prebuilt_libs"]
 [[example]]
 name = "common"
 crate-type = ["staticlib"]
+doc-scrape-examples = true
 
 
 [workspace]
 members = ["crates/*"]
+
+
+
+[package.metadata.docs.rs]
+cargo-args = ["-Zunstable-options", "-Zrustdoc-scrape-examples"]

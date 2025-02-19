@@ -227,131 +227,131 @@ pub type uintmax_t = __uintmax_t;
 pub struct ImpellerContext_ {
     _unused: [u8; 0],
 }
-#[doc = " An Impeller graphics context. Contexts are platform and client-rendering-API\n specific.\n\n Contexts are thread-safe objects that are expensive to create. Most\n applications will only ever create a single context during their lifetimes.\n Once setup, Impeller is ready to render frames as performantly as possible.\n\n During setup, context create the underlying graphics pipelines, allocators,\n worker threads, etc...\n\n The general guidance is to create as few contexts as possible (typically\n just one) and share them as much as possible.\n"]
+#[doc = "An Impeller graphics context. Contexts are platform and client-rendering-API\nspecific.\n\nContexts are thread-safe objects that are expensive to create. Most\napplications will only ever create a single context during their lifetimes.\nOnce setup, Impeller is ready to render frames as performantly as possible.\n\nDuring setup, context create the underlying graphics pipelines, allocators,\nworker threads, etc...\n\nThe general guidance is to create as few contexts as possible (typically\njust one) and share them as much as possible.\n"]
 pub type ImpellerContext = *mut ImpellerContext_;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ImpellerDisplayList_ {
     _unused: [u8; 0],
 }
-#[doc = " Display lists represent encoded rendering intent. These objects are\n immutable, reusable, thread-safe, and context-agnostic.\n\n While it is perfectly fine to create new display lists per frame, there may\n be opportunities for optimization when display lists are reused multiple\n times.\n"]
+#[doc = "Display lists represent encoded rendering intent. These objects are\nimmutable, reusable, thread-safe, and context-agnostic.\n\nWhile it is perfectly fine to create new display lists per frame, there may\nbe opportunities for optimization when display lists are reused multiple\ntimes.\n"]
 pub type ImpellerDisplayList = *mut ImpellerDisplayList_;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ImpellerDisplayListBuilder_ {
     _unused: [u8; 0],
 }
-#[doc = " Display list builders allow for the incremental creation of display lists.\n\n Display list builders are context-agnostic.\n"]
+#[doc = "Display list builders allow for the incremental creation of display lists.\n\nDisplay list builders are context-agnostic.\n"]
 pub type ImpellerDisplayListBuilder = *mut ImpellerDisplayListBuilder_;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ImpellerPaint_ {
     _unused: [u8; 0],
 }
-#[doc = " Paints control the behavior of draw calls encoded in a display list.\n\n Like display lists, paints are context-agnostic.\n"]
+#[doc = "Paints control the behavior of draw calls encoded in a display list.\n\nLike display lists, paints are context-agnostic.\n"]
 pub type ImpellerPaint = *mut ImpellerPaint_;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ImpellerColorFilter_ {
     _unused: [u8; 0],
 }
-#[doc = " Color filters are functions that take two colors and mix them to produce a\n single color. This color is then merged with the destination during\n blending.\n"]
+#[doc = "Color filters are functions that take two colors and mix them to produce a\nsingle color. This color is then merged with the destination during\nblending.\n"]
 pub type ImpellerColorFilter = *mut ImpellerColorFilter_;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ImpellerColorSource_ {
     _unused: [u8; 0],
 }
-#[doc = " Color sources are functions that generate colors for each texture element\n covered by a draw call. The colors for each element can be generated using a\n mathematical function (to produce gradients for example) or sampled from a\n texture.\n"]
+#[doc = "Color sources are functions that generate colors for each texture element\ncovered by a draw call. The colors for each element can be generated using a\nmathematical function (to produce gradients for example) or sampled from a\ntexture.\n"]
 pub type ImpellerColorSource = *mut ImpellerColorSource_;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ImpellerImageFilter_ {
     _unused: [u8; 0],
 }
-#[doc = " Image filters are functions that are applied regions of a texture to produce\n a single color. Contrast this with color filters that operate independently\n on a per-pixel basis. The generated color is then merged with the\n destination during blending.\n"]
+#[doc = "Image filters are functions that are applied regions of a texture to produce\na single color. Contrast this with color filters that operate independently\non a per-pixel basis. The generated color is then merged with the\ndestination during blending.\n"]
 pub type ImpellerImageFilter = *mut ImpellerImageFilter_;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ImpellerMaskFilter_ {
     _unused: [u8; 0],
 }
-#[doc = " Mask filters are functions that are applied over a shape after it has been\n drawn but before it has been blended into the final image.\n"]
+#[doc = "Mask filters are functions that are applied over a shape after it has been\ndrawn but before it has been blended into the final image.\n"]
 pub type ImpellerMaskFilter = *mut ImpellerMaskFilter_;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ImpellerTypographyContext_ {
     _unused: [u8; 0],
 }
-#[doc = " Typography contexts allow for the layout and rendering of text.\n\n These are typically expensive to create and applications will only ever need\n to create a single one of these during their lifetimes.\n\n Unlike graphics context, typograhy contexts are not thread-safe. These must\n be created, used, and collected on a single thread.\n"]
+#[doc = "Typography contexts allow for the layout and rendering of text.\n\nThese are typically expensive to create and applications will only ever need\nto create a single one of these during their lifetimes.\n\nUnlike graphics context, typograhy contexts are not thread-safe. These must\nbe created, used, and collected on a single thread.\n"]
 pub type ImpellerTypographyContext = *mut ImpellerTypographyContext_;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ImpellerParagraph_ {
     _unused: [u8; 0],
 }
-#[doc = " An immutable, fully laid out paragraph.\n"]
+#[doc = "An immutable, fully laid out paragraph.\n"]
 pub type ImpellerParagraph = *mut ImpellerParagraph_;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ImpellerParagraphBuilder_ {
     _unused: [u8; 0],
 }
-#[doc = " Paragraph builders allow for the creation of fully laid out paragraphs\n (which themselves are immutable).\n\n To build a paragraph, users push/pop paragraph styles onto a stack then add\n UTF-8 encoded text. The properties on the top of paragraph style stack when\n the text is added are used to layout and shape that subset of the paragraph.\n\n @see      `ImpellerParagraphStyle`\n"]
+#[doc = "Paragraph builders allow for the creation of fully laid out paragraphs\n(which themselves are immutable).\n\nTo build a paragraph, users push/pop paragraph styles onto a stack then add\nUTF-8 encoded text. The properties on the top of paragraph style stack when\nthe text is added are used to layout and shape that subset of the paragraph.\n\n@see      `ImpellerParagraphStyle`\n"]
 pub type ImpellerParagraphBuilder = *mut ImpellerParagraphBuilder_;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ImpellerParagraphStyle_ {
     _unused: [u8; 0],
 }
-#[doc = " Specified when building a paragraph, paragraph styles are managed in a stack\n with specify text properties to apply to text that is added to the paragraph\n builder.\n"]
+#[doc = "Specified when building a paragraph, paragraph styles are managed in a stack\nwith specify text properties to apply to text that is added to the paragraph\nbuilder.\n"]
 pub type ImpellerParagraphStyle = *mut ImpellerParagraphStyle_;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ImpellerPath_ {
     _unused: [u8; 0],
 }
-#[doc = " Represents a two-dimensional path that is immutable and graphics context\n agnostic.\n\n Paths in Impeller consist of linear, cubic Bézier curve, and quadratic\n Bézier curve segments. All other shapes are approximations using these\n building blocks.\n\n Paths are created using path builder that allow for the configuration of the\n path segments, how they are filled, and/or stroked.\n"]
+#[doc = "Represents a two-dimensional path that is immutable and graphics context\nagnostic.\n\nPaths in Impeller consist of linear, cubic Bézier curve, and quadratic\nBézier curve segments. All other shapes are approximations using these\nbuilding blocks.\n\nPaths are created using path builder that allow for the configuration of the\npath segments, how they are filled, and/or stroked.\n"]
 pub type ImpellerPath = *mut ImpellerPath_;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ImpellerPathBuilder_ {
     _unused: [u8; 0],
 }
-#[doc = " Path builders allow for the incremental building up of paths.\n"]
+#[doc = "Path builders allow for the incremental building up of paths.\n"]
 pub type ImpellerPathBuilder = *mut ImpellerPathBuilder_;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ImpellerSurface_ {
     _unused: [u8; 0],
 }
-#[doc = " A surface represents a render target for Impeller to direct the rendering\n intent specified the form of display lists to.\n\n Render targets are how Impeller API users perform Window System Integration\n (WSI). Users wrap swapchain images as surfaces and draw display lists onto\n these surfaces to present content.\n\n Creating surfaces is typically platform and client-rendering-API specific.\n"]
+#[doc = "A surface represents a render target for Impeller to direct the rendering\nintent specified the form of display lists to.\n\nRender targets are how Impeller API users perform Window System Integration\n(WSI). Users wrap swapchain images as surfaces and draw display lists onto\nthese surfaces to present content.\n\nCreating surfaces is typically platform and client-rendering-API specific.\n"]
 pub type ImpellerSurface = *mut ImpellerSurface_;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ImpellerTexture_ {
     _unused: [u8; 0],
 }
-#[doc = " A reference to a texture whose data is resident on the GPU. These can be\n referenced in draw calls and paints.\n\n Creating textures is extremely expensive. Creating a single one can\n typically comfortably blow the frame budget of an application. Textures\n should be created on background threads.\n\n @warning    While textures themselves are thread safe, some context types\n             (like OpenGL) may need extra configuration to be able to operate\n             from multiple threads.\n"]
+#[doc = "A reference to a texture whose data is resident on the GPU. These can be\nreferenced in draw calls and paints.\n\nCreating textures is extremely expensive. Creating a single one can\ntypically comfortably blow the frame budget of an application. Textures\nshould be created on background threads.\n\n@warning    While textures themselves are thread safe, some context types\n(like OpenGL) may need extra configuration to be able to operate\nfrom multiple threads.\n"]
 pub type ImpellerTexture = *mut ImpellerTexture_;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ImpellerVulkanSwapchain_ {
     _unused: [u8; 0],
 }
-#[doc = " The primary form of WSI when using a Vulkan context, these swapchains use\n the `VK_KHR_surface` Vulkan extension.\n\n Creating a swapchain is extremely expensive. One must be created at\n application startup and re-used throughout the application lifecycle.\n\n Swapchains are resilient to the underlying surfaces being resized. The\n swapchain images will be re-created as necessary on-demand.\n"]
+#[doc = "The primary form of WSI when using a Vulkan context, these swapchains use\nthe `VK_KHR_surface` Vulkan extension.\n\nCreating a swapchain is extremely expensive. One must be created at\napplication startup and re-used throughout the application lifecycle.\n\nSwapchains are resilient to the underlying surfaces being resized. The\nswapchain images will be re-created as necessary on-demand.\n"]
 pub type ImpellerVulkanSwapchain = *mut ImpellerVulkanSwapchain_;
-#[doc = " A callback invoked by Impeller that passes a user supplied baton back to the\n user. Impeller does not interpret the baton in any way. The way the baton is\n specified and the thread on which the callback is invoked depends on how the\n user supplies the callback to Impeller.\n"]
+#[doc = "A callback invoked by Impeller that passes a user supplied baton back to the\nuser. Impeller does not interpret the baton in any way. The way the baton is\nspecified and the thread on which the callback is invoked depends on how the\nuser supplies the callback to Impeller.\n"]
 pub type ImpellerCallback =
     ::std::option::Option<unsafe extern "C" fn(user_data: *mut ::std::os::raw::c_void)>;
-#[doc = " A callback used by Impeller to allow the user to resolve function pointers.\n A user supplied baton that is uninterpreted by Impeller is passed back to\n the user in the callback. How the baton is specified to Impeller and the\n thread on which the callback is invoked depends on how the callback is\n specified to Impeller.\n"]
+#[doc = "A callback used by Impeller to allow the user to resolve function pointers.\nA user supplied baton that is uninterpreted by Impeller is passed back to\nthe user in the callback. How the baton is specified to Impeller and the\nthread on which the callback is invoked depends on how the callback is\nspecified to Impeller.\n"]
 pub type ImpellerProcAddressCallback = ::std::option::Option<
     unsafe extern "C" fn(
         proc_name: *const ::std::os::raw::c_char,
         user_data: *mut ::std::os::raw::c_void,
     ) -> *mut ::std::os::raw::c_void,
 >;
-#[doc = " A callback used by Impeller to allow the user to resolve Vulkan function\n pointers. A user supplied baton that is uninterpreted by Impeller is passed\n back to the user in the callback.\n"]
+#[doc = "A callback used by Impeller to allow the user to resolve Vulkan function\npointers. A user supplied baton that is uninterpreted by Impeller is passed\nback to the user in the callback.\n"]
 pub type ImpellerVulkanProcAddressCallback = ::std::option::Option<
     unsafe extern "C" fn(
         vulkan_instance: *mut ::std::os::raw::c_void,
@@ -554,7 +554,7 @@ const _: () = {
     ["Offset of field: ImpellerISize::height"]
         [::std::mem::offset_of!(ImpellerISize, height) - 8usize];
 };
-#[doc = " A 4x4 transformation matrix using column-major storage.\n\n ```ignore | m[0] m[4] m[8]  m[12] |\n | m[1] m[5] m[9]  m[13] |\n | m[2] m[6] m[10] m[14] |\n | m[3] m[7] m[11] m[15] |\n ```\n"]
+#[doc = "A 4x4 transformation matrix using column-major storage.\n\n```cpp\n| m[0] m[4] m[8]  m[12] |\n| m[1] m[5] m[9]  m[13] |\n| m[2] m[6] m[10] m[14] |\n| m[3] m[7] m[11] m[15] |\n```\n"]
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct ImpellerMatrix {
@@ -566,7 +566,7 @@ const _: () = {
     ["Alignment of ImpellerMatrix"][::std::mem::align_of::<ImpellerMatrix>() - 4usize];
     ["Offset of field: ImpellerMatrix::m"][::std::mem::offset_of!(ImpellerMatrix, m) - 0usize];
 };
-#[doc = " A 4x5 matrix using row-major storage used for transforming color values.\n\n To transform color values, a 5x5 matrix is constructed with the 5th row\n being identity. Then the following transformation is performed:\n\n ```ignore | R' |   | m[0]  m[1]  m[2]  m[3]  m[4]  |   | R |\n | G' |   | m[5]  m[6]  m[7]  m[8]  m[9]  |   | G |\n | B' | = | m[10] m[11] m[12] m[13] m[14] | * | B |\n | A' |   | m[15] m[16] m[17] m[18] m[19] |   | A |\n | 1  |   | 0     0     0     0     1     |   | 1 |\n ```\n\n The translation column (m[4], m[9], m[14], m[19]) must be specified in\n non-normalized 8-bit unsigned integer space (0 to 255). Values outside this\n range will produce undefined results.\n\n The identity transformation is thus:\n\n ```ignore 1, 0, 0, 0, 0,\n 0, 1, 0, 0, 0,\n 0, 0, 1, 0, 0,\n 0, 0, 0, 1, 0,\n ```\n\n Some examples:\n\n To invert all colors:\n\n ```ignore -1,  0,  0, 0, 255,\n  0, -1,  0, 0, 255,\n  0,  0, -1, 0, 255,\n  0,  0,  0, 1,   0,\n ```\n\n To apply a sepia filter:\n\n ```ignore 0.393, 0.769, 0.189, 0, 0,\n 0.349, 0.686, 0.168, 0, 0,\n 0.272, 0.534, 0.131, 0, 0,\n 0,     0,     0,     1, 0,\n ```\n\n To apply a grayscale conversion filter:\n\n ```ignore  0.2126, 0.7152, 0.0722, 0, 0,\n  0.2126, 0.7152, 0.0722, 0, 0,\n  0.2126, 0.7152, 0.0722, 0, 0,\n  0,      0,      0,      1, 0,\n ```\n\n @see      ImpellerColorFilter\n"]
+#[doc = "A 4x5 matrix using row-major storage used for transforming color values.\n\nTo transform color values, a 5x5 matrix is constructed with the 5th row\nbeing identity. Then the following transformation is performed:\n\n```cpp\n| R' |   | m[0]  m[1]  m[2]  m[3]  m[4]  |   | R |\n| G' |   | m[5]  m[6]  m[7]  m[8]  m[9]  |   | G |\n| B' | = | m[10] m[11] m[12] m[13] m[14] | * | B |\n| A' |   | m[15] m[16] m[17] m[18] m[19] |   | A |\n| 1  |   | 0     0     0     0     1     |   | 1 |\n```\n\nThe translation column (m[4], m[9], m[14], m[19]) must be specified in\nnon-normalized 8-bit unsigned integer space (0 to 255). Values outside this\nrange will produce undefined results.\n\nThe identity transformation is thus:\n\n```cpp\n1, 0, 0, 0, 0,\n0, 1, 0, 0, 0,\n0, 0, 1, 0, 0,\n0, 0, 0, 1, 0,\n```\n\nSome examples:\n\nTo invert all colors:\n\n```cpp\n-1,  0,  0, 0, 255,\n0, -1,  0, 0, 255,\n0,  0, -1, 0, 255,\n0,  0,  0, 1,   0,\n```\n\nTo apply a sepia filter:\n\n```cpp\n0.393, 0.769, 0.189, 0, 0,\n0.349, 0.686, 0.168, 0, 0,\n0.272, 0.534, 0.131, 0, 0,\n0,     0,     0,     1, 0,\n```\n\nTo apply a grayscale conversion filter:\n\n```cpp\n0.2126, 0.7152, 0.0722, 0, 0,\n0.2126, 0.7152, 0.0722, 0, 0,\n0.2126, 0.7152, 0.0722, 0, 0,\n0,      0,      0,      1, 0,\n```\n\n@see      ImpellerColorFilter\n"]
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
 pub struct ImpellerColorMatrix {
@@ -753,177 +753,177 @@ impl Default for ImpellerContextVulkanInfo {
     }
 }
 unsafe extern "C" {
-    #[doc = " @brief      Get the version of Impeller standalone API. This is the API that\n             will be accepted for validity checks when provided to the\n             context creation methods.\n\n             The current version of the API  is denoted by the\n             `IMPELLER_VERSION` macro. This version must be passed to APIs\n             that create top-level objects like graphics contexts.\n             Construction of the context may fail if the API version expected\n             by the caller is not supported by the library.\n\n             Since there are no API stability guarantees today, passing a\n             version that is different to the one returned by\n             `ImpellerGetVersion` will always fail.\n\n @see        `ImpellerContextCreateOpenGLESNew`\n\n @return     The version of the standalone API.\n"]
+    #[doc = "@brief      Get the version of Impeller standalone API. This is the API that\nwill be accepted for validity checks when provided to the\ncontext creation methods.\n\nThe current version of the API  is denoted by the\n`IMPELLER_VERSION` macro. This version must be passed to APIs\nthat create top-level objects like graphics contexts.\nConstruction of the context may fail if the API version expected\nby the caller is not supported by the library.\n\nSince there are no API stability guarantees today, passing a\nversion that is different to the one returned by\n`ImpellerGetVersion` will always fail.\n\n@see        `ImpellerContextCreateOpenGLESNew`\n\n@return     The version of the standalone API.\n"]
     pub fn ImpellerGetVersion() -> u32;
-    #[doc = " @brief      Create an OpenGL(ES) Impeller context.\n\n @warning    Unlike other context types, the OpenGL ES context can only be\n             created, used, and collected on the calling thread. This\n             restriction may be lifted in the future once reactor workers are\n             exposed in the API. No other context types have threading\n             restrictions. Till reactor workers can be used, using the\n             context on a background thread will cause a stall of OpenGL\n             operations.\n\n @param[in]  version      The version of the Impeller\n                          standalone API. See `ImpellerGetVersion`. If the\n                          specified here is not compatible with the version\n                          of the library, context creation will fail and NULL\n                          context returned from this call.\n @param[in]  gl_proc_address_callback\n                          The gl proc address callback. For instance,\n                          `eglGetProcAddress`.\n @param[in]  gl_proc_address_callback_user_data\n                          The gl proc address callback user data baton. This\n                          pointer is not interpreted by Impeller and will be\n                          returned as user data in the proc address callback.\n                          user data.\n\n @return     The context or NULL if one cannot be created.\n"]
+    #[doc = "@brief      Create an OpenGL(ES) Impeller context.\n\n@warning    Unlike other context types, the OpenGL ES context can only be\ncreated, used, and collected on the calling thread. This\nrestriction may be lifted in the future once reactor workers are\nexposed in the API. No other context types have threading\nrestrictions. Till reactor workers can be used, using the\ncontext on a background thread will cause a stall of OpenGL\noperations.\n\n@param[in]  version      The version of the Impeller\nstandalone API. See `ImpellerGetVersion`. If the\nspecified here is not compatible with the version\nof the library, context creation will fail and NULL\ncontext returned from this call.\n@param[in]  gl_proc_address_callback\nThe gl proc address callback. For instance,\n`eglGetProcAddress`.\n@param[in]  gl_proc_address_callback_user_data\nThe gl proc address callback user data baton. This\npointer is not interpreted by Impeller and will be\nreturned as user data in the proc address callback.\nuser data.\n\n@return     The context or NULL if one cannot be created.\n"]
     pub fn ImpellerContextCreateOpenGLESNew(
         version: u32,
         gl_proc_address_callback: ImpellerProcAddressCallback,
         gl_proc_address_callback_user_data: *mut ::std::os::raw::c_void,
     ) -> ImpellerContext;
-    #[doc = " @brief      Create a Metal context using the system default Metal device.\n\n @param[in]  version  The version specified in the IMPELLER_VERSION macro.\n\n @return     The Metal context or NULL if one cannot be created.\n"]
+    #[doc = "@brief      Create a Metal context using the system default Metal device.\n\n@param[in]  version  The version specified in the IMPELLER_VERSION macro.\n\n@return     The Metal context or NULL if one cannot be created.\n"]
     pub fn ImpellerContextCreateMetalNew(version: u32) -> ImpellerContext;
-    #[doc = " @brief      Create a Vulkan context using the provided Vulkan Settings.\n\n @param[in]  version   The version specified in the IMPELLER_VERSION macro.\n @param[in]  settings  The Vulkan settings.\n\n @return     The Vulkan context or NULL if one cannot be created.\n"]
+    #[doc = "@brief      Create a Vulkan context using the provided Vulkan Settings.\n\n@param[in]  version   The version specified in the IMPELLER_VERSION macro.\n@param[in]  settings  The Vulkan settings.\n\n@return     The Vulkan context or NULL if one cannot be created.\n"]
     pub fn ImpellerContextCreateVulkanNew(
         version: u32,
         settings: *const ImpellerContextVulkanSettings,
     ) -> ImpellerContext;
-    #[doc = " @brief      Retain a strong reference to the object. The object can be NULL\n             in which case this method is a no-op.\n\n @param[in]  context  The context.\n"]
+    #[doc = "@brief      Retain a strong reference to the object. The object can be NULL\nin which case this method is a no-op.\n\n@param[in]  context  The context.\n"]
     pub fn ImpellerContextRetain(context: ImpellerContext);
-    #[doc = " @brief      Release a previously retained reference to the object. The\n             object can be NULL in which case this method is a no-op.\n\n @param[in]  context  The context.\n"]
+    #[doc = "@brief      Release a previously retained reference to the object. The\nobject can be NULL in which case this method is a no-op.\n\n@param[in]  context  The context.\n"]
     pub fn ImpellerContextRelease(context: ImpellerContext);
-    #[doc = " @brief      Get internal Vulkan handles managed by the given Vulkan context.\n             Ownership of the handles is still maintained by Impeller. This\n             accessor is just available so embedders can create resources\n             using the same device and instance as Impeller for interop.\n\n @warning    If the context is not a Vulkan context, False is returned with\n             the [out] argument unaffected.\n\n @param[in]  context          The context\n @param[out]  out_vulkan_info  The out vulkan information\n\n @return     If the Vulkan info could be fetched from the context.\n"]
+    #[doc = "@brief      Get internal Vulkan handles managed by the given Vulkan context.\nOwnership of the handles is still maintained by Impeller. This\naccessor is just available so embedders can create resources\nusing the same device and instance as Impeller for interop.\n\n@warning    If the context is not a Vulkan context, False is returned with\nthe [out] argument unaffected.\n\n@param[in]  context          The context\n@param[out]  out_vulkan_info  The out vulkan information\n\n@return     If the Vulkan info could be fetched from the context.\n"]
     pub fn ImpellerContextGetVulkanInfo(
         context: ImpellerContext,
         out_vulkan_info: *mut ImpellerContextVulkanInfo,
     ) -> bool;
-    #[doc = " @brief      Create a new Vulkan swapchain using a VkSurfaceKHR instance.\n             Ownership of the surface is transferred over to Impeller. The\n             Vulkan instance the surface is created from must the same as the\n             context provided.\n\n @param[in]  context             The context. Must be a Vulkan context whose\n                                 instance is the same used to create the\n                                 surface passed into the next argument.\n @param      vulkan_surface_khr  The vulkan surface.\n\n @return     The vulkan swapchain.\n"]
+    #[doc = "@brief      Create a new Vulkan swapchain using a VkSurfaceKHR instance.\nOwnership of the surface is transferred over to Impeller. The\nVulkan instance the surface is created from must the same as the\ncontext provided.\n\n@param[in]  context             The context. Must be a Vulkan context whose\ninstance is the same used to create the\nsurface passed into the next argument.\n@param      vulkan_surface_khr  The vulkan surface.\n\n@return     The vulkan swapchain.\n"]
     pub fn ImpellerVulkanSwapchainCreateNew(
         context: ImpellerContext,
         vulkan_surface_khr: *mut ::std::os::raw::c_void,
     ) -> ImpellerVulkanSwapchain;
-    #[doc = " @brief      Retain a strong reference to the object. The object can be NULL\n             in which case this method is a no-op.\n\n @param[in]  swapchain  The swapchain.\n"]
+    #[doc = "@brief      Retain a strong reference to the object. The object can be NULL\nin which case this method is a no-op.\n\n@param[in]  swapchain  The swapchain.\n"]
     pub fn ImpellerVulkanSwapchainRetain(swapchain: ImpellerVulkanSwapchain);
-    #[doc = " @brief      Release a previously retained reference to the object. The\n             object can be NULL in which case this method is a no-op.\n\n @param[in]  swapchain  The swapchain.\n"]
+    #[doc = "@brief      Release a previously retained reference to the object. The\nobject can be NULL in which case this method is a no-op.\n\n@param[in]  swapchain  The swapchain.\n"]
     pub fn ImpellerVulkanSwapchainRelease(swapchain: ImpellerVulkanSwapchain);
-    #[doc = " @brief      A potentially blocking operation, acquires the next surface to\n             render to. Since this may block, surface acquisition must be\n             delayed for as long as possible to avoid an idle wait on the\n             CPU.\n\n @param[in]  swapchain  The swapchain.\n\n @return     The surface if one could be obtained, NULL otherwise.\n"]
+    #[doc = "@brief      A potentially blocking operation, acquires the next surface to\nrender to. Since this may block, surface acquisition must be\ndelayed for as long as possible to avoid an idle wait on the\nCPU.\n\n@param[in]  swapchain  The swapchain.\n\n@return     The surface if one could be obtained, NULL otherwise.\n"]
     pub fn ImpellerVulkanSwapchainAcquireNextSurfaceNew(
         swapchain: ImpellerVulkanSwapchain,
     ) -> ImpellerSurface;
-    #[doc = " @brief      Create a new surface by wrapping an existing framebuffer object.\n             The framebuffer must be complete as determined by\n             `glCheckFramebufferStatus`. The framebuffer is still owned by\n             the caller and it must be collected once the surface is\n             collected.\n\n @param[in]  context  The context.\n @param[in]  fbo      The framebuffer object handle.\n @param[in]  format   The format of the framebuffer.\n @param[in]  size     The size of the framebuffer is texels.\n\n @return     The surface if once can be created, NULL otherwise.\n"]
+    #[doc = "@brief      Create a new surface by wrapping an existing framebuffer object.\nThe framebuffer must be complete as determined by\n`glCheckFramebufferStatus`. The framebuffer is still owned by\nthe caller and it must be collected once the surface is\ncollected.\n\n@param[in]  context  The context.\n@param[in]  fbo      The framebuffer object handle.\n@param[in]  format   The format of the framebuffer.\n@param[in]  size     The size of the framebuffer is texels.\n\n@return     The surface if once can be created, NULL otherwise.\n"]
     pub fn ImpellerSurfaceCreateWrappedFBONew(
         context: ImpellerContext,
         fbo: u64,
         format: PixelFormat,
         size: *const ImpellerISize,
     ) -> ImpellerSurface;
-    #[doc = " @brief      Create a surface by wrapping a Metal drawable. This is useful\n             during WSI when the drawable is the backing store of the Metal\n             layer being drawn to.\n\n             The Metal layer must be using the same device managed by the\n             underlying context.\n\n @param[in]  context         The context. The Metal device managed by this\n                             context must be the same used to create the\n                             drawable that is being wrapped.\n @param      metal_drawable  The drawable to wrap as a surface.\n\n @return     The surface if one could be wrapped, NULL otherwise.\n"]
+    #[doc = "@brief      Create a surface by wrapping a Metal drawable. This is useful\nduring WSI when the drawable is the backing store of the Metal\nlayer being drawn to.\n\nThe Metal layer must be using the same device managed by the\nunderlying context.\n\n@param[in]  context         The context. The Metal device managed by this\ncontext must be the same used to create the\ndrawable that is being wrapped.\n@param      metal_drawable  The drawable to wrap as a surface.\n\n@return     The surface if one could be wrapped, NULL otherwise.\n"]
     pub fn ImpellerSurfaceCreateWrappedMetalDrawableNew(
         context: ImpellerContext,
         metal_drawable: *mut ::std::os::raw::c_void,
     ) -> ImpellerSurface;
-    #[doc = " @brief      Retain a strong reference to the object. The object can be NULL\n             in which case this method is a no-op.\n\n @param[in]  surface  The surface.\n"]
+    #[doc = "@brief      Retain a strong reference to the object. The object can be NULL\nin which case this method is a no-op.\n\n@param[in]  surface  The surface.\n"]
     pub fn ImpellerSurfaceRetain(surface: ImpellerSurface);
-    #[doc = " @brief      Release a previously retained reference to the object. The\n             object can be NULL in which case this method is a no-op.\n\n @param[in]  surface  The surface.\n"]
+    #[doc = "@brief      Release a previously retained reference to the object. The\nobject can be NULL in which case this method is a no-op.\n\n@param[in]  surface  The surface.\n"]
     pub fn ImpellerSurfaceRelease(surface: ImpellerSurface);
-    #[doc = " @brief      Draw a display list onto the surface. The same display list can\n             be drawn multiple times to different surfaces.\n\n @warning    In the OpenGL backend, Impeller will not make an effort to\n             preserve the OpenGL state that is current in the context.\n             Embedders that perform additional OpenGL operations in the\n             context should expect the reset state after control transitions\n             back to them. Key state to watch out for would be the viewports,\n             stencil rects, test toggles, resource (texture, framebuffer,\n             buffer) bindings, etc...\n\n @param[in]  surface       The surface to draw the display list to.\n @param[in]  display_list  The display list to draw onto the surface.\n\n @return     If the display list could be drawn onto the surface.\n"]
+    #[doc = "@brief      Draw a display list onto the surface. The same display list can\nbe drawn multiple times to different surfaces.\n\n@warning    In the OpenGL backend, Impeller will not make an effort to\npreserve the OpenGL state that is current in the context.\nEmbedders that perform additional OpenGL operations in the\ncontext should expect the reset state after control transitions\nback to them. Key state to watch out for would be the viewports,\nstencil rects, test toggles, resource (texture, framebuffer,\nbuffer) bindings, etc...\n\n@param[in]  surface       The surface to draw the display list to.\n@param[in]  display_list  The display list to draw onto the surface.\n\n@return     If the display list could be drawn onto the surface.\n"]
     pub fn ImpellerSurfaceDrawDisplayList(
         surface: ImpellerSurface,
         display_list: ImpellerDisplayList,
     ) -> bool;
-    #[doc = " @brief      Present the surface to the underlying window system.\n\n @param[in]  surface  The surface to present.\n\n @return     True if the surface could be presented.\n"]
+    #[doc = "@brief      Present the surface to the underlying window system.\n\n@param[in]  surface  The surface to present.\n\n@return     True if the surface could be presented.\n"]
     pub fn ImpellerSurfacePresent(surface: ImpellerSurface) -> bool;
-    #[doc = " @brief      Retain a strong reference to the object. The object can be NULL\n             in which case this method is a no-op.\n\n @param[in]  path  The path.\n"]
+    #[doc = "@brief      Retain a strong reference to the object. The object can be NULL\nin which case this method is a no-op.\n\n@param[in]  path  The path.\n"]
     pub fn ImpellerPathRetain(path: ImpellerPath);
-    #[doc = " @brief      Release a previously retained reference to the object. The\n             object can be NULL in which case this method is a no-op.\n\n @param[in]  path  The path.\n"]
+    #[doc = "@brief      Release a previously retained reference to the object. The\nobject can be NULL in which case this method is a no-op.\n\n@param[in]  path  The path.\n"]
     pub fn ImpellerPathRelease(path: ImpellerPath);
-    #[doc = " @brief      Create a new path builder. Paths themselves are immutable.\n             A builder builds these immutable paths.\n\n @return     The path builder.\n"]
+    #[doc = "@brief      Create a new path builder. Paths themselves are immutable.\nA builder builds these immutable paths.\n\n@return     The path builder.\n"]
     pub fn ImpellerPathBuilderNew() -> ImpellerPathBuilder;
-    #[doc = " @brief      Retain a strong reference to the object. The object can be NULL\n             in which case this method is a no-op.\n\n @param[in]  builder  The builder.\n"]
+    #[doc = "@brief      Retain a strong reference to the object. The object can be NULL\nin which case this method is a no-op.\n\n@param[in]  builder  The builder.\n"]
     pub fn ImpellerPathBuilderRetain(builder: ImpellerPathBuilder);
-    #[doc = " @brief      Release a previously retained reference to the object. The\n             object can be NULL in which case this method is a no-op.\n\n @param[in]  builder  The builder.\n"]
+    #[doc = "@brief      Release a previously retained reference to the object. The\nobject can be NULL in which case this method is a no-op.\n\n@param[in]  builder  The builder.\n"]
     pub fn ImpellerPathBuilderRelease(builder: ImpellerPathBuilder);
-    #[doc = " @brief      Move the cursor to the specified location.\n\n @param[in]  builder   The builder.\n @param[in]  location  The location.\n"]
+    #[doc = "@brief      Move the cursor to the specified location.\n\n@param[in]  builder   The builder.\n@param[in]  location  The location.\n"]
     pub fn ImpellerPathBuilderMoveTo(builder: ImpellerPathBuilder, location: *const ImpellerPoint);
-    #[doc = " @brief      Add a line segment from the current cursor location to the given\n             location. The cursor location is updated to be at the endpoint.\n\n @param[in]  builder   The builder.\n @param[in]  location  The location.\n"]
+    #[doc = "@brief      Add a line segment from the current cursor location to the given\nlocation. The cursor location is updated to be at the endpoint.\n\n@param[in]  builder   The builder.\n@param[in]  location  The location.\n"]
     pub fn ImpellerPathBuilderLineTo(builder: ImpellerPathBuilder, location: *const ImpellerPoint);
-    #[doc = " @brief      Add a quadratic curve from whose start point is the cursor to\n             the specified end point using the a single control point.\n\n             The new location of the cursor after this call is the end point.\n\n @param[in]  builder        The builder.\n @param[in]  control_point  The control point.\n @param[in]  end_point      The end point.\n"]
+    #[doc = "@brief      Add a quadratic curve from whose start point is the cursor to\nthe specified end point using the a single control point.\n\nThe new location of the cursor after this call is the end point.\n\n@param[in]  builder        The builder.\n@param[in]  control_point  The control point.\n@param[in]  end_point      The end point.\n"]
     pub fn ImpellerPathBuilderQuadraticCurveTo(
         builder: ImpellerPathBuilder,
         control_point: *const ImpellerPoint,
         end_point: *const ImpellerPoint,
     );
-    #[doc = " @brief      Add a cubic curve whose start point is current cursor location\n             to the specified end point using the two specified control\n             points.\n\n             The new location of the cursor after this call is the end point\n             supplied.\n\n @param[in]  builder          The builder\n @param[in]  control_point_1  The control point 1\n @param[in]  control_point_2  The control point 2\n @param[in]  end_point        The end point\n"]
+    #[doc = "@brief      Add a cubic curve whose start point is current cursor location\nto the specified end point using the two specified control\npoints.\n\nThe new location of the cursor after this call is the end point\nsupplied.\n\n@param[in]  builder          The builder\n@param[in]  control_point_1  The control point 1\n@param[in]  control_point_2  The control point 2\n@param[in]  end_point        The end point\n"]
     pub fn ImpellerPathBuilderCubicCurveTo(
         builder: ImpellerPathBuilder,
         control_point_1: *const ImpellerPoint,
         control_point_2: *const ImpellerPoint,
         end_point: *const ImpellerPoint,
     );
-    #[doc = " @brief      Adds a rectangle to the path.\n\n @param[in]  builder  The builder.\n @param[in]  rect     The rectangle.\n"]
+    #[doc = "@brief      Adds a rectangle to the path.\n\n@param[in]  builder  The builder.\n@param[in]  rect     The rectangle.\n"]
     pub fn ImpellerPathBuilderAddRect(builder: ImpellerPathBuilder, rect: *const ImpellerRect);
-    #[doc = " @brief      Add an arc to the path.\n\n @param[in]  builder              The builder.\n @param[in]  oval_bounds          The oval bounds.\n @param[in]  start_angle_degrees  The start angle in degrees.\n @param[in]  end_angle_degrees    The end angle in degrees.\n"]
+    #[doc = "@brief      Add an arc to the path.\n\n@param[in]  builder              The builder.\n@param[in]  oval_bounds          The oval bounds.\n@param[in]  start_angle_degrees  The start angle in degrees.\n@param[in]  end_angle_degrees    The end angle in degrees.\n"]
     pub fn ImpellerPathBuilderAddArc(
         builder: ImpellerPathBuilder,
         oval_bounds: *const ImpellerRect,
         start_angle_degrees: f32,
         end_angle_degrees: f32,
     );
-    #[doc = " @brief      Add an oval to the path.\n\n @param[in]  builder      The builder.\n @param[in]  oval_bounds  The oval bounds.\n"]
+    #[doc = "@brief      Add an oval to the path.\n\n@param[in]  builder      The builder.\n@param[in]  oval_bounds  The oval bounds.\n"]
     pub fn ImpellerPathBuilderAddOval(
         builder: ImpellerPathBuilder,
         oval_bounds: *const ImpellerRect,
     );
-    #[doc = " @brief      Add a rounded rect with potentially non-uniform radii to the\n             path.\n\n @param[in]  builder         The builder.\n @param[in]  rect            The rectangle.\n @param[in]  rounding_radii  The rounding radii.\n"]
+    #[doc = "@brief      Add a rounded rect with potentially non-uniform radii to the\npath.\n\n@param[in]  builder         The builder.\n@param[in]  rect            The rectangle.\n@param[in]  rounding_radii  The rounding radii.\n"]
     pub fn ImpellerPathBuilderAddRoundedRect(
         builder: ImpellerPathBuilder,
         rect: *const ImpellerRect,
         rounding_radii: *const ImpellerRoundingRadii,
     );
-    #[doc = " @brief      Close the path.\n\n @param[in]  builder  The builder.\n"]
+    #[doc = "@brief      Close the path.\n\n@param[in]  builder  The builder.\n"]
     pub fn ImpellerPathBuilderClose(builder: ImpellerPathBuilder);
-    #[doc = " @brief      Create a new path by copying the existing built-up path. The\n             existing path can continue being added to.\n\n @param[in]  builder  The builder.\n @param[in]  fill     The fill.\n\n @return     The impeller path.\n"]
+    #[doc = "@brief      Create a new path by copying the existing built-up path. The\nexisting path can continue being added to.\n\n@param[in]  builder  The builder.\n@param[in]  fill     The fill.\n\n@return     The impeller path.\n"]
     pub fn ImpellerPathBuilderCopyPathNew(
         builder: ImpellerPathBuilder,
         fill: FillType,
     ) -> ImpellerPath;
-    #[doc = " @brief      Create a new path using the existing built-up path. The existing\n             path builder now contains an empty path.\n\n @param[in]  builder  The builder.\n @param[in]  fill     The fill.\n\n @return     The impeller path.\n"]
+    #[doc = "@brief      Create a new path using the existing built-up path. The existing\npath builder now contains an empty path.\n\n@param[in]  builder  The builder.\n@param[in]  fill     The fill.\n\n@return     The impeller path.\n"]
     pub fn ImpellerPathBuilderTakePathNew(
         builder: ImpellerPathBuilder,
         fill: FillType,
     ) -> ImpellerPath;
-    #[doc = " @brief      Create a new paint with default values.\n\n @return     The impeller paint.\n"]
+    #[doc = "@brief      Create a new paint with default values.\n\n@return     The impeller paint.\n"]
     pub fn ImpellerPaintNew() -> ImpellerPaint;
-    #[doc = " @brief      Retain a strong reference to the object. The object can be NULL\n             in which case this method is a no-op.\n\n @param[in]  paint  The paint.\n"]
+    #[doc = "@brief      Retain a strong reference to the object. The object can be NULL\nin which case this method is a no-op.\n\n@param[in]  paint  The paint.\n"]
     pub fn ImpellerPaintRetain(paint: ImpellerPaint);
-    #[doc = " @brief      Release a previously retained reference to the object. The\n             object can be NULL in which case this method is a no-op.\n\n @param[in]  paint  The paint.\n"]
+    #[doc = "@brief      Release a previously retained reference to the object. The\nobject can be NULL in which case this method is a no-op.\n\n@param[in]  paint  The paint.\n"]
     pub fn ImpellerPaintRelease(paint: ImpellerPaint);
-    #[doc = " @brief      Set the paint color.\n\n @param[in]  paint  The paint.\n @param[in]  color  The color.\n"]
+    #[doc = "@brief      Set the paint color.\n\n@param[in]  paint  The paint.\n@param[in]  color  The color.\n"]
     pub fn ImpellerPaintSetColor(paint: ImpellerPaint, color: *const ImpellerColor);
-    #[doc = " @brief      Set the paint blend mode. The blend mode controls how the new\n             paints contents are mixed with the values already drawn using\n             previous draw calls.\n\n @param[in]  paint  The paint.\n @param[in]  mode   The mode.\n"]
+    #[doc = "@brief      Set the paint blend mode. The blend mode controls how the new\npaints contents are mixed with the values already drawn using\nprevious draw calls.\n\n@param[in]  paint  The paint.\n@param[in]  mode   The mode.\n"]
     pub fn ImpellerPaintSetBlendMode(paint: ImpellerPaint, mode: BlendMode);
-    #[doc = " @brief      Set the paint draw style. The style controls if the closed\n             shapes are filled and/or stroked.\n\n @param[in]  paint  The paint.\n @param[in]  style  The style.\n"]
+    #[doc = "@brief      Set the paint draw style. The style controls if the closed\nshapes are filled and/or stroked.\n\n@param[in]  paint  The paint.\n@param[in]  style  The style.\n"]
     pub fn ImpellerPaintSetDrawStyle(paint: ImpellerPaint, style: DrawStyle);
-    #[doc = " @brief      Sets how strokes rendered using this paint are capped.\n\n @param[in]  paint  The paint.\n @param[in]  cap    The stroke cap style.\n"]
+    #[doc = "@brief      Sets how strokes rendered using this paint are capped.\n\n@param[in]  paint  The paint.\n@param[in]  cap    The stroke cap style.\n"]
     pub fn ImpellerPaintSetStrokeCap(paint: ImpellerPaint, cap: StrokeCap);
-    #[doc = " @brief      Sets how strokes rendered using this paint are joined.\n\n @param[in]  paint  The paint.\n @param[in]  join   The join.\n"]
+    #[doc = "@brief      Sets how strokes rendered using this paint are joined.\n\n@param[in]  paint  The paint.\n@param[in]  join   The join.\n"]
     pub fn ImpellerPaintSetStrokeJoin(paint: ImpellerPaint, join: StrokeJoin);
-    #[doc = " @brief      Set the width of the strokes rendered using this paint.\n\n @param[in]  paint  The paint.\n @param[in]  width  The width.\n"]
+    #[doc = "@brief      Set the width of the strokes rendered using this paint.\n\n@param[in]  paint  The paint.\n@param[in]  width  The width.\n"]
     pub fn ImpellerPaintSetStrokeWidth(paint: ImpellerPaint, width: f32);
-    #[doc = " @brief      Set the miter limit of the strokes rendered using this paint.\n\n @param[in]  paint  The paint.\n @param[in]  miter  The miter limit.\n"]
+    #[doc = "@brief      Set the miter limit of the strokes rendered using this paint.\n\n@param[in]  paint  The paint.\n@param[in]  miter  The miter limit.\n"]
     pub fn ImpellerPaintSetStrokeMiter(paint: ImpellerPaint, miter: f32);
-    #[doc = " @brief      Set the color filter of the paint.\n\n             Color filters are functions that take two colors and mix them to\n             produce a single color. This color is then usually merged with\n             the destination during blending.\n\n @param[in]  paint         The paint.\n @param[in]  color_filter  The color filter.\n"]
+    #[doc = "@brief      Set the color filter of the paint.\n\nColor filters are functions that take two colors and mix them to\nproduce a single color. This color is then usually merged with\nthe destination during blending.\n\n@param[in]  paint         The paint.\n@param[in]  color_filter  The color filter.\n"]
     pub fn ImpellerPaintSetColorFilter(paint: ImpellerPaint, color_filter: ImpellerColorFilter);
-    #[doc = " @brief      Set the color source of the paint.\n\n             Color sources are functions that generate colors for each\n             texture element covered by a draw call.\n\n @param[in]  paint         The paint.\n @param[in]  color_source  The color source.\n"]
+    #[doc = "@brief      Set the color source of the paint.\n\nColor sources are functions that generate colors for each\ntexture element covered by a draw call.\n\n@param[in]  paint         The paint.\n@param[in]  color_source  The color source.\n"]
     pub fn ImpellerPaintSetColorSource(paint: ImpellerPaint, color_source: ImpellerColorSource);
-    #[doc = " @brief      Set the image filter of a paint.\n\n             Image filters are functions that are applied to regions of a\n             texture to produce a single color.\n\n @param[in]  paint         The paint.\n @param[in]  image_filter  The image filter.\n"]
+    #[doc = "@brief      Set the image filter of a paint.\n\nImage filters are functions that are applied to regions of a\ntexture to produce a single color.\n\n@param[in]  paint         The paint.\n@param[in]  image_filter  The image filter.\n"]
     pub fn ImpellerPaintSetImageFilter(paint: ImpellerPaint, image_filter: ImpellerImageFilter);
-    #[doc = " @brief      Set the mask filter of a paint.\n\n @param[in]  paint        The paint.\n @param[in]  mask_filter  The mask filter.\n"]
+    #[doc = "@brief      Set the mask filter of a paint.\n\n@param[in]  paint        The paint.\n@param[in]  mask_filter  The mask filter.\n"]
     pub fn ImpellerPaintSetMaskFilter(paint: ImpellerPaint, mask_filter: ImpellerMaskFilter);
-    #[doc = " @brief      Create a texture with decompressed bytes.\n\n             Impeller will do its best to perform the transfer of this data\n             to GPU memory with a minimal number of copies. Towards this\n             end, it may need to send this data to a different thread for\n             preparation and transfer. To facilitate this transfer, it is\n             recommended that the content mapping have a release callback\n             attach to it. When there is a release callback, Impeller assumes\n             that collection of the data can be deferred till texture upload\n             is done and can happen on a background thread. When there is no\n             release callback, Impeller may try to perform an eager copy of\n             the data if it needs to perform data preparation and transfer on\n             a background thread.\n\n             Whether an extra data copy actually occurs will always depend on\n             the rendering backend in use. But it is best practice to provide\n             a release callback and be resilient to the data being released\n             in a deferred manner on a background thread.\n\n @warning    Do **not** supply compressed image data directly (PNG, JPEG,\n             etc...). This function only works with tightly packed\n             decompressed data.\n\n @param[in]  context                        The context.\n @param[in]  descriptor                     The texture descriptor.\n @param[in]  contents                       The contents.\n @param[in]  contents_on_release_user_data  The baton passes to the contents\n                                            release callback if one exists.\n\n @return     The texture if one can be created using the provided data, NULL\n             otherwise.\n"]
+    #[doc = "@brief      Create a texture with decompressed bytes.\n\nImpeller will do its best to perform the transfer of this data\nto GPU memory with a minimal number of copies. Towards this\nend, it may need to send this data to a different thread for\npreparation and transfer. To facilitate this transfer, it is\nrecommended that the content mapping have a release callback\nattach to it. When there is a release callback, Impeller assumes\nthat collection of the data can be deferred till texture upload\nis done and can happen on a background thread. When there is no\nrelease callback, Impeller may try to perform an eager copy of\nthe data if it needs to perform data preparation and transfer on\na background thread.\n\nWhether an extra data copy actually occurs will always depend on\nthe rendering backend in use. But it is best practice to provide\na release callback and be resilient to the data being released\nin a deferred manner on a background thread.\n\n@warning    Do **not** supply compressed image data directly (PNG, JPEG,\netc...). This function only works with tightly packed\ndecompressed data.\n\n@param[in]  context                        The context.\n@param[in]  descriptor                     The texture descriptor.\n@param[in]  contents                       The contents.\n@param[in]  contents_on_release_user_data  The baton passes to the contents\nrelease callback if one exists.\n\n@return     The texture if one can be created using the provided data, NULL\notherwise.\n"]
     pub fn ImpellerTextureCreateWithContentsNew(
         context: ImpellerContext,
         descriptor: *const ImpellerTextureDescriptor,
         contents: *const ImpellerMapping,
         contents_on_release_user_data: *mut ::std::os::raw::c_void,
     ) -> ImpellerTexture;
-    #[doc = " @brief      Create a texture with an externally created OpenGL texture\n             handle.\n\n             Ownership of the handle is transferred over to Impeller after a\n             successful call to this method. Impeller is responsible for\n             calling glDeleteTextures on this handle. Do **not** collect this\n             handle yourself as this will lead to a double-free.\n\n             The handle must be created in the same context as the one used\n             by Impeller. If a different context is used, that context must\n             be in the same sharegroup as Impellers OpenGL context and all\n             synchronization of texture contents must already be complete.\n\n             If the context is not an OpenGL context, this call will always\n             fail.\n\n @param[in]  context     The context\n @param[in]  descriptor  The descriptor\n @param[in]  handle      The handle\n\n @return     The texture if one could be created by adopting the supplied\n             texture handle, NULL otherwise.\n"]
+    #[doc = "@brief      Create a texture with an externally created OpenGL texture\nhandle.\n\nOwnership of the handle is transferred over to Impeller after a\nsuccessful call to this method. Impeller is responsible for\ncalling glDeleteTextures on this handle. Do **not** collect this\nhandle yourself as this will lead to a double-free.\n\nThe handle must be created in the same context as the one used\nby Impeller. If a different context is used, that context must\nbe in the same sharegroup as Impellers OpenGL context and all\nsynchronization of texture contents must already be complete.\n\nIf the context is not an OpenGL context, this call will always\nfail.\n\n@param[in]  context     The context\n@param[in]  descriptor  The descriptor\n@param[in]  handle      The handle\n\n@return     The texture if one could be created by adopting the supplied\ntexture handle, NULL otherwise.\n"]
     pub fn ImpellerTextureCreateWithOpenGLTextureHandleNew(
         context: ImpellerContext,
         descriptor: *const ImpellerTextureDescriptor,
         handle: u64,
     ) -> ImpellerTexture;
-    #[doc = " @brief      Retain a strong reference to the object. The object can be NULL\n             in which case this method is a no-op.\n\n @param[in]  texture  The texture.\n"]
+    #[doc = "@brief      Retain a strong reference to the object. The object can be NULL\nin which case this method is a no-op.\n\n@param[in]  texture  The texture.\n"]
     pub fn ImpellerTextureRetain(texture: ImpellerTexture);
-    #[doc = " @brief      Release a previously retained reference to the object. The\n             object can be NULL in which case this method is a no-op.\n\n @param[in]  texture  The texture.\n"]
+    #[doc = "@brief      Release a previously retained reference to the object. The\nobject can be NULL in which case this method is a no-op.\n\n@param[in]  texture  The texture.\n"]
     pub fn ImpellerTextureRelease(texture: ImpellerTexture);
-    #[doc = " @brief      Get the OpenGL handle associated with this texture. If this is\n             not an OpenGL texture, this method will always return 0.\n\n             OpenGL handles are lazily created, this method will return\n             GL_NONE is no OpenGL handle is available. To ensure that this\n             call eagerly creates an OpenGL texture, call this on a thread\n             where Impeller knows there is an OpenGL context available.\n\n @param[in]  texture  The texture.\n\n @return     The OpenGL handle if one is available, GL_NONE otherwise.\n"]
+    #[doc = "@brief      Get the OpenGL handle associated with this texture. If this is\nnot an OpenGL texture, this method will always return 0.\n\nOpenGL handles are lazily created, this method will return\nGL_NONE is no OpenGL handle is available. To ensure that this\ncall eagerly creates an OpenGL texture, call this on a thread\nwhere Impeller knows there is an OpenGL context available.\n\n@param[in]  texture  The texture.\n\n@return     The OpenGL handle if one is available, GL_NONE otherwise.\n"]
     pub fn ImpellerTextureGetOpenGLHandle(texture: ImpellerTexture) -> u64;
-    #[doc = " @brief      Retain a strong reference to the object. The object can be NULL\n             in which case this method is a no-op.\n\n @param[in]  color_source  The color source.\n"]
+    #[doc = "@brief      Retain a strong reference to the object. The object can be NULL\nin which case this method is a no-op.\n\n@param[in]  color_source  The color source.\n"]
     pub fn ImpellerColorSourceRetain(color_source: ImpellerColorSource);
-    #[doc = " @brief      Release a previously retained reference to the object. The\n             object can be NULL in which case this method is a no-op.\n\n @param[in]  color_source  The color source.\n"]
+    #[doc = "@brief      Release a previously retained reference to the object. The\nobject can be NULL in which case this method is a no-op.\n\n@param[in]  color_source  The color source.\n"]
     pub fn ImpellerColorSourceRelease(color_source: ImpellerColorSource);
-    #[doc = " @brief      Create a color source that forms a linear gradient.\n\n @param[in]  start_point     The start point.\n @param[in]  end_point       The end point.\n @param[in]  stop_count      The stop count.\n @param[in]  colors          The colors.\n @param[in]  stops           The stops.\n @param[in]  tile_mode       The tile mode.\n @param[in]  transformation  The transformation.\n\n @return     The color source.\n"]
+    #[doc = "@brief      Create a color source that forms a linear gradient.\n\n@param[in]  start_point     The start point.\n@param[in]  end_point       The end point.\n@param[in]  stop_count      The stop count.\n@param[in]  colors          The colors.\n@param[in]  stops           The stops.\n@param[in]  tile_mode       The tile mode.\n@param[in]  transformation  The transformation.\n\n@return     The color source.\n"]
     pub fn ImpellerColorSourceCreateLinearGradientNew(
         start_point: *const ImpellerPoint,
         end_point: *const ImpellerPoint,
@@ -933,7 +933,7 @@ unsafe extern "C" {
         tile_mode: TileMode,
         transformation: *const ImpellerMatrix,
     ) -> ImpellerColorSource;
-    #[doc = " @brief      Create a color source that forms a radial gradient.\n\n @param[in]  center          The center.\n @param[in]  radius          The radius.\n @param[in]  stop_count      The stop count.\n @param[in]  colors          The colors.\n @param[in]  stops           The stops.\n @param[in]  tile_mode       The tile mode.\n @param[in]  transformation  The transformation.\n\n @return     The color source.\n"]
+    #[doc = "@brief      Create a color source that forms a radial gradient.\n\n@param[in]  center          The center.\n@param[in]  radius          The radius.\n@param[in]  stop_count      The stop count.\n@param[in]  colors          The colors.\n@param[in]  stops           The stops.\n@param[in]  tile_mode       The tile mode.\n@param[in]  transformation  The transformation.\n\n@return     The color source.\n"]
     pub fn ImpellerColorSourceCreateRadialGradientNew(
         center: *const ImpellerPoint,
         radius: f32,
@@ -943,7 +943,7 @@ unsafe extern "C" {
         tile_mode: TileMode,
         transformation: *const ImpellerMatrix,
     ) -> ImpellerColorSource;
-    #[doc = " @brief      Create a color source that forms a conical gradient.\n\n @param[in]  start_center    The start center.\n @param[in]  start_radius    The start radius.\n @param[in]  end_center      The end center.\n @param[in]  end_radius      The end radius.\n @param[in]  stop_count      The stop count.\n @param[in]  colors          The colors.\n @param[in]  stops           The stops.\n @param[in]  tile_mode       The tile mode.\n @param[in]  transformation  The transformation.\n\n @return     The color source.\n"]
+    #[doc = "@brief      Create a color source that forms a conical gradient.\n\n@param[in]  start_center    The start center.\n@param[in]  start_radius    The start radius.\n@param[in]  end_center      The end center.\n@param[in]  end_radius      The end radius.\n@param[in]  stop_count      The stop count.\n@param[in]  colors          The colors.\n@param[in]  stops           The stops.\n@param[in]  tile_mode       The tile mode.\n@param[in]  transformation  The transformation.\n\n@return     The color source.\n"]
     pub fn ImpellerColorSourceCreateConicalGradientNew(
         start_center: *const ImpellerPoint,
         start_radius: f32,
@@ -955,7 +955,7 @@ unsafe extern "C" {
         tile_mode: TileMode,
         transformation: *const ImpellerMatrix,
     ) -> ImpellerColorSource;
-    #[doc = " @brief      Create a color source that forms a sweep gradient.\n\n @param[in]  center          The center.\n @param[in]  start           The start.\n @param[in]  end             The end.\n @param[in]  stop_count      The stop count.\n @param[in]  colors          The colors.\n @param[in]  stops           The stops.\n @param[in]  tile_mode       The tile mode.\n @param[in]  transformation  The transformation.\n\n @return     The color source.\n"]
+    #[doc = "@brief      Create a color source that forms a sweep gradient.\n\n@param[in]  center          The center.\n@param[in]  start           The start.\n@param[in]  end             The end.\n@param[in]  stop_count      The stop count.\n@param[in]  colors          The colors.\n@param[in]  stops           The stops.\n@param[in]  tile_mode       The tile mode.\n@param[in]  transformation  The transformation.\n\n@return     The color source.\n"]
     pub fn ImpellerColorSourceCreateSweepGradientNew(
         center: *const ImpellerPoint,
         start: f32,
@@ -966,7 +966,7 @@ unsafe extern "C" {
         tile_mode: TileMode,
         transformation: *const ImpellerMatrix,
     ) -> ImpellerColorSource;
-    #[doc = " @brief      Create a color source that samples from an image.\n\n @param[in]  image                 The image.\n @param[in]  horizontal_tile_mode  The horizontal tile mode.\n @param[in]  vertical_tile_mode    The vertical tile mode.\n @param[in]  sampling              The sampling.\n @param[in]  transformation        The transformation.\n\n @return     The color source.\n"]
+    #[doc = "@brief      Create a color source that samples from an image.\n\n@param[in]  image                 The image.\n@param[in]  horizontal_tile_mode  The horizontal tile mode.\n@param[in]  vertical_tile_mode    The vertical tile mode.\n@param[in]  sampling              The sampling.\n@param[in]  transformation        The transformation.\n\n@return     The color source.\n"]
     pub fn ImpellerColorSourceCreateImageNew(
         image: ImpellerTexture,
         horizontal_tile_mode: TileMode,
@@ -974,155 +974,155 @@ unsafe extern "C" {
         sampling: TextureSampling,
         transformation: *const ImpellerMatrix,
     ) -> ImpellerColorSource;
-    #[doc = " @brief      Retain a strong reference to the object. The object can be NULL\n             in which case this method is a no-op.\n\n @param[in]  color_filter  The color filter.\n"]
+    #[doc = "@brief      Retain a strong reference to the object. The object can be NULL\nin which case this method is a no-op.\n\n@param[in]  color_filter  The color filter.\n"]
     pub fn ImpellerColorFilterRetain(color_filter: ImpellerColorFilter);
-    #[doc = " @brief      Release a previously retained reference to the object. The\n             object can be NULL in which case this method is a no-op.\n\n @param[in]  color_filter  The color filter.\n"]
+    #[doc = "@brief      Release a previously retained reference to the object. The\nobject can be NULL in which case this method is a no-op.\n\n@param[in]  color_filter  The color filter.\n"]
     pub fn ImpellerColorFilterRelease(color_filter: ImpellerColorFilter);
-    #[doc = " @brief      Create a color filter that performs blending of pixel values\n             independently.\n\n @param[in]  color       The color.\n @param[in]  blend_mode  The blend mode.\n\n @return     The color filter.\n"]
+    #[doc = "@brief      Create a color filter that performs blending of pixel values\nindependently.\n\n@param[in]  color       The color.\n@param[in]  blend_mode  The blend mode.\n\n@return     The color filter.\n"]
     pub fn ImpellerColorFilterCreateBlendNew(
         color: *const ImpellerColor,
         blend_mode: BlendMode,
     ) -> ImpellerColorFilter;
-    #[doc = " @brief      Create a color filter that transforms pixel color values\n             independently.\n\n @param[in]  color_matrix  The color matrix.\n\n @return     The color filter.\n"]
+    #[doc = "@brief      Create a color filter that transforms pixel color values\nindependently.\n\n@param[in]  color_matrix  The color matrix.\n\n@return     The color filter.\n"]
     pub fn ImpellerColorFilterCreateColorMatrixNew(
         color_matrix: *const ImpellerColorMatrix,
     ) -> ImpellerColorFilter;
-    #[doc = " @brief      Retain a strong reference to the object. The object can be NULL\n             in which case this method is a no-op.\n\n @param[in]  mask_filter  The mask filter.\n"]
+    #[doc = "@brief      Retain a strong reference to the object. The object can be NULL\nin which case this method is a no-op.\n\n@param[in]  mask_filter  The mask filter.\n"]
     pub fn ImpellerMaskFilterRetain(mask_filter: ImpellerMaskFilter);
-    #[doc = " @brief      Release a previously retained reference to the object. The\n             object can be NULL in which case this method is a no-op.\n\n @param[in]  mask_filter  The mask filter.\n"]
+    #[doc = "@brief      Release a previously retained reference to the object. The\nobject can be NULL in which case this method is a no-op.\n\n@param[in]  mask_filter  The mask filter.\n"]
     pub fn ImpellerMaskFilterRelease(mask_filter: ImpellerMaskFilter);
-    #[doc = " @brief      Create a mask filter that blurs contents in the masked shape.\n\n @param[in]  style  The style.\n @param[in]  sigma  The sigma.\n\n @return     The mask filter.\n"]
+    #[doc = "@brief      Create a mask filter that blurs contents in the masked shape.\n\n@param[in]  style  The style.\n@param[in]  sigma  The sigma.\n\n@return     The mask filter.\n"]
     pub fn ImpellerMaskFilterCreateBlurNew(style: BlurStyle, sigma: f32) -> ImpellerMaskFilter;
-    #[doc = " @brief      Retain a strong reference to the object. The object can be NULL\n             in which case this method is a no-op.\n\n @param[in]  image_filter  The image filter.\n"]
+    #[doc = "@brief      Retain a strong reference to the object. The object can be NULL\nin which case this method is a no-op.\n\n@param[in]  image_filter  The image filter.\n"]
     pub fn ImpellerImageFilterRetain(image_filter: ImpellerImageFilter);
-    #[doc = " @brief      Release a previously retained reference to the object. The\n             object can be NULL in which case this method is a no-op.\n\n @param[in]  image_filter  The image filter.\n"]
+    #[doc = "@brief      Release a previously retained reference to the object. The\nobject can be NULL in which case this method is a no-op.\n\n@param[in]  image_filter  The image filter.\n"]
     pub fn ImpellerImageFilterRelease(image_filter: ImpellerImageFilter);
-    #[doc = " @brief      Creates an image filter that applies a Gaussian blur.\n\n             The Gaussian blur applied may be an approximation for\n             performance.\n\n\n @param[in]  x_sigma    The x sigma.\n @param[in]  y_sigma    The y sigma.\n @param[in]  tile_mode  The tile mode.\n\n @return     The image filter.\n"]
+    #[doc = "@brief      Creates an image filter that applies a Gaussian blur.\n\nThe Gaussian blur applied may be an approximation for\nperformance.\n\n\n@param[in]  x_sigma    The x sigma.\n@param[in]  y_sigma    The y sigma.\n@param[in]  tile_mode  The tile mode.\n\n@return     The image filter.\n"]
     pub fn ImpellerImageFilterCreateBlurNew(
         x_sigma: f32,
         y_sigma: f32,
         tile_mode: TileMode,
     ) -> ImpellerImageFilter;
-    #[doc = " @brief      Creates an image filter that enhances the per-channel pixel\n             values to the maximum value in a circle around the pixel.\n\n @param[in]  x_radius  The x radius.\n @param[in]  y_radius  The y radius.\n\n @return     The image filter.\n"]
+    #[doc = "@brief      Creates an image filter that enhances the per-channel pixel\nvalues to the maximum value in a circle around the pixel.\n\n@param[in]  x_radius  The x radius.\n@param[in]  y_radius  The y radius.\n\n@return     The image filter.\n"]
     pub fn ImpellerImageFilterCreateDilateNew(x_radius: f32, y_radius: f32) -> ImpellerImageFilter;
-    #[doc = " @brief      Creates an image filter that dampens the per-channel pixel\n             values to the minimum value in a circle around the pixel.\n\n @param[in]  x_radius  The x radius.\n @param[in]  y_radius  The y radius.\n\n @return     The image filter.\n"]
+    #[doc = "@brief      Creates an image filter that dampens the per-channel pixel\nvalues to the minimum value in a circle around the pixel.\n\n@param[in]  x_radius  The x radius.\n@param[in]  y_radius  The y radius.\n\n@return     The image filter.\n"]
     pub fn ImpellerImageFilterCreateErodeNew(x_radius: f32, y_radius: f32) -> ImpellerImageFilter;
-    #[doc = " @brief      Creates an image filter that applies a transformation matrix to\n             the underlying image.\n\n @param[in]  matrix    The transformation matrix.\n @param[in]  sampling  The image sampling mode.\n\n @return     The image filter.\n"]
+    #[doc = "@brief      Creates an image filter that applies a transformation matrix to\nthe underlying image.\n\n@param[in]  matrix    The transformation matrix.\n@param[in]  sampling  The image sampling mode.\n\n@return     The image filter.\n"]
     pub fn ImpellerImageFilterCreateMatrixNew(
         matrix: *const ImpellerMatrix,
         sampling: TextureSampling,
     ) -> ImpellerImageFilter;
-    #[doc = " @brief      Creates a composed filter that when applied is identical to\n             subsequently applying the inner and then the outer filters.\n\n             ```ignore             destination = outer_filter(inner_filter(source))\n             ```\n\n @param[in]  outer  The outer image filter.\n @param[in]  inner  The inner image filter.\n\n @return     The combined image filter.\n"]
+    #[doc = "@brief      Creates a composed filter that when applied is identical to\nsubsequently applying the inner and then the outer filters.\n\n```cpp\ndestination = outer_filter(inner_filter(source))\n```\n\n@param[in]  outer  The outer image filter.\n@param[in]  inner  The inner image filter.\n\n@return     The combined image filter.\n"]
     pub fn ImpellerImageFilterCreateComposeNew(
         outer: ImpellerImageFilter,
         inner: ImpellerImageFilter,
     ) -> ImpellerImageFilter;
-    #[doc = " @brief      Retain a strong reference to the object. The object can be NULL\n             in which case this method is a no-op.\n\n @param[in]  display_list  The display list.\n"]
+    #[doc = "@brief      Retain a strong reference to the object. The object can be NULL\nin which case this method is a no-op.\n\n@param[in]  display_list  The display list.\n"]
     pub fn ImpellerDisplayListRetain(display_list: ImpellerDisplayList);
-    #[doc = " @brief      Release a previously retained reference to the object. The\n             object can be NULL in which case this method is a no-op.\n\n @param[in]  display_list  The display list.\n"]
+    #[doc = "@brief      Release a previously retained reference to the object. The\nobject can be NULL in which case this method is a no-op.\n\n@param[in]  display_list  The display list.\n"]
     pub fn ImpellerDisplayListRelease(display_list: ImpellerDisplayList);
-    #[doc = " @brief      Create a new display list builder.\n\n             An optional cull rectangle may be specified. Impeller is allowed\n             to treat the contents outside this rectangle as being undefined.\n             This may aid performance optimizations.\n\n @param[in]  cull_rect  The cull rectangle or NULL.\n\n @return     The display list builder.\n"]
+    #[doc = "@brief      Create a new display list builder.\n\nAn optional cull rectangle may be specified. Impeller is allowed\nto treat the contents outside this rectangle as being undefined.\nThis may aid performance optimizations.\n\n@param[in]  cull_rect  The cull rectangle or NULL.\n\n@return     The display list builder.\n"]
     pub fn ImpellerDisplayListBuilderNew(
         cull_rect: *const ImpellerRect,
     ) -> ImpellerDisplayListBuilder;
-    #[doc = " @brief      Retain a strong reference to the object. The object can be NULL\n             in which case this method is a no-op.\n\n @param[in]  builder  The display list builder.\n"]
+    #[doc = "@brief      Retain a strong reference to the object. The object can be NULL\nin which case this method is a no-op.\n\n@param[in]  builder  The display list builder.\n"]
     pub fn ImpellerDisplayListBuilderRetain(builder: ImpellerDisplayListBuilder);
-    #[doc = " @brief      Release a previously retained reference to the object. The\n             object can be NULL in which case this method is a no-op.\n\n @param[in]  builder  The display list builder.\n"]
+    #[doc = "@brief      Release a previously retained reference to the object. The\nobject can be NULL in which case this method is a no-op.\n\n@param[in]  builder  The display list builder.\n"]
     pub fn ImpellerDisplayListBuilderRelease(builder: ImpellerDisplayListBuilder);
-    #[doc = " @brief      Create a new display list using the rendering intent already\n             encoded in the builder. The builder is reset after this call.\n\n @param[in]  builder  The builder.\n\n @return     The display list.\n"]
+    #[doc = "@brief      Create a new display list using the rendering intent already\nencoded in the builder. The builder is reset after this call.\n\n@param[in]  builder  The builder.\n\n@return     The display list.\n"]
     pub fn ImpellerDisplayListBuilderCreateDisplayListNew(
         builder: ImpellerDisplayListBuilder,
     ) -> ImpellerDisplayList;
-    #[doc = " @brief      Stashes the current transformation and clip state onto a save\n             stack.\n\n @param[in]  builder  The builder.\n"]
+    #[doc = "@brief      Stashes the current transformation and clip state onto a save\nstack.\n\n@param[in]  builder  The builder.\n"]
     pub fn ImpellerDisplayListBuilderSave(builder: ImpellerDisplayListBuilder);
-    #[doc = " @brief      Stashes the current transformation and clip state onto a save\n             stack and creates and creates an offscreen layer onto which\n             subsequent rendering intent will be directed to.\n\n             On the balancing call to restore, the supplied paints filters\n             and blend modes will be used to composite the offscreen contents\n             back onto the display display list.\n\n @param[in]  builder   The builder.\n @param[in]  bounds    The bounds.\n @param[in]  paint     The paint.\n @param[in]  backdrop  The backdrop.\n"]
+    #[doc = "@brief      Stashes the current transformation and clip state onto a save\nstack and creates and creates an offscreen layer onto which\nsubsequent rendering intent will be directed to.\n\nOn the balancing call to restore, the supplied paints filters\nand blend modes will be used to composite the offscreen contents\nback onto the display display list.\n\n@param[in]  builder   The builder.\n@param[in]  bounds    The bounds.\n@param[in]  paint     The paint.\n@param[in]  backdrop  The backdrop.\n"]
     pub fn ImpellerDisplayListBuilderSaveLayer(
         builder: ImpellerDisplayListBuilder,
         bounds: *const ImpellerRect,
         paint: ImpellerPaint,
         backdrop: ImpellerImageFilter,
     );
-    #[doc = " @brief      Pops the last entry pushed onto the save stack using a call to\n             `ImpellerDisplayListBuilderSave` or\n             `ImpellerDisplayListBuilderSaveLayer`.\n\n @param[in]  builder  The builder.\n"]
+    #[doc = "@brief      Pops the last entry pushed onto the save stack using a call to\n`ImpellerDisplayListBuilderSave` or\n`ImpellerDisplayListBuilderSaveLayer`.\n\n@param[in]  builder  The builder.\n"]
     pub fn ImpellerDisplayListBuilderRestore(builder: ImpellerDisplayListBuilder);
-    #[doc = " @brief      Apply a scale to the transformation matrix currently on top of\n             the save stack.\n\n @param[in]  builder  The builder.\n @param[in]  x_scale  The x scale.\n @param[in]  y_scale  The y scale.\n"]
+    #[doc = "@brief      Apply a scale to the transformation matrix currently on top of\nthe save stack.\n\n@param[in]  builder  The builder.\n@param[in]  x_scale  The x scale.\n@param[in]  y_scale  The y scale.\n"]
     pub fn ImpellerDisplayListBuilderScale(
         builder: ImpellerDisplayListBuilder,
         x_scale: f32,
         y_scale: f32,
     );
-    #[doc = " @brief      Apply a clockwise rotation to the transformation matrix\n             currently on top of the save stack.\n\n @param[in]  builder        The builder.\n @param[in]  angle_degrees  The angle in degrees.\n"]
+    #[doc = "@brief      Apply a clockwise rotation to the transformation matrix\ncurrently on top of the save stack.\n\n@param[in]  builder        The builder.\n@param[in]  angle_degrees  The angle in degrees.\n"]
     pub fn ImpellerDisplayListBuilderRotate(
         builder: ImpellerDisplayListBuilder,
         angle_degrees: f32,
     );
-    #[doc = " @brief      Apply a translation to the transformation matrix currently on\n             top of the save stack.\n\n @param[in]  builder        The builder.\n @param[in]  x_translation  The x translation.\n @param[in]  y_translation  The y translation.\n"]
+    #[doc = "@brief      Apply a translation to the transformation matrix currently on\ntop of the save stack.\n\n@param[in]  builder        The builder.\n@param[in]  x_translation  The x translation.\n@param[in]  y_translation  The y translation.\n"]
     pub fn ImpellerDisplayListBuilderTranslate(
         builder: ImpellerDisplayListBuilder,
         x_translation: f32,
         y_translation: f32,
     );
-    #[doc = " @brief      Appends the the provided transformation to the transformation\n             already on the save stack.\n\n @param[in]  builder    The builder.\n @param[in]  transform  The transform to append.\n"]
+    #[doc = "@brief      Appends the the provided transformation to the transformation\nalready on the save stack.\n\n@param[in]  builder    The builder.\n@param[in]  transform  The transform to append.\n"]
     pub fn ImpellerDisplayListBuilderTransform(
         builder: ImpellerDisplayListBuilder,
         transform: *const ImpellerMatrix,
     );
-    #[doc = " @brief      Clear the transformation on top of the save stack and replace it\n             with a new value.\n\n @param[in]  builder    The builder.\n @param[in]  transform  The new transform.\n"]
+    #[doc = "@brief      Clear the transformation on top of the save stack and replace it\nwith a new value.\n\n@param[in]  builder    The builder.\n@param[in]  transform  The new transform.\n"]
     pub fn ImpellerDisplayListBuilderSetTransform(
         builder: ImpellerDisplayListBuilder,
         transform: *const ImpellerMatrix,
     );
-    #[doc = " @brief      Get the transformation currently built up on the top of the\n             transformation stack.\n\n @param[in]  builder        The builder.\n @param[out] out_transform  The transform.\n"]
+    #[doc = "@brief      Get the transformation currently built up on the top of the\ntransformation stack.\n\n@param[in]  builder        The builder.\n@param[out] out_transform  The transform.\n"]
     pub fn ImpellerDisplayListBuilderGetTransform(
         builder: ImpellerDisplayListBuilder,
         out_transform: *mut ImpellerMatrix,
     );
-    #[doc = " @brief      Reset the transformation on top of the transformation stack to\n             identity.\n\n @param[in]  builder  The builder.\n"]
+    #[doc = "@brief      Reset the transformation on top of the transformation stack to\nidentity.\n\n@param[in]  builder  The builder.\n"]
     pub fn ImpellerDisplayListBuilderResetTransform(builder: ImpellerDisplayListBuilder);
-    #[doc = " @brief      Get the current size of the save stack.\n\n @param[in]  builder  The builder.\n\n @return     The save stack size.\n"]
+    #[doc = "@brief      Get the current size of the save stack.\n\n@param[in]  builder  The builder.\n\n@return     The save stack size.\n"]
     pub fn ImpellerDisplayListBuilderGetSaveCount(builder: ImpellerDisplayListBuilder) -> u32;
-    #[doc = " @brief      Effectively calls ImpellerDisplayListBuilderRestore till the\n             size of the save stack becomes a specified count.\n\n @param[in]  builder  The builder.\n @param[in]  count    The count.\n"]
+    #[doc = "@brief      Effectively calls ImpellerDisplayListBuilderRestore till the\nsize of the save stack becomes a specified count.\n\n@param[in]  builder  The builder.\n@param[in]  count    The count.\n"]
     pub fn ImpellerDisplayListBuilderRestoreToCount(
         builder: ImpellerDisplayListBuilder,
         count: u32,
     );
-    #[doc = " @brief      Reduces the clip region to the intersection of the current clip\n             and the given rectangle taking into account the clip operation.\n\n @param[in]  builder  The builder.\n @param[in]  rect     The rectangle.\n @param[in]  op       The operation.\n"]
+    #[doc = "@brief      Reduces the clip region to the intersection of the current clip\nand the given rectangle taking into account the clip operation.\n\n@param[in]  builder  The builder.\n@param[in]  rect     The rectangle.\n@param[in]  op       The operation.\n"]
     pub fn ImpellerDisplayListBuilderClipRect(
         builder: ImpellerDisplayListBuilder,
         rect: *const ImpellerRect,
         op: ClipOperation,
     );
-    #[doc = " @brief      Reduces the clip region to the intersection of the current clip\n             and the given oval taking into account the clip operation.\n\n @param[in]  builder      The builder.\n @param[in]  oval_bounds  The oval bounds.\n @param[in]  op           The operation.\n"]
+    #[doc = "@brief      Reduces the clip region to the intersection of the current clip\nand the given oval taking into account the clip operation.\n\n@param[in]  builder      The builder.\n@param[in]  oval_bounds  The oval bounds.\n@param[in]  op           The operation.\n"]
     pub fn ImpellerDisplayListBuilderClipOval(
         builder: ImpellerDisplayListBuilder,
         oval_bounds: *const ImpellerRect,
         op: ClipOperation,
     );
-    #[doc = " @brief      Reduces the clip region to the intersection of the current clip\n             and the given rounded rectangle taking into account the clip\n             operation.\n\n @param[in]  builder  The builder.\n @param[in]  rect     The rectangle.\n @param[in]  radii    The radii.\n @param[in]  op       The operation.\n"]
+    #[doc = "@brief      Reduces the clip region to the intersection of the current clip\nand the given rounded rectangle taking into account the clip\noperation.\n\n@param[in]  builder  The builder.\n@param[in]  rect     The rectangle.\n@param[in]  radii    The radii.\n@param[in]  op       The operation.\n"]
     pub fn ImpellerDisplayListBuilderClipRoundedRect(
         builder: ImpellerDisplayListBuilder,
         rect: *const ImpellerRect,
         radii: *const ImpellerRoundingRadii,
         op: ClipOperation,
     );
-    #[doc = " @brief      Reduces the clip region to the intersection of the current clip\n             and the given path taking into account the clip operation.\n\n @param[in]  builder  The builder.\n @param[in]  path     The path.\n @param[in]  op       The operation.\n"]
+    #[doc = "@brief      Reduces the clip region to the intersection of the current clip\nand the given path taking into account the clip operation.\n\n@param[in]  builder  The builder.\n@param[in]  path     The path.\n@param[in]  op       The operation.\n"]
     pub fn ImpellerDisplayListBuilderClipPath(
         builder: ImpellerDisplayListBuilder,
         path: ImpellerPath,
         op: ClipOperation,
     );
-    #[doc = " @brief      Fills the current clip with the specified paint.\n\n @param[in]  builder  The builder.\n @param[in]  paint    The paint.\n"]
+    #[doc = "@brief      Fills the current clip with the specified paint.\n\n@param[in]  builder  The builder.\n@param[in]  paint    The paint.\n"]
     pub fn ImpellerDisplayListBuilderDrawPaint(
         builder: ImpellerDisplayListBuilder,
         paint: ImpellerPaint,
     );
-    #[doc = " @brief      Draws a line segment.\n\n @param[in]  builder  The builder.\n @param[in]  from     The starting point of the line.\n @param[in]  to       The end point of the line.\n @param[in]  paint    The paint.\n"]
+    #[doc = "@brief      Draws a line segment.\n\n@param[in]  builder  The builder.\n@param[in]  from     The starting point of the line.\n@param[in]  to       The end point of the line.\n@param[in]  paint    The paint.\n"]
     pub fn ImpellerDisplayListBuilderDrawLine(
         builder: ImpellerDisplayListBuilder,
         from: *const ImpellerPoint,
         to: *const ImpellerPoint,
         paint: ImpellerPaint,
     );
-    #[doc = " @brief      Draws a dash line segment.\n\n @param[in]  builder     The builder.\n @param[in]  from        The starting point of the line.\n @param[in]  to          The end point of the line.\n @param[in]  on_length   On length.\n @param[in]  off_length  Off length.\n @param[in]  paint       The paint.\n"]
+    #[doc = "@brief      Draws a dash line segment.\n\n@param[in]  builder     The builder.\n@param[in]  from        The starting point of the line.\n@param[in]  to          The end point of the line.\n@param[in]  on_length   On length.\n@param[in]  off_length  Off length.\n@param[in]  paint       The paint.\n"]
     pub fn ImpellerDisplayListBuilderDrawDashedLine(
         builder: ImpellerDisplayListBuilder,
         from: *const ImpellerPoint,
@@ -1131,26 +1131,26 @@ unsafe extern "C" {
         off_length: f32,
         paint: ImpellerPaint,
     );
-    #[doc = " @brief      Draws a rectangle.\n\n @param[in]  builder  The builder.\n @param[in]  rect     The rectangle.\n @param[in]  paint    The paint.\n"]
+    #[doc = "@brief      Draws a rectangle.\n\n@param[in]  builder  The builder.\n@param[in]  rect     The rectangle.\n@param[in]  paint    The paint.\n"]
     pub fn ImpellerDisplayListBuilderDrawRect(
         builder: ImpellerDisplayListBuilder,
         rect: *const ImpellerRect,
         paint: ImpellerPaint,
     );
-    #[doc = " @brief      Draws an oval.\n\n @param[in]  builder      The builder.\n @param[in]  oval_bounds  The oval bounds.\n @param[in]  paint        The paint.\n"]
+    #[doc = "@brief      Draws an oval.\n\n@param[in]  builder      The builder.\n@param[in]  oval_bounds  The oval bounds.\n@param[in]  paint        The paint.\n"]
     pub fn ImpellerDisplayListBuilderDrawOval(
         builder: ImpellerDisplayListBuilder,
         oval_bounds: *const ImpellerRect,
         paint: ImpellerPaint,
     );
-    #[doc = " @brief      Draws a rounded rect.\n\n @param[in]  builder  The builder.\n @param[in]  rect     The rectangle.\n @param[in]  radii    The radii.\n @param[in]  paint    The paint.\n"]
+    #[doc = "@brief      Draws a rounded rect.\n\n@param[in]  builder  The builder.\n@param[in]  rect     The rectangle.\n@param[in]  radii    The radii.\n@param[in]  paint    The paint.\n"]
     pub fn ImpellerDisplayListBuilderDrawRoundedRect(
         builder: ImpellerDisplayListBuilder,
         rect: *const ImpellerRect,
         radii: *const ImpellerRoundingRadii,
         paint: ImpellerPaint,
     );
-    #[doc = " @brief      Draws a shape that is the different between the specified\n             rectangles (each with configurable corner radii).\n\n @param[in]  builder      The builder.\n @param[in]  outer_rect   The outer rectangle.\n @param[in]  outer_radii  The outer radii.\n @param[in]  inner_rect   The inner rectangle.\n @param[in]  inner_radii  The inner radii.\n @param[in]  paint        The paint.\n"]
+    #[doc = "@brief      Draws a shape that is the different between the specified\nrectangles (each with configurable corner radii).\n\n@param[in]  builder      The builder.\n@param[in]  outer_rect   The outer rectangle.\n@param[in]  outer_radii  The outer radii.\n@param[in]  inner_rect   The inner rectangle.\n@param[in]  inner_radii  The inner radii.\n@param[in]  paint        The paint.\n"]
     pub fn ImpellerDisplayListBuilderDrawRoundedRectDifference(
         builder: ImpellerDisplayListBuilder,
         outer_rect: *const ImpellerRect,
@@ -1159,25 +1159,25 @@ unsafe extern "C" {
         inner_radii: *const ImpellerRoundingRadii,
         paint: ImpellerPaint,
     );
-    #[doc = " @brief      Draws the specified shape.\n\n @param[in]  builder  The builder.\n @param[in]  path     The path.\n @param[in]  paint    The paint.\n"]
+    #[doc = "@brief      Draws the specified shape.\n\n@param[in]  builder  The builder.\n@param[in]  path     The path.\n@param[in]  paint    The paint.\n"]
     pub fn ImpellerDisplayListBuilderDrawPath(
         builder: ImpellerDisplayListBuilder,
         path: ImpellerPath,
         paint: ImpellerPaint,
     );
-    #[doc = " @brief      Flattens the contents of another display list into the one\n             currently being built.\n\n @param[in]  builder       The builder.\n @param[in]  display_list  The display list.\n @param[in]  opacity       The opacity.\n"]
+    #[doc = "@brief      Flattens the contents of another display list into the one\ncurrently being built.\n\n@param[in]  builder       The builder.\n@param[in]  display_list  The display list.\n@param[in]  opacity       The opacity.\n"]
     pub fn ImpellerDisplayListBuilderDrawDisplayList(
         builder: ImpellerDisplayListBuilder,
         display_list: ImpellerDisplayList,
         opacity: f32,
     );
-    #[doc = " @brief      Draw a paragraph at the specified point.\n\n @param[in]  builder    The builder.\n @param[in]  paragraph  The paragraph.\n @param[in]  point      The point.\n"]
+    #[doc = "@brief      Draw a paragraph at the specified point.\n\n@param[in]  builder    The builder.\n@param[in]  paragraph  The paragraph.\n@param[in]  point      The point.\n"]
     pub fn ImpellerDisplayListBuilderDrawParagraph(
         builder: ImpellerDisplayListBuilder,
         paragraph: ImpellerParagraph,
         point: *const ImpellerPoint,
     );
-    #[doc = " @brief      Draw a texture at the specified point.\n\n @param[in]  builder   The builder.\n @param[in]  texture   The texture.\n @param[in]  point     The point.\n @param[in]  sampling  The sampling.\n @param[in]  paint     The paint.\n"]
+    #[doc = "@brief      Draw a texture at the specified point.\n\n@param[in]  builder   The builder.\n@param[in]  texture   The texture.\n@param[in]  point     The point.\n@param[in]  sampling  The sampling.\n@param[in]  paint     The paint.\n"]
     pub fn ImpellerDisplayListBuilderDrawTexture(
         builder: ImpellerDisplayListBuilder,
         texture: ImpellerTexture,
@@ -1185,7 +1185,7 @@ unsafe extern "C" {
         sampling: TextureSampling,
         paint: ImpellerPaint,
     );
-    #[doc = " @brief      Draw a portion of texture at the specified location.\n\n @param[in]  builder   The builder.\n @param[in]  texture   The texture.\n @param[in]  src_rect  The source rectangle.\n @param[in]  dst_rect  The destination rectangle.\n @param[in]  sampling  The sampling.\n @param[in]  paint     The paint.\n"]
+    #[doc = "@brief      Draw a portion of texture at the specified location.\n\n@param[in]  builder   The builder.\n@param[in]  texture   The texture.\n@param[in]  src_rect  The source rectangle.\n@param[in]  dst_rect  The destination rectangle.\n@param[in]  sampling  The sampling.\n@param[in]  paint     The paint.\n"]
     pub fn ImpellerDisplayListBuilderDrawTextureRect(
         builder: ImpellerDisplayListBuilder,
         texture: ImpellerTexture,
@@ -1194,118 +1194,118 @@ unsafe extern "C" {
         sampling: TextureSampling,
         paint: ImpellerPaint,
     );
-    #[doc = " @brief      Create a new typography contents.\n\n @return     The typography context.\n"]
+    #[doc = "@brief      Create a new typography contents.\n\n@return     The typography context.\n"]
     pub fn ImpellerTypographyContextNew() -> ImpellerTypographyContext;
-    #[doc = " @brief      Retain a strong reference to the object. The object can be NULL\n             in which case this method is a no-op.\n\n @param[in]  context  The typography context.\n"]
+    #[doc = "@brief      Retain a strong reference to the object. The object can be NULL\nin which case this method is a no-op.\n\n@param[in]  context  The typography context.\n"]
     pub fn ImpellerTypographyContextRetain(context: ImpellerTypographyContext);
-    #[doc = " @brief      Release a previously retained reference to the object. The\n             object can be NULL in which case this method is a no-op.\n\n @param[in]  context  The typography context.\n"]
+    #[doc = "@brief      Release a previously retained reference to the object. The\nobject can be NULL in which case this method is a no-op.\n\n@param[in]  context  The typography context.\n"]
     pub fn ImpellerTypographyContextRelease(context: ImpellerTypographyContext);
-    #[doc = " @brief      Register a custom font.\n\n             The following font formats are supported:\n             * OpenType font collections (.ttc extension)\n             * TrueType fonts: (.ttf extension)\n             * OpenType fonts: (.otf extension)\n\n @warning    Web Open Font Formats (.woff and .woff2 extensions) are **not**\n             supported.\n\n             The font data is specified as a mapping. It is possible for the\n             release callback of the mapping to not be called even past the\n             destruction of the typography context. Care must be taken to not\n             collect the mapping till the release callback is invoked by\n             Impeller.\n\n             The family alias name can be NULL. In such cases, the font\n             family specified in paragraph styles must match the family that\n             is specified in the font data.\n\n             If the family name alias is not NULL, that family name must be\n             used in the paragraph style to reference glyphs from this font\n             instead of the one encoded in the font itself.\n\n             Multiple fonts (with glyphs for different styles) can be\n             specified with the same family.\n\n @see        `ImpellerParagraphStyleSetFontFamily`\n\n @param[in]  context                        The context.\n @param[in]  contents                       The contents.\n @param[in]  contents_on_release_user_data  The user data baton to be passed\n                                            to the contents release callback.\n @param[in]  family_name_alias              The family name alias or NULL if\n                                            the one specified in the font\n                                            data is to be used.\n\n @return     If the font could be successfully registered.\n"]
+    #[doc = "@brief      Register a custom font.\n\nThe following font formats are supported:\n* OpenType font collections (.ttc extension)\n* TrueType fonts: (.ttf extension)\n* OpenType fonts: (.otf extension)\n\n@warning    Web Open Font Formats (.woff and .woff2 extensions) are **not**\nsupported.\n\nThe font data is specified as a mapping. It is possible for the\nrelease callback of the mapping to not be called even past the\ndestruction of the typography context. Care must be taken to not\ncollect the mapping till the release callback is invoked by\nImpeller.\n\nThe family alias name can be NULL. In such cases, the font\nfamily specified in paragraph styles must match the family that\nis specified in the font data.\n\nIf the family name alias is not NULL, that family name must be\nused in the paragraph style to reference glyphs from this font\ninstead of the one encoded in the font itself.\n\nMultiple fonts (with glyphs for different styles) can be\nspecified with the same family.\n\n@see        `ImpellerParagraphStyleSetFontFamily`\n\n@param[in]  context                        The context.\n@param[in]  contents                       The contents.\n@param[in]  contents_on_release_user_data  The user data baton to be passed\nto the contents release callback.\n@param[in]  family_name_alias              The family name alias or NULL if\nthe one specified in the font\ndata is to be used.\n\n@return     If the font could be successfully registered.\n"]
     pub fn ImpellerTypographyContextRegisterFont(
         context: ImpellerTypographyContext,
         contents: *const ImpellerMapping,
         contents_on_release_user_data: *mut ::std::os::raw::c_void,
         family_name_alias: *const ::std::os::raw::c_char,
     ) -> bool;
-    #[doc = " @brief      Create a new paragraph style.\n\n @return     The paragraph style.\n"]
+    #[doc = "@brief      Create a new paragraph style.\n\n@return     The paragraph style.\n"]
     pub fn ImpellerParagraphStyleNew() -> ImpellerParagraphStyle;
-    #[doc = " @brief      Retain a strong reference to the object. The object can be NULL\n             in which case this method is a no-op.\n\n @param[in]  paragraph_style  The paragraph style.\n"]
+    #[doc = "@brief      Retain a strong reference to the object. The object can be NULL\nin which case this method is a no-op.\n\n@param[in]  paragraph_style  The paragraph style.\n"]
     pub fn ImpellerParagraphStyleRetain(paragraph_style: ImpellerParagraphStyle);
-    #[doc = " @brief      Release a previously retained reference to the object. The\n             object can be NULL in which case this method is a no-op.\n\n @param[in]  paragraph_style  The paragraph style.\n"]
+    #[doc = "@brief      Release a previously retained reference to the object. The\nobject can be NULL in which case this method is a no-op.\n\n@param[in]  paragraph_style  The paragraph style.\n"]
     pub fn ImpellerParagraphStyleRelease(paragraph_style: ImpellerParagraphStyle);
-    #[doc = " @brief      Set the paint used to render the text glyph contents.\n\n @param[in]  paragraph_style  The paragraph style.\n @param[in]  paint            The paint.\n"]
+    #[doc = "@brief      Set the paint used to render the text glyph contents.\n\n@param[in]  paragraph_style  The paragraph style.\n@param[in]  paint            The paint.\n"]
     pub fn ImpellerParagraphStyleSetForeground(
         paragraph_style: ImpellerParagraphStyle,
         paint: ImpellerPaint,
     );
-    #[doc = " @brief      Set the paint used to render the background of the text glyphs.\n\n @param[in]  paragraph_style  The paragraph style.\n @param[in]  paint            The paint.\n"]
+    #[doc = "@brief      Set the paint used to render the background of the text glyphs.\n\n@param[in]  paragraph_style  The paragraph style.\n@param[in]  paint            The paint.\n"]
     pub fn ImpellerParagraphStyleSetBackground(
         paragraph_style: ImpellerParagraphStyle,
         paint: ImpellerPaint,
     );
-    #[doc = " @brief      Set the weight of the font to select when rendering glyphs.\n\n @param[in]  paragraph_style  The paragraph style.\n @param[in]  weight           The weight.\n"]
+    #[doc = "@brief      Set the weight of the font to select when rendering glyphs.\n\n@param[in]  paragraph_style  The paragraph style.\n@param[in]  weight           The weight.\n"]
     pub fn ImpellerParagraphStyleSetFontWeight(
         paragraph_style: ImpellerParagraphStyle,
         weight: FontWeight,
     );
-    #[doc = " @brief      Set whether the glyphs should be bolded or italicized.\n\n @param[in]  paragraph_style  The paragraph style.\n @param[in]  style            The style.\n"]
+    #[doc = "@brief      Set whether the glyphs should be bolded or italicized.\n\n@param[in]  paragraph_style  The paragraph style.\n@param[in]  style            The style.\n"]
     pub fn ImpellerParagraphStyleSetFontStyle(
         paragraph_style: ImpellerParagraphStyle,
         style: FontStyle,
     );
-    #[doc = " @brief      Set the font family.\n\n @param[in]  paragraph_style  The paragraph style.\n @param[in]  family_name      The family name.\n"]
+    #[doc = "@brief      Set the font family.\n\n@param[in]  paragraph_style  The paragraph style.\n@param[in]  family_name      The family name.\n"]
     pub fn ImpellerParagraphStyleSetFontFamily(
         paragraph_style: ImpellerParagraphStyle,
         family_name: *const ::std::os::raw::c_char,
     );
-    #[doc = " @brief      Set the font size.\n\n @param[in]  paragraph_style  The paragraph style.\n @param[in]  size             The size.\n"]
+    #[doc = "@brief      Set the font size.\n\n@param[in]  paragraph_style  The paragraph style.\n@param[in]  size             The size.\n"]
     pub fn ImpellerParagraphStyleSetFontSize(paragraph_style: ImpellerParagraphStyle, size: f32);
-    #[doc = " @brief      The height of the text as a multiple of text size.\n\n             When height is 0.0, the line height will be determined by the\n             font's metrics directly, which may differ from the font size.\n             Otherwise the line height of the text will be a multiple of font\n             size, and be exactly fontSize * height logical pixels tall.\n\n @param[in]  paragraph_style  The paragraph style.\n @param[in]  height           The height.\n"]
+    #[doc = "@brief      The height of the text as a multiple of text size.\n\nWhen height is 0.0, the line height will be determined by the\nfont's metrics directly, which may differ from the font size.\nOtherwise the line height of the text will be a multiple of font\nsize, and be exactly fontSize * height logical pixels tall.\n\n@param[in]  paragraph_style  The paragraph style.\n@param[in]  height           The height.\n"]
     pub fn ImpellerParagraphStyleSetHeight(paragraph_style: ImpellerParagraphStyle, height: f32);
-    #[doc = " @brief      Set the alignment of text within the paragraph.\n\n @param[in]  paragraph_style  The paragraph style.\n @param[in]  align            The align.\n"]
+    #[doc = "@brief      Set the alignment of text within the paragraph.\n\n@param[in]  paragraph_style  The paragraph style.\n@param[in]  align            The align.\n"]
     pub fn ImpellerParagraphStyleSetTextAlignment(
         paragraph_style: ImpellerParagraphStyle,
         align: TextAlignment,
     );
-    #[doc = " @brief      Set the directionality of the text within the paragraph.\n\n @param[in]  paragraph_style  The paragraph style.\n @param[in]  direction        The direction.\n"]
+    #[doc = "@brief      Set the directionality of the text within the paragraph.\n\n@param[in]  paragraph_style  The paragraph style.\n@param[in]  direction        The direction.\n"]
     pub fn ImpellerParagraphStyleSetTextDirection(
         paragraph_style: ImpellerParagraphStyle,
         direction: TextDirection,
     );
-    #[doc = " @brief      Set the maximum line count within the paragraph.\n\n @param[in]  paragraph_style  The paragraph style.\n @param[in]  max_lines        The maximum lines.\n"]
+    #[doc = "@brief      Set the maximum line count within the paragraph.\n\n@param[in]  paragraph_style  The paragraph style.\n@param[in]  max_lines        The maximum lines.\n"]
     pub fn ImpellerParagraphStyleSetMaxLines(
         paragraph_style: ImpellerParagraphStyle,
         max_lines: u32,
     );
-    #[doc = " @brief      Set the paragraph locale.\n\n @param[in]  paragraph_style  The paragraph style.\n @param[in]  locale           The locale.\n"]
+    #[doc = "@brief      Set the paragraph locale.\n\n@param[in]  paragraph_style  The paragraph style.\n@param[in]  locale           The locale.\n"]
     pub fn ImpellerParagraphStyleSetLocale(
         paragraph_style: ImpellerParagraphStyle,
         locale: *const ::std::os::raw::c_char,
     );
-    #[doc = " @brief      Create a new paragraph builder.\n\n @param[in]  context  The context.\n\n @return     The paragraph builder.\n"]
+    #[doc = "@brief      Create a new paragraph builder.\n\n@param[in]  context  The context.\n\n@return     The paragraph builder.\n"]
     pub fn ImpellerParagraphBuilderNew(
         context: ImpellerTypographyContext,
     ) -> ImpellerParagraphBuilder;
-    #[doc = " @brief      Retain a strong reference to the object. The object can be NULL\n             in which case this method is a no-op.\n\n @param[in]  paragraph_builder  The paragraph builder.\n"]
+    #[doc = "@brief      Retain a strong reference to the object. The object can be NULL\nin which case this method is a no-op.\n\n@param[in]  paragraph_builder  The paragraph builder.\n"]
     pub fn ImpellerParagraphBuilderRetain(paragraph_builder: ImpellerParagraphBuilder);
-    #[doc = " @brief      Release a previously retained reference to the object. The\n             object can be NULL in which case this method is a no-op.\n\n @param[in]  paragraph_builder  The paragraph_builder.\n"]
+    #[doc = "@brief      Release a previously retained reference to the object. The\nobject can be NULL in which case this method is a no-op.\n\n@param[in]  paragraph_builder  The paragraph_builder.\n"]
     pub fn ImpellerParagraphBuilderRelease(paragraph_builder: ImpellerParagraphBuilder);
-    #[doc = " @brief      Push a new paragraph style onto the paragraph style stack\n             managed by the paragraph builder.\n\n             Not all paragraph styles can be combined. For instance, it does\n             not make sense to mix text alignment for different text runs\n             within a paragraph. In such cases, the preference of the the\n             first paragraph style on the style stack will take hold.\n\n             If text is pushed onto the paragraph builder without a style\n             previously pushed onto the stack, a default paragraph text style\n             will be used. This may not always be desirable because some\n             style element cannot be overridden. It is recommended that a\n             default paragraph style always be pushed onto the stack before\n             the addition of any text.\n\n @param[in]  paragraph_builder  The paragraph builder.\n @param[in]  style              The style.\n"]
+    #[doc = "@brief      Push a new paragraph style onto the paragraph style stack\nmanaged by the paragraph builder.\n\nNot all paragraph styles can be combined. For instance, it does\nnot make sense to mix text alignment for different text runs\nwithin a paragraph. In such cases, the preference of the the\nfirst paragraph style on the style stack will take hold.\n\nIf text is pushed onto the paragraph builder without a style\npreviously pushed onto the stack, a default paragraph text style\nwill be used. This may not always be desirable because some\nstyle element cannot be overridden. It is recommended that a\ndefault paragraph style always be pushed onto the stack before\nthe addition of any text.\n\n@param[in]  paragraph_builder  The paragraph builder.\n@param[in]  style              The style.\n"]
     pub fn ImpellerParagraphBuilderPushStyle(
         paragraph_builder: ImpellerParagraphBuilder,
         style: ImpellerParagraphStyle,
     );
-    #[doc = " @brief      Pop a previously pushed paragraph style from the paragraph style\n             stack.\n\n @param[in]  paragraph_builder  The paragraph builder.\n"]
+    #[doc = "@brief      Pop a previously pushed paragraph style from the paragraph style\nstack.\n\n@param[in]  paragraph_builder  The paragraph builder.\n"]
     pub fn ImpellerParagraphBuilderPopStyle(paragraph_builder: ImpellerParagraphBuilder);
-    #[doc = " @brief      Add UTF-8 encoded text to the paragraph. The text will be styled\n             according to the paragraph style already on top of the paragraph\n             style stack.\n\n @param[in]  paragraph_builder  The paragraph builder.\n @param[in]  data               The data.\n @param[in]  length             The length.\n"]
+    #[doc = "@brief      Add UTF-8 encoded text to the paragraph. The text will be styled\naccording to the paragraph style already on top of the paragraph\nstyle stack.\n\n@param[in]  paragraph_builder  The paragraph builder.\n@param[in]  data               The data.\n@param[in]  length             The length.\n"]
     pub fn ImpellerParagraphBuilderAddText(
         paragraph_builder: ImpellerParagraphBuilder,
         data: *const u8,
         length: u32,
     );
-    #[doc = " @brief      Layout and build a new paragraph using the specified width. The\n             resulting paragraph is immutable. The paragraph builder must be\n             discarded and a new one created to build more paragraphs.\n\n @param[in]  paragraph_builder  The paragraph builder.\n @param[in]  width              The paragraph width.\n\n @return     The paragraph if one can be created, NULL otherwise.\n"]
+    #[doc = "@brief      Layout and build a new paragraph using the specified width. The\nresulting paragraph is immutable. The paragraph builder must be\ndiscarded and a new one created to build more paragraphs.\n\n@param[in]  paragraph_builder  The paragraph builder.\n@param[in]  width              The paragraph width.\n\n@return     The paragraph if one can be created, NULL otherwise.\n"]
     pub fn ImpellerParagraphBuilderBuildParagraphNew(
         paragraph_builder: ImpellerParagraphBuilder,
         width: f32,
     ) -> ImpellerParagraph;
-    #[doc = " @brief      Retain a strong reference to the object. The object can be NULL\n             in which case this method is a no-op.\n\n @param[in]  paragraph  The paragraph.\n"]
+    #[doc = "@brief      Retain a strong reference to the object. The object can be NULL\nin which case this method is a no-op.\n\n@param[in]  paragraph  The paragraph.\n"]
     pub fn ImpellerParagraphRetain(paragraph: ImpellerParagraph);
-    #[doc = " @brief      Release a previously retained reference to the object. The\n             object can be NULL in which case this method is a no-op.\n\n @param[in]  paragraph  The paragraph.\n"]
+    #[doc = "@brief      Release a previously retained reference to the object. The\nobject can be NULL in which case this method is a no-op.\n\n@param[in]  paragraph  The paragraph.\n"]
     pub fn ImpellerParagraphRelease(paragraph: ImpellerParagraph);
-    #[doc = " @see        `ImpellerParagraphGetMinIntrinsicWidth`\n\n @param[in]  paragraph  The paragraph.\n\n\n @return     The width provided to the paragraph builder during the call to\n             layout. This is the maximum width any line in the laid out\n             paragraph can occupy. But, it is not necessarily the actual\n             width of the paragraph after layout.\n"]
+    #[doc = "@see        `ImpellerParagraphGetMinIntrinsicWidth`\n\n@param[in]  paragraph  The paragraph.\n\n\n@return     The width provided to the paragraph builder during the call to\nlayout. This is the maximum width any line in the laid out\nparagraph can occupy. But, it is not necessarily the actual\nwidth of the paragraph after layout.\n"]
     pub fn ImpellerParagraphGetMaxWidth(paragraph: ImpellerParagraph) -> f32;
-    #[doc = " @param[in]  paragraph  The paragraph.\n\n @return     The height of the laid out paragraph. This is **not** a tight\n             bounding box and some glyphs may not reach the minimum location\n             they are allowed to reach.\n"]
+    #[doc = "@param[in]  paragraph  The paragraph.\n\n@return     The height of the laid out paragraph. This is **not** a tight\nbounding box and some glyphs may not reach the minimum location\nthey are allowed to reach.\n"]
     pub fn ImpellerParagraphGetHeight(paragraph: ImpellerParagraph) -> f32;
-    #[doc = " @param[in]  paragraph  The paragraph.\n\n @return     The length of the longest line in the paragraph. This is the\n             horizontal distance between the left edge of the leftmost glyph\n             and the right edge of the rightmost glyph, in the longest line\n             in the paragraph.\n"]
+    #[doc = "@param[in]  paragraph  The paragraph.\n\n@return     The length of the longest line in the paragraph. This is the\nhorizontal distance between the left edge of the leftmost glyph\nand the right edge of the rightmost glyph, in the longest line\nin the paragraph.\n"]
     pub fn ImpellerParagraphGetLongestLineWidth(paragraph: ImpellerParagraph) -> f32;
-    #[doc = " @see        `ImpellerParagraphGetMaxWidth`\n\n @param[in]  paragraph  The paragraph.\n\n @return     The actual width of the longest line in the paragraph after\n             layout. This is expected to be less than or equal to\n             `ImpellerParagraphGetMaxWidth`.\n"]
+    #[doc = "@see        `ImpellerParagraphGetMaxWidth`\n\n@param[in]  paragraph  The paragraph.\n\n@return     The actual width of the longest line in the paragraph after\nlayout. This is expected to be less than or equal to\n`ImpellerParagraphGetMaxWidth`.\n"]
     pub fn ImpellerParagraphGetMinIntrinsicWidth(paragraph: ImpellerParagraph) -> f32;
-    #[doc = " @param[in]  paragraph  The paragraph.\n\n @return     The width of the paragraph without line breaking.\n"]
+    #[doc = "@param[in]  paragraph  The paragraph.\n\n@return     The width of the paragraph without line breaking.\n"]
     pub fn ImpellerParagraphGetMaxIntrinsicWidth(paragraph: ImpellerParagraph) -> f32;
-    #[doc = " @param[in]  paragraph  The paragraph.\n\n @return     The distance from the top of the paragraph to the ideographic\n             baseline of the first line when using ideographic fonts\n             (Japanese, Korean, etc...).\n"]
+    #[doc = "@param[in]  paragraph  The paragraph.\n\n@return     The distance from the top of the paragraph to the ideographic\nbaseline of the first line when using ideographic fonts\n(Japanese, Korean, etc...).\n"]
     pub fn ImpellerParagraphGetIdeographicBaseline(paragraph: ImpellerParagraph) -> f32;
-    #[doc = " @param[in]  paragraph  The paragraph.\n\n @return     The distance from the top of the paragraph to the alphabetic\n             baseline of the first line when using alphabetic fonts (A-Z,\n             a-z, Greek, etc...).\n"]
+    #[doc = "@param[in]  paragraph  The paragraph.\n\n@return     The distance from the top of the paragraph to the alphabetic\nbaseline of the first line when using alphabetic fonts (A-Z,\na-z, Greek, etc...).\n"]
     pub fn ImpellerParagraphGetAlphabeticBaseline(paragraph: ImpellerParagraph) -> f32;
-    #[doc = " @param[in]  paragraph  The paragraph.\n\n @return     The number of lines visible in the paragraph after line\n             breaking.\n"]
+    #[doc = "@param[in]  paragraph  The paragraph.\n\n@return     The number of lines visible in the paragraph after line\nbreaking.\n"]
     pub fn ImpellerParagraphGetLineCount(paragraph: ImpellerParagraph) -> u32;
 }

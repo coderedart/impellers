@@ -37,7 +37,7 @@ Again, skia. But lots of guide-level docs for people who are starting out with V
 ### Why Impeller?
 * **Blazingly? Fast** - It is used in Flutter, so, you know it will be maintained and improved continuously. The focus is also on *consistency* to keep everything running smooth.
 * **Great text rendering AND layout** - The rust ecosystem is severely lacking
-    when it comes to text. Impeller is basically production grade when it comes to text.
+    when it comes to text. Impeller is production grade when it comes to text.
 * **Simple Object Model**: The object model is very simple and takes like 5 minutes to learn.
 * **Easy to Embed** - Any (opengl/vk/mtl)-based app/game can embed Impeller in less than 10 lines.
 * **Fast compilation** -  The only bottleneck is network speed to download the prebuilt libs.

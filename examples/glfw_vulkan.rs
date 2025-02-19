@@ -50,11 +50,8 @@ pub fn main() {
         // check events
         gtx.poll_events();
         for (_, event) in flush_messages(&ev_receiver) {
-            match event {
-                WindowEvent::Close => {
-                    window.set_should_close(true);
-                }
-                _ => {}
+            if event == WindowEvent::Close {
+                window.set_should_close(true);
             }
         }
 

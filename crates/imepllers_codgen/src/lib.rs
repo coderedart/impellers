@@ -159,12 +159,13 @@ impl bindgen::callbacks::ParseCallbacks for ImpellerApiJson {
         // but only for the first of the pair (ignoring the second).
         let mut replace = true;
         for line in comment.lines() {
+            // indented lines will be considered code blocks too, so lets remove them.
+            let line = line.trim();
+            // triple backticks are also considered codeblocks, so lets make them cpp blocks to make rust ignore them.
             if line.trim() == "```" {
                 // got the first one of the pair
                 if replace {
-                    // lets leave all the formatting (like newlines) as is
-                    // and just replace the backticks
-                    let line = line.replace("```", "```ignore");
+                    let line = line.replace("```", "```cpp\n");
                     new_comment.push_str(&line);
                     replace = false; // the next one will be the second of the pair
                     continue;

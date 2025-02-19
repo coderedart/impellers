@@ -181,7 +181,7 @@ impl ImpellerVersion {
     ///
     /// Since there are no API stability guarantees today, passing a
     /// version that is different to the one returned by
-    /// [Self::get_version] will always fail.
+    /// [Self::get_linked_version] will always fail.
     ///
     /// see [Context::new_opengl_es]
     ///
@@ -302,14 +302,26 @@ impl Context {
     ///
     /// @return The context or error if the context could not be created.
     ///
-    /// ```ignore
-    /// Context::new_opengl_es( |name| {
-    ///     glutin_or_glfw_or_sdl_thing.get_proc_address(name)
-    /// });
+    /// ```
+    /// fn create_impeller_ctx(window: &mut glfw::PWindow) {
+    ///     // as easy as it gets
+    ///     let impeller_ctx = unsafe {
+    ///         // safety:  drop all objects created from this context
+    ///         //          before `window` is dropped
+    ///         impellers::Context::new_opengl_es( |name| {
+    ///             window.get_proc_address(name) as _
+    ///         })
+    ///     };
+    ///
+    /// }
     /// ```
     ///
     /// # Safety
-    /// Unlike other context types, the OpenGL ES context can only be
+    /// * The context must be dropped before the window is dropped.
+    /// * The context may only be used only when opengl context is current on the thread.
+    /// * Any object (like texture or surface) that you create using this context
+    ///   must be dropped before the context is dropped.
+    /// * Unlike other context types, the OpenGL ES context can only be
     /// created, used, and collected on the calling thread. This
     /// restriction may be lifted in the future once reactor workers are
     /// exposed in the API. No other context types have threading
@@ -337,8 +349,10 @@ impl Context {
         }
     }
     /// Create a new surface by wrapping an existing framebuffer object.
-    /// @param
-    /// - context  The context.
+    /// The surface is just a cheap use-and-throw object.
+    /// Create it, draw to it (once) and drop it .
+    ///
+    ///
     /// - fbo      The framebuffer object handle.
     /// - format   The format of the framebuffer.
     /// - size     The size of the framebuffer is texels.
@@ -346,7 +360,10 @@ impl Context {
     /// @return    The surface if once can be created, NULL otherwise.
     ///
     /// # Safety
-    /// The framebuffer must be complete as determined by
+    /// * The surface must be properly configured (eg: no pending resizes)
+    /// * must be drawn to only once and then dropped (presented if vulkan).
+    /// * must be dropped before the context is dropped
+    /// * The framebuffer must be complete as determined by
     /// `glCheckFramebufferStatus`. The framebuffer is still owned by
     /// the caller and it must be collected once the surface is
     /// collected.
@@ -374,6 +391,10 @@ impl Context {
     /// @return     The texture if one can be created using the provided data, NULL
     ///             otherwise.
     ///
+    /// # Safety
+    ///
+    /// * The texture must be dropped before the context is dropped
+    ///
     /// Note:   The following section doesn't apply to rust bindings.
     ///         we just don't bother with owned copies and always prefer borrowed version.
     ///         If someone has any idea on how to ergonomically implement this, please do let me know.
@@ -396,7 +417,7 @@ impl Context {
     /// in a deferred manner on a background thread.
     ///
     #[doc(alias = "sys::ImpellerTextureCreateWithContentsNew")]
-    pub fn create_texture_with_rgba8(
+    pub unsafe fn create_texture_with_rgba8(
         &self,
         contents: &[u8],
         width: u32,
@@ -446,12 +467,14 @@ impl Context {
     /// @return     The texture if one could be created by adopting the supplied
     ///             texture handle, NULL otherwise.
     /// # Safety
-    /// Ownership of the handle is transferred over to Impeller after a
+    ///
+    /// * The texture must be dropped before the context is dropped
+    /// * Ownership of the handle is transferred over to Impeller after a
     /// successful call to this method. Impeller is responsible for
     /// calling glDeleteTextures on this handle. Do **not** collect this
     /// handle yourself as this will lead to a double-free.
     ///
-    /// The handle must be created in the same context as the one used
+    /// * The handle must be created in the same context as the one used
     /// by Impeller. If a different context is used, that context must
     /// be in the same sharegroup as Impellers OpenGL context and all
     /// synchronization of texture contents must already be complete.
@@ -516,6 +539,8 @@ impl Context {
     /// @return     The Vulkan context or NULL if one cannot be created.
     ///
     /// # Safety
+    ///
+    /// Don't know much vulkan either, so users will have to figure out the safety invariants.
     ///
     /// Just look at vulkan docs for how your proc_address_callback should work.
     /// Don't hold on to any pointers given to your closure (instance pointer or char pointer).
@@ -650,19 +675,17 @@ impl Drop for DisplayList {
 ///
 /// ### Recorder Semantics
 ///
-/// This is a mix of skia's Canvas and PictureRecorder. You basically call functions
+/// This is a mix of skia's Canvas and PictureRecorder. You call functions
 /// to draw things, but technically, you are just queuing draw commands.
-/// Think of it as pushing elements into a Vec.
 ///
-/// And when you are done recording, you use [Self::build] to create an immutable
-/// [DisplayList]. Think of this as taking a [Vec] and turning it into a
-/// [std::sync::Arc] containing a immutable slice.
+/// And when you are done recording, you use [Self::build] to create a
+/// [DisplayList].
 ///
-/// Just like you can extend a [Vec] with [Vec::extend_from_slice], you can
-/// push use [Self::draw_display_list] to add draw commands from a built [DisplayList].
+/// Finally, you "execute" all the queued draw commands
+/// on an actual [Surface] with [Surface::draw_display_list].
 ///
-/// Finally, you take a [Surface] and "replay" all the draw commands
-/// on that surface with [Surface::draw_display_list].
+/// [Self::draw_display_list] can be used to push a copy of draw commands from
+/// a [DisplayList] into a [DisplayListBuilder].
 ///
 /// <https://api.flutter.dev/flutter/dart-ui/Canvas-class.html>
 ///
@@ -670,25 +693,24 @@ impl Drop for DisplayList {
 ///
 /// ### Transformation And Clip Stack
 ///
-/// Internally, this maintains a stack of transformation matrices and clip rects.
-/// All draw commands are affected by the all the transformations in the stack.
+/// Internally, this maintains a stack of (transformation matrices + clip rects).
 ///
 /// You push a new transformation or clip on to the stack using [Self::save]
-/// and pop one off [Self::restore].
+/// and pop them off [Self::restore].
 ///
 /// You can check the current size of the stack with [Self::get_save_count].
-/// You can use this and pop off all elements upot this point using [Self::restore_to_count].
+/// You can use this to pop off all elements above that that point using [Self::restore_to_count].
 ///
 /// <https://learn.microsoft.com/en-us/dotnet/api/skiasharp.skcanvas?view=skiasharp-2.88#clipping-and-state>
 ///
 /// ### Save Layer
 ///
-/// [Self::save_layer] can be used to basically create an offscreen layer and redirect
-/// all the subsequent draw commands to this layer. Then, finally, you can blend
-/// this offscreen layer back onto the parent layer using [Self::restore].
+/// [Self::save_layer] creates an offscreen layer and redirects
+/// all the subsequent draw commands to this layer. This offscreen
+/// layer is blended back onto the parent layer using [Self::restore].
 ///
-/// Here, you get to add effects that affect the whole offscreen layer.
-/// For example, make the entire layer more transparent. Or add a backdrop blur.
+/// This is expensive, but is useful to apply fancy effects for a whole
+/// "group" of draw commands (a whole layer).
 ///
 /// ### Transforms
 ///
@@ -698,7 +720,7 @@ impl Drop for DisplayList {
 /// On hidpi screens, you might want to scale your canvas by scale factor of the screen.
 /// This will ensure that the rest of the application can just draw normally and still be the right size.
 ///
-/// Remember that the transforms `combine`. So, if you scale by 2.0, save stack, scale by 2.0, you
+/// Remember that the transforms compose. So, if you scale by 2.0, save stack, scale by 2.0, you
 /// are now scaling by 4.0 (2.0 from first transform and 2.0 from current transform).
 ///
 /// <https://learn.microsoft.com/en-us/dotnet/api/skiasharp.skcanvas?view=skiasharp-2.88#transformations>
@@ -710,7 +732,7 @@ impl Drop for DisplayList {
 ///
 /// ### Paint
 ///
-/// [Paint] is the most commonly used object and store the configuration
+/// [Paint] is the most commonly used object and stores the configuration
 /// for draw commands.
 ///
 /// For example, [Self::draw_rect] draws a rectangle. But whether it is a filled rect or just
@@ -1840,7 +1862,7 @@ impl ImageFilter {
     /// Creates a composed filter that when applied is identical to
     /// subsequently applying the inner and then the outer filters.
     ///
-    /// ```ignore
+    /// ```cpp
     /// destination = outer_filter(inner_filter(source))
     /// ```
     ///
@@ -1907,12 +1929,14 @@ impl MaskFilter {
 /// These are typically expensive to create and applications will only ever need
 /// to create a single one of these during their lifetimes.
 ///
-/// These basically hold the "font data". You can optionally register custom fonts.
-/// Or just user the fonts available on user's system.
-/// You configure which font to use for text with [ParagraphStyle].
+/// These hold the "font data" for building paragraphs.
+/// You can optionally register custom fonts or just use the fonts
+/// available on user's system.
 ///
 /// Unlike graphics context, typograhy contexts are not thread-safe. These must
 /// be created, used, and collected on a single thread.
+///
+/// @see [ParagraphStyle]
 pub struct TypographyContext(sys::ImpellerTypographyContext);
 
 impl Clone for TypographyContext {
@@ -2105,16 +2129,22 @@ impl Paragraph {
 /// @see      [ParagraphStyle]
 ///
 /// ```
+/// # use impellers::{TypographyContext, ParagraphStyle, ParagraphBuilder};
 /// // this contains the fonts from user's system (or you can add custom fonts)
-/// let fonts = TypographyContext::new();
+/// let fonts = TypographyContext::default();
 /// // style decides the appearance of the text
-/// let style = ParagraphStyle::new()
+/// let style = ParagraphStyle::default();
 /// style.set_font_family("Arial");
 /// style.set_font_size(12.0);
-/// let mut builder = ParagraphBuilder::new(&fonts);
+/// let mut builder = ParagraphBuilder::new(&fonts).expect("failed to create para builder");
 /// builder.push_style(&style); // DON'T forget to set the style before adding text
-/// builder.add_text("Hello, world!");
-/// let paragraph = builder.build().unwrap();
+/// builder.add_text("Hello, world!\n");
+/// style.set_font_size(24.0);
+/// builder.push_style(&style);
+/// builder.add_text("Big World!\n"); // 24.0 font size
+/// builder.pop_style(); // the 24.0 style is popped off. the previous 12.0 style is used
+/// builder.add_text("Small World!\n"); // 12.0 font size
+/// let paragraph = builder.build(100.0).expect("building paragraph failed");
 /// ```
 pub struct ParagraphBuilder(sys::ImpellerParagraphBuilder);
 

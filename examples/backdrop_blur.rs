@@ -16,10 +16,12 @@ fn main() {
 
     let (width, height) = pixels.dimensions();
     let contents = pixels.into_raw();
-    let tex = framework
-        .itx
-        .create_texture_with_rgba8(&contents, width, height)
-        .unwrap();
+    let tex = unsafe {
+        framework
+            .itx
+            .create_texture_with_rgba8(&contents, width, height)
+            .unwrap()
+    };
     let dl = {
         let builder = DisplayListBuilder::new(None);
         let paint = Paint::default();
