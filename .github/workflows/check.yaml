@@ -30,4 +30,5 @@ jobs:
       if: matrix.os != 'macos'
       run: |
         cargo run --example=empty --features=prebuilt_libs,sys,debug_static_link
-        # windows release statics don't work with llvm-strip --strip-unneeded. we should try --strip-debug
+        cargo run --example=empty --features=prebuilt_libs,sys,static_link
+        
