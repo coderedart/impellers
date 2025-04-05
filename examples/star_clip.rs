@@ -14,7 +14,7 @@ fn main() {
             .unwrap()
     };
     let dl = {
-        let builder = DisplayListBuilder::new(None);
+        let mut builder = DisplayListBuilder::new(None);
 
         // the rect inside image that contains the dog.
         let dog_rect = Rect::new([700.0, 500.0].into(), [600.0, 500.0].into());
@@ -26,7 +26,7 @@ fn main() {
 
         let path = {
             // build a star path
-            let path_builder = PathBuilder::default();
+            let mut path_builder = PathBuilder::default();
             path_builder.move_to([128.0, 0.0].into());
             path_builder.line_to([168.0, 80.0].into());
             path_builder.line_to([256.0, 93.0].into());
@@ -43,7 +43,7 @@ fn main() {
         };
         {
             // clear screen
-            let paint = Paint::default();
+            let mut paint = Paint::default();
             paint.set_color(Color::BLACK);
             builder.draw_paint(&paint);
         }

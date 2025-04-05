@@ -119,6 +119,8 @@
     "ImpellerParagraph": "/// An immutable, fully laid out paragraph.\n///",
     "ImpellerParagraphBuilder": "/// Paragraph builders allow for the creation of fully laid out paragraphs\n/// (which themselves are immutable).\n///\n/// To build a paragraph, users push/pop paragraph styles onto a stack then add\n/// UTF-8 encoded text. The properties on the top of paragraph style stack when\n/// the text is added are used to layout and shape that subset of the paragraph.\n///\n/// @see      `ImpellerParagraphStyle`\n///",
     "ImpellerParagraphStyle": "/// Specified when building a paragraph, paragraph styles are managed in a stack\n/// with specify text properties to apply to text that is added to the paragraph\n/// builder.\n///",
+    "ImpellerLineMetrics": "/// Describes the metrics of lines in a fully laid out paragraph.\n///\n/// Regardless of how the string of text is specified to the paragraph builder,\n/// offsets into buffers that are returned by line metrics are always assumed to\n/// be into buffers of UTF-16 code units.\n///",
+    "ImpellerGlyphInfo": "/// Describes the metrics of glyphs in a paragraph line.\n///",
     "ImpellerPath": "/// Represents a two-dimensional path that is immutable and graphics context\n/// agnostic.\n///\n/// Paths in Impeller consist of linear, cubic B\u00e9zier curve, and quadratic\n/// B\u00e9zier curve segments. All other shapes are approximations using these\n/// building blocks.\n///\n/// Paths are created using path builder that allow for the configuration of the\n/// path segments, how they are filled, and/or stroked.\n///",
     "ImpellerPathBuilder": "/// Path builders allow for the incremental building up of paths.\n///",
     "ImpellerSurface": "/// A surface represents a render target for Impeller to direct the rendering\n/// intent specified the form of display lists to.\n///\n/// Render targets are how Impeller API users perform Window System Integration\n/// (WSI). Users wrap swapchain images as surfaces and draw display lists onto\n/// these surfaces to present content.\n///\n/// Creating surfaces is typically platform and client-rendering-API specific.\n///",
@@ -1949,6 +1951,40 @@
         }
       ]
     },
+    "ImpellerDisplayListBuilderDrawShadow": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "builder",
+          "ty": "ImpellerDisplayListBuilder",
+          "nonnull": true
+        },
+        {
+          "name": "path",
+          "ty": "ImpellerPath",
+          "nonnull": true
+        },
+        {
+          "name": "color",
+          "ty": "const ImpellerColor*",
+          "nonnull": true
+        },
+        {
+          "name": "elevation",
+          "ty": "float"
+        },
+        {
+          "name": "occluder_is_transparent",
+          "ty": "bool"
+        },
+        {
+          "name": "device_pixel_ratio",
+          "ty": "float"
+        }
+      ]
+    },
     "ImpellerDisplayListBuilderDrawTexture": {
       "return_ty": {
         "ty": "void"
@@ -2495,6 +2531,368 @@
           "nonnull": true
         }
       ]
+    },
+    "ImpellerParagraphGetWordBoundary": {
+      "return_ty": {
+        "ty": "ImpellerRange"
+      },
+      "args": [
+        {
+          "name": "paragraph",
+          "ty": "ImpellerParagraph",
+          "nonnull": true
+        },
+        {
+          "name": "code_unit_index",
+          "ty": "size_t"
+        }
+      ]
+    },
+    "ImpellerParagraphGetLineMetrics": {
+      "return_ty": {
+        "ty": "ImpellerLineMetrics"
+      },
+      "args": [
+        {
+          "name": "paragraph",
+          "ty": "ImpellerParagraph",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerParagraphCreateGlyphInfoAtCodeUnitIndexNew": {
+      "return_ty": {
+        "ty": "ImpellerGlyphInfo",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "paragraph",
+          "ty": "ImpellerParagraph",
+          "nonnull": true
+        },
+        {
+          "name": "code_unit_index",
+          "ty": "size_t"
+        }
+      ]
+    },
+    "ImpellerParagraphCreateGlyphInfoAtParagraphCoordinatesNew": {
+      "return_ty": {
+        "ty": "ImpellerGlyphInfo",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "paragraph",
+          "ty": "ImpellerParagraph",
+          "nonnull": true
+        },
+        {
+          "name": "x",
+          "ty": "double"
+        },
+        {
+          "name": "y",
+          "ty": "double"
+        }
+      ]
+    },
+    "ImpellerLineMetricsRetain": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "line_metrics",
+          "ty": "ImpellerLineMetrics"
+        }
+      ]
+    },
+    "ImpellerLineMetricsRelease": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "line_metrics",
+          "ty": "ImpellerLineMetrics"
+        }
+      ]
+    },
+    "ImpellerLineMetricsGetUnscaledAscent": {
+      "return_ty": {
+        "ty": "double"
+      },
+      "args": [
+        {
+          "name": "metrics",
+          "ty": "ImpellerLineMetrics",
+          "nonnull": true
+        },
+        {
+          "name": "line",
+          "ty": "size_t"
+        }
+      ]
+    },
+    "ImpellerLineMetricsGetAscent": {
+      "return_ty": {
+        "ty": "double"
+      },
+      "args": [
+        {
+          "name": "metrics",
+          "ty": "ImpellerLineMetrics",
+          "nonnull": true
+        },
+        {
+          "name": "line",
+          "ty": "size_t"
+        }
+      ]
+    },
+    "ImpellerLineMetricsGetDescent": {
+      "return_ty": {
+        "ty": "double"
+      },
+      "args": [
+        {
+          "name": "metrics",
+          "ty": "ImpellerLineMetrics",
+          "nonnull": true
+        },
+        {
+          "name": "line",
+          "ty": "size_t"
+        }
+      ]
+    },
+    "ImpellerLineMetricsGetBaseline": {
+      "return_ty": {
+        "ty": "double"
+      },
+      "args": [
+        {
+          "name": "metrics",
+          "ty": "ImpellerLineMetrics",
+          "nonnull": true
+        },
+        {
+          "name": "line",
+          "ty": "size_t"
+        }
+      ]
+    },
+    "ImpellerLineMetricsIsHardbreak": {
+      "return_ty": {
+        "ty": "bool"
+      },
+      "args": [
+        {
+          "name": "metrics",
+          "ty": "ImpellerLineMetrics",
+          "nonnull": true
+        },
+        {
+          "name": "line",
+          "ty": "size_t"
+        }
+      ]
+    },
+    "ImpellerLineMetricsGetWidth": {
+      "return_ty": {
+        "ty": "double"
+      },
+      "args": [
+        {
+          "name": "metrics",
+          "ty": "ImpellerLineMetrics",
+          "nonnull": true
+        },
+        {
+          "name": "line",
+          "ty": "size_t"
+        }
+      ]
+    },
+    "ImpellerLineMetricsGetHeight": {
+      "return_ty": {
+        "ty": "double"
+      },
+      "args": [
+        {
+          "name": "metrics",
+          "ty": "ImpellerLineMetrics",
+          "nonnull": true
+        },
+        {
+          "name": "line",
+          "ty": "size_t"
+        }
+      ]
+    },
+    "ImpellerLineMetricsGetLeft": {
+      "return_ty": {
+        "ty": "double"
+      },
+      "args": [
+        {
+          "name": "metrics",
+          "ty": "ImpellerLineMetrics",
+          "nonnull": true
+        },
+        {
+          "name": "line",
+          "ty": "size_t"
+        }
+      ]
+    },
+    "ImpellerLineMetricsGetCodeUnitStartIndex": {
+      "return_ty": {
+        "ty": "size_t"
+      },
+      "args": [
+        {
+          "name": "metrics",
+          "ty": "ImpellerLineMetrics",
+          "nonnull": true
+        },
+        {
+          "name": "line",
+          "ty": "size_t"
+        }
+      ]
+    },
+    "ImpellerLineMetricsGetCodeUnitEndIndex": {
+      "return_ty": {
+        "ty": "size_t"
+      },
+      "args": [
+        {
+          "name": "metrics",
+          "ty": "ImpellerLineMetrics",
+          "nonnull": true
+        },
+        {
+          "name": "line",
+          "ty": "size_t"
+        }
+      ]
+    },
+    "ImpellerLineMetricsGetCodeUnitEndIndexExcludingWhitespace": {
+      "return_ty": {
+        "ty": "size_t"
+      },
+      "args": [
+        {
+          "name": "metrics",
+          "ty": "ImpellerLineMetrics",
+          "nonnull": true
+        },
+        {
+          "name": "line",
+          "ty": "size_t"
+        }
+      ]
+    },
+    "ImpellerLineMetricsGetCodeUnitEndIndexIncludingNewline": {
+      "return_ty": {
+        "ty": "size_t"
+      },
+      "args": [
+        {
+          "name": "metrics",
+          "ty": "ImpellerLineMetrics",
+          "nonnull": true
+        },
+        {
+          "name": "line",
+          "ty": "size_t"
+        }
+      ]
+    },
+    "ImpellerGlyphInfoRetain": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "glyph_info",
+          "ty": "ImpellerGlyphInfo"
+        }
+      ]
+    },
+    "ImpellerGlyphInfoRelease": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "glyph_info",
+          "ty": "ImpellerGlyphInfo"
+        }
+      ]
+    },
+    "ImpellerGlyphInfoGetGraphemeClusterCodeUnitRangeBegin": {
+      "return_ty": {
+        "ty": "size_t"
+      },
+      "args": [
+        {
+          "name": "glyph_info",
+          "ty": "ImpellerGlyphInfo",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerGlyphInfoGetGraphemeClusterCodeUnitRangeEnd": {
+      "return_ty": {
+        "ty": "size_t"
+      },
+      "args": [
+        {
+          "name": "glyph_info",
+          "ty": "ImpellerGlyphInfo",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerGlyphInfoGetGraphemeClusterBounds": {
+      "return_ty": {
+        "ty": "ImpellerRect"
+      },
+      "args": [
+        {
+          "name": "glyph_info",
+          "ty": "ImpellerGlyphInfo",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerGlyphInfoIsEllipsis": {
+      "return_ty": {
+        "ty": "bool"
+      },
+      "args": [
+        {
+          "name": "glyph_info",
+          "ty": "ImpellerGlyphInfo",
+          "nonnull": true
+        }
+      ]
+    },
+    "ImpellerGlyphInfoGetTextDirection": {
+      "return_ty": {
+        "ty": "ImpellerTextDirection"
+      },
+      "args": [
+        {
+          "name": "glyph_info",
+          "ty": "ImpellerGlyphInfo",
+          "nonnull": true
+        }
+      ]
     }
   },
   "pod_structs": {
@@ -2555,6 +2953,19 @@
         {
           "name": "height",
           "ty": "int64_t"
+        }
+      ]
+    },
+    "ImpellerRange": {
+      "doc": "",
+      "fields": [
+        {
+          "name": "start",
+          "ty": "uint64_t"
+        },
+        {
+          "name": "end",
+          "ty": "uint64_t"
         }
       ]
     },
@@ -2711,8 +3122,10 @@
     "const char*",
     "const float*",
     "const uint8_t*",
+    "double",
     "float",
     "int64_t",
+    "size_t",
     "uint32_t",
     "uint64_t",
     "void",

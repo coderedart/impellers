@@ -308,6 +308,20 @@ pub struct ImpellerParagraphStyle_ {
 pub type ImpellerParagraphStyle = *mut ImpellerParagraphStyle_;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct ImpellerLineMetrics_ {
+    _unused: [u8; 0],
+}
+#[doc = "Describes the metrics of lines in a fully laid out paragraph.\n\nRegardless of how the string of text is specified to the paragraph builder,\noffsets into buffers that are returned by line metrics are always assumed to\nbe into buffers of UTF-16 code units.\n"]
+pub type ImpellerLineMetrics = *mut ImpellerLineMetrics_;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImpellerGlyphInfo_ {
+    _unused: [u8; 0],
+}
+#[doc = "Describes the metrics of glyphs in a paragraph line.\n"]
+pub type ImpellerGlyphInfo = *mut ImpellerGlyphInfo_;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct ImpellerPath_ {
     _unused: [u8; 0],
 }
@@ -553,6 +567,20 @@ const _: () = {
         [::std::mem::offset_of!(ImpellerISize, width) - 0usize];
     ["Offset of field: ImpellerISize::height"]
         [::std::mem::offset_of!(ImpellerISize, height) - 8usize];
+};
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone)]
+pub struct ImpellerRange {
+    pub start: u64,
+    pub end: u64,
+}
+#[allow(clippy::unnecessary_operation, clippy::identity_op)]
+const _: () = {
+    ["Size of ImpellerRange"][::std::mem::size_of::<ImpellerRange>() - 16usize];
+    ["Alignment of ImpellerRange"][::std::mem::align_of::<ImpellerRange>() - 8usize];
+    ["Offset of field: ImpellerRange::start"]
+        [::std::mem::offset_of!(ImpellerRange, start) - 0usize];
+    ["Offset of field: ImpellerRange::end"][::std::mem::offset_of!(ImpellerRange, end) - 8usize];
 };
 #[doc = "A 4x4 transformation matrix using column-major storage.\n\n```cpp\n| m[0] m[4] m[8]  m[12] |\n| m[1] m[5] m[9]  m[13] |\n| m[2] m[6] m[10] m[14] |\n| m[3] m[7] m[11] m[15] |\n```\n"]
 #[repr(C)]
@@ -1177,6 +1205,15 @@ unsafe extern "C" {
         paragraph: ImpellerParagraph,
         point: *const ImpellerPoint,
     );
+    #[doc = "@brief      Draw a shadow for a Path given a material elevation. If the\noccluding object is not opaque, additional hints (via the\n`occluder_is_transparent` argument) must be provided to render\nthe shadow correctly.\n\n@param[in]  builder    The builder.\n@param[in]  path       The shadow path.\n@param[in]  color      The shadow color.\n@param[in]  elevation  The material elevation.\n@param[in]  occluder_is_transparent\nIf the object casting the shadow is transparent.\n@param[in]  device_pixel_ratio\nThe device pixel ratio.\n"]
+    pub fn ImpellerDisplayListBuilderDrawShadow(
+        builder: ImpellerDisplayListBuilder,
+        path: ImpellerPath,
+        color: *const ImpellerColor,
+        elevation: f32,
+        occluder_is_transparent: bool,
+        device_pixel_ratio: f32,
+    );
     #[doc = "@brief      Draw a texture at the specified point.\n\n@param[in]  builder   The builder.\n@param[in]  texture   The texture.\n@param[in]  point     The point.\n@param[in]  sampling  The sampling.\n@param[in]  paint     The paint.\n"]
     pub fn ImpellerDisplayListBuilderDrawTexture(
         builder: ImpellerDisplayListBuilder,
@@ -1308,4 +1345,81 @@ unsafe extern "C" {
     pub fn ImpellerParagraphGetAlphabeticBaseline(paragraph: ImpellerParagraph) -> f32;
     #[doc = "@param[in]  paragraph  The paragraph.\n\n@return     The number of lines visible in the paragraph after line\nbreaking.\n"]
     pub fn ImpellerParagraphGetLineCount(paragraph: ImpellerParagraph) -> u32;
+    #[doc = "@brief      Get the range into the UTF-16 code unit buffer that represents\nthe word at the specified caret location in the same buffer.\n\nWord boundaries are defined more precisely in [Unicode Standard\nAnnex #29](http://www.unicode.org/reports/tr29/#Word_Boundaries)\n\n@param[in]  paragraph        The paragraph\n@param[in]  code_unit_index  The code unit index\n\n@return     The impeller range.\n"]
+    pub fn ImpellerParagraphGetWordBoundary(
+        paragraph: ImpellerParagraph,
+        code_unit_index: usize,
+    ) -> ImpellerRange;
+    #[doc = "@brief      Get the line metrics of this laid out paragraph. Calculating the\nline metrics is expensive. The first time line metrics are\nrequested, they will be cached along with the paragraph (which\nis immutable).\n\n@param[in]  paragraph  The paragraph.\n\n@return     The line metrics.\n"]
+    pub fn ImpellerParagraphGetLineMetrics(paragraph: ImpellerParagraph) -> ImpellerLineMetrics;
+    #[doc = "@brief      Create a new instance of glyph info that can be queried for\ninformation about the glyph at the given UTF-16 code unit index.\nThe instance must be freed using `ImpellerGlyphInfoRelease`.\n\n@param[in]  paragraph        The paragraph.\n@param[in]  code_unit_index  The UTF-16 code unit index.\n\n@return     The glyph information.\n"]
+    pub fn ImpellerParagraphCreateGlyphInfoAtCodeUnitIndexNew(
+        paragraph: ImpellerParagraph,
+        code_unit_index: usize,
+    ) -> ImpellerGlyphInfo;
+    #[doc = "@brief      Create a new instance of glyph info that can be queried for\ninformation about the glyph closest to the specified coordinates\nrelative to the origin of the paragraph. The instance must be\nfreed using `ImpellerGlyphInfoRelease`.\n\n@param[in]  paragraph  The paragraph.\n@param[in]  x          The x coordinate relative to paragraph origin.\n@param[in]  y          The x coordinate relative to paragraph origin.\n\n@return     The glyph information.\n"]
+    pub fn ImpellerParagraphCreateGlyphInfoAtParagraphCoordinatesNew(
+        paragraph: ImpellerParagraph,
+        x: f64,
+        y: f64,
+    ) -> ImpellerGlyphInfo;
+    #[doc = "@brief      Retain a strong reference to the object. The object can be NULL\nin which case this method is a no-op.\n\n@param[in]  line_metrics  The line metrics.\n"]
+    pub fn ImpellerLineMetricsRetain(line_metrics: ImpellerLineMetrics);
+    #[doc = "@brief      Release a previously retained reference to the object. The\nobject can be NULL in which case this method is a no-op.\n\n@param[in]  line_metrics  The line metrics.\n"]
+    pub fn ImpellerLineMetricsRelease(line_metrics: ImpellerLineMetrics);
+    #[doc = "@brief      The rise from the baseline as calculated from the font and style\nfor this line ignoring the height from the text style.\n\n@param[in]  metrics  The metrics.\n@param[in]  line     The line index (zero based).\n\n@return     The unscaled ascent.\n"]
+    pub fn ImpellerLineMetricsGetUnscaledAscent(metrics: ImpellerLineMetrics, line: usize) -> f64;
+    #[doc = "@brief      The rise from the baseline as calculated from the font and style\nfor this line.\n\n@param[in]  metrics  The metrics.\n@param[in]  line     The line index (zero based).\n\n@return     The ascent.\n"]
+    pub fn ImpellerLineMetricsGetAscent(metrics: ImpellerLineMetrics, line: usize) -> f64;
+    #[doc = "@brief      The drop from the baseline as calculated from the font and style\nfor this line.\n\n@param[in]  metrics  The metrics.\n@param[in]  line     The line index (zero based).\n\n@return     The descent.\n"]
+    pub fn ImpellerLineMetricsGetDescent(metrics: ImpellerLineMetrics, line: usize) -> f64;
+    #[doc = "@brief      The y coordinate of the baseline for this line from the top of\nthe paragraph.\n\n@param[in]  metrics  The metrics.\n@param[in]  line     The line index (zero based).\n\n@return     The baseline.\n"]
+    pub fn ImpellerLineMetricsGetBaseline(metrics: ImpellerLineMetrics, line: usize) -> f64;
+    #[doc = "@brief      Used to determine if this line ends with an explicit line break\n(e.g. '\\n') or is the end of the paragraph.\n\n@param[in]  metrics  The metrics.\n@param[in]  line     The line index (zero based).\n\n@return     True if the line is a hard break.\n"]
+    pub fn ImpellerLineMetricsIsHardbreak(metrics: ImpellerLineMetrics, line: usize) -> bool;
+    #[doc = "@brief      Width of the line from the left edge of the leftmost glyph to\nthe right edge of the rightmost glyph.\n\n@param[in]  metrics  The metrics.\n@param[in]  line     The line index (zero based).\n\n@return     The width.\n"]
+    pub fn ImpellerLineMetricsGetWidth(metrics: ImpellerLineMetrics, line: usize) -> f64;
+    #[doc = "@brief      Total height of the line from the top edge to the bottom edge.\n\n@param[in]  metrics  The metrics.\n@param[in]  line     The line index (zero based).\n\n@return     The height.\n"]
+    pub fn ImpellerLineMetricsGetHeight(metrics: ImpellerLineMetrics, line: usize) -> f64;
+    #[doc = "@brief      The x coordinate of left edge of the line.\n\n@param[in]  metrics  The metrics.\n@param[in]  line     The line index (zero based).\n\n@return     The left edge coordinate.\n"]
+    pub fn ImpellerLineMetricsGetLeft(metrics: ImpellerLineMetrics, line: usize) -> f64;
+    #[doc = "@brief      Fetch the start index in the buffer of UTF-16 code units used to\nrepresent the paragraph line.\n\n@param[in]  metrics  The metrics.\n@param[in]  line     The line index (zero based).\n\n@return     The UTF-16 code units start index.\n"]
+    pub fn ImpellerLineMetricsGetCodeUnitStartIndex(
+        metrics: ImpellerLineMetrics,
+        line: usize,
+    ) -> usize;
+    #[doc = "@brief      Fetch the end index in the buffer of UTF-16 code units used to\nrepresent the paragraph line.\n\n@param[in]  metrics  The metrics.\n@param[in]  line     The line index (zero based).\n\n@return     The UTF-16 code units end index.\n"]
+    pub fn ImpellerLineMetricsGetCodeUnitEndIndex(
+        metrics: ImpellerLineMetrics,
+        line: usize,
+    ) -> usize;
+    #[doc = "@brief      Fetch the end index (excluding whitespace) in the buffer of\nUTF-16 code units used to represent the paragraph line.\n\n@param[in]  metrics  The metrics.\n@param[in]  line     The line index (zero based).\n\n@return     The UTF-16 code units end index excluding whitespace.\n"]
+    pub fn ImpellerLineMetricsGetCodeUnitEndIndexExcludingWhitespace(
+        metrics: ImpellerLineMetrics,
+        line: usize,
+    ) -> usize;
+    #[doc = "@brief      Fetch the end index (including newlines) in the buffer of UTF-16\ncode units used to represent the paragraph line.\n\n@param[in]  metrics  The metrics.\n@param[in]  line     The line index (zero based).\n\n@return     The UTF-16 code units end index including newlines.\n"]
+    pub fn ImpellerLineMetricsGetCodeUnitEndIndexIncludingNewline(
+        metrics: ImpellerLineMetrics,
+        line: usize,
+    ) -> usize;
+    #[doc = "@brief      Retain a strong reference to the object. The object can be NULL\nin which case this method is a no-op.\n\n@param[in]  glyph_info  The glyph information.\n"]
+    pub fn ImpellerGlyphInfoRetain(glyph_info: ImpellerGlyphInfo);
+    #[doc = "@brief      Release a previously retained reference to the object. The\nobject can be NULL in which case this method is a no-op.\n\n@param[in]  glyph_info  The glyph information.\n"]
+    pub fn ImpellerGlyphInfoRelease(glyph_info: ImpellerGlyphInfo);
+    #[doc = "@brief      Fetch the start index in the buffer of UTF-16 code units used to\nrepresent the grapheme cluster for a glyph.\n\n@param[in]  glyph_info  The glyph information.\n\n@return     The UTF-16 code units start index.\n"]
+    pub fn ImpellerGlyphInfoGetGraphemeClusterCodeUnitRangeBegin(
+        glyph_info: ImpellerGlyphInfo,
+    ) -> usize;
+    #[doc = "@brief      Fetch the end index in the buffer of UTF-16 code units used to\nrepresent the grapheme cluster for a glyph.\n\n@param[in]  glyph_info  The glyph information.\n\n@return     The UTF-16 code units end index.\n"]
+    pub fn ImpellerGlyphInfoGetGraphemeClusterCodeUnitRangeEnd(
+        glyph_info: ImpellerGlyphInfo,
+    ) -> usize;
+    #[doc = "@brief      Fetch the bounds of the grapheme cluster for the glyph in the\ncoordinate space of the paragraph.\n\n@param[in]  glyph_info  The glyph information.\n\n@return     The grapheme cluster bounds.\n"]
+    pub fn ImpellerGlyphInfoGetGraphemeClusterBounds(glyph_info: ImpellerGlyphInfo)
+        -> ImpellerRect;
+    #[doc = "@param[in]  glyph_info  The glyph information.\n\n@return     True if the glyph represents an ellipsis. False otherwise.\n"]
+    pub fn ImpellerGlyphInfoIsEllipsis(glyph_info: ImpellerGlyphInfo) -> bool;
+    #[doc = "@param[in]  glyph_info  The glyph information.\n\n@return     The direction of the run that contains the glyph.\n"]
+    pub fn ImpellerGlyphInfoGetTextDirection(glyph_info: ImpellerGlyphInfo) -> TextDirection;
 }

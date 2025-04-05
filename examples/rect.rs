@@ -7,8 +7,8 @@ fn main() {
     // if you want to do any initialization before event loop,
     // this is the place for that.
     let dl = {
-        let builder = DisplayListBuilder::new(None);
-        let paint = Paint::default();
+        let mut builder = DisplayListBuilder::new(None);
+        let mut paint = Paint::default();
         paint.set_color(Color::BLACK);
         // clear with black first
         builder.draw_paint(&paint);

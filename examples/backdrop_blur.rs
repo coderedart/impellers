@@ -23,7 +23,7 @@ fn main() {
             .unwrap()
     };
     let dl = {
-        let builder = DisplayListBuilder::new(None);
+        let mut builder = DisplayListBuilder::new(None);
         let paint = Paint::default();
         builder.draw_texture(&tex, Point::zero(), TextureSampling::Linear, &paint);
 

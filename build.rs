@@ -170,43 +170,58 @@ fn main() {
         }
     }
     const LOCAL_IMPELLER_ARCHIVE_NAME: &str = "impeller_sdk.zip";
-
+    /// This function gets the main cache directory and creates a subdirectory named
+    /// `build_name` inside it to cache our artefacts (or use existing ones if provided).
+    /// 
+    /// So, the path will be `CACHE_DIR`/`build_name` and this is where you can download
+    /// impeller_sdk.zip (if it doesn't already exist) and extract it (if not already extracted).
+    /// 
+    /// For `CACHE_DIR`, we use 
+    /// * `IMPELLER_CACHE_DIR` env var if present or
+    /// * walks up the `OUT_DIR` until it finds the parent of `target` and creates `.impeller_cache` there.
+    /// If `.impeller_cache`/version.txt doesn't exist or match the crate version, it clears the entire directory
+    /// to remove any older artefacts. 
     fn get_zip_cache_dir(out_dir: &Path, build_name: &str) -> PathBuf {
-        let impeller_cache_dir = get_cache_directory(out_dir);
+        let impeller_cache_dir = if let Ok(cache_dir) = std::env::var("IMPELLER_CACHE_DIR") {
+            println!("found IMPELLER_CACHE_DIR: {cache_dir}");
+            PathBuf::from(cache_dir)
+        } else {
+            println!(
+                "no IMPELLER_CACHE_DIR env var found. falling back to target/../.impeller_cache"
+            );
+            // This will get/create cache directory. If the current version doesn't match the version stored in
+            // directory, it will remove the directory and create a new one to discard all the old artefacts.
+            // assuming cargo's target directory is located in the current directory.
+            let impeller_cache_dir = out_dir // ./target/release/build/impeller_a2142341/out
+                .parent()
+                .expect("failed to get out_dir parent") // ./target/release/build/impeller_a2142341
+                .parent()
+                .expect("failed to get out_dir's grandparent") // ./target/release/build
+                .parent()
+                .expect("failed to get profile directory") // ./target/release
+                .parent()
+                .expect("failed to get target directory") // ./target
+                .parent()
+                .expect("failed to get target directory's parent") // . (project dir)
+                .join(".impeller_cache"); // ./.impeller_cache
+            let impeller_cache_version_path = impeller_cache_dir.join("version.txt");
+            let impeller_version = std::env::var("CARGO_PKG_VERSION").unwrap();
+            let version_in_file =
+                std::fs::read_to_string(&impeller_cache_version_path).unwrap_or_default();
+            if version_in_file != impeller_version {
+                println!("cargo:warning=impeller cache directory is out of date {impeller_version} vs {version_in_file}");
+                if impeller_cache_dir.exists() {
+                    std::fs::remove_dir_all(&impeller_cache_dir)
+                        .expect("failed to remove impeller cache dir");
+                }
+                std::fs::create_dir_all(&impeller_cache_dir)
+                    .expect("failed to create impeller cache dir");
+                std::fs::write(&impeller_cache_version_path, impeller_version).unwrap();
+            }
+            impeller_cache_dir
+        };
         let zip_cache_dir = impeller_cache_dir.join(build_name);
         std::fs::create_dir_all(&zip_cache_dir).expect("failed to create zip cache dir");
         zip_cache_dir
-    }
-    /// This will get/create cache directory. If the current version doesn't match the version stored in
-    /// directory, it will remove the directory and create a new one to discard all the old artefacts.
-    fn get_cache_directory(out_dir: &Path) -> PathBuf {
-        // assuming cargo's target directory is located in the current directory.
-        let impeller_cache_dir = out_dir // ./target/release/build/impeller_a2142341/out
-            .parent()
-            .expect("failed to get out_dir parent") // ./target/release/build/impeller_a2142341
-            .parent()
-            .expect("failed to get out_dir's grandparent") // ./target/release/build
-            .parent()
-            .expect("failed to get profile directory") // ./target/release
-            .parent()
-            .expect("failed to get target directory") // ./target
-            .parent()
-            .expect("failed to get target directory's parent") // ./
-            .join(".impeller_cache"); // ./.impeller_cache
-        let impeller_cache_version_path = impeller_cache_dir.join("version.txt");
-        let impeller_version = std::env::var("CARGO_PKG_VERSION").unwrap();
-        let version_in_file =
-            std::fs::read_to_string(&impeller_cache_version_path).unwrap_or_default();
-        if version_in_file != impeller_version {
-            println!("cargo:warning=impeller cache directory is out of date {impeller_version} vs {version_in_file}");
-            if impeller_cache_dir.exists() {
-                std::fs::remove_dir_all(&impeller_cache_dir)
-                    .expect("failed to remove impeller cache dir");
-            }
-            std::fs::create_dir_all(&impeller_cache_dir)
-                .expect("failed to create impeller cache dir");
-            std::fs::write(&impeller_cache_version_path, impeller_version).unwrap();
-        }
-        impeller_cache_dir
     }
 }

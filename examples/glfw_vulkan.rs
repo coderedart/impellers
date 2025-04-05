@@ -42,8 +42,9 @@ pub fn main() {
         .result()
         .expect("failed to create vk surface khr");
     assert!(!vulkan_surface_khr.is_null(), "surface pointer is null");
-    let vk_swapchain = unsafe { itx.create_new_vulkan_swapchain(vulkan_surface_khr.as_raw() as _) }
-        .expect("failed to create vk swapchain");
+    let mut vk_swapchain =
+        unsafe { itx.create_new_vulkan_swapchain(vulkan_surface_khr.as_raw() as _) }
+            .expect("failed to create vk swapchain");
 
     // enter event loop
     while !window.should_close() {
@@ -55,14 +56,13 @@ pub fn main() {
             }
         }
 
-        // create a display list
-        let display_list = {
+        let clear_display_list = {
             // create a display list builder
-            let builder = DisplayListBuilder::new(None);
+            let mut builder = DisplayListBuilder::new(None);
             // paint controls the properties of draw commands
-            let paint = Paint::default();
+            let mut paint = Paint::default();
             // eg: lets set the color to black. So, any drawing command with this paint will use that color.
-            paint.set_color(Color::ACAPULCO);
+            paint.set_color(Color::BLACKBERRY);
             // fill the bounds with a color (^^that we set above)
             builder.draw_paint(&paint);
             let current_time = gtx.get_time(); // time in seconds since start of the program
@@ -77,12 +77,47 @@ pub fn main() {
             // finish recording the drawing commands. This is only a "list" and we haven't drawn anything yet.
             builder.build().expect("failed to build a display_list")
         };
-
-        let surface = vk_swapchain.acquire_next_surface_new().unwrap();
+        let animating_dl = {
+            // create a display list builder
+            let mut builder = DisplayListBuilder::new(None);
+            // paint controls the properties of draw commands
+            let mut paint = Paint::default();
+            let current_time = gtx.get_time(); // time in seconds since start of the program
+                                               // lets set the color to a color that changes with time.
+                                               // sin/cos/tan will always be in the range of -1 to 1, so lets use abs to keep it in between 0 and 1.
+            paint.set_color(Color::new_srgb(
+                current_time.sin().abs() as _,
+                current_time.cos().abs() as _,
+                current_time.tan().abs() as _,
+            ));
+            builder.draw_rect(&Rect::from_size(Size::new(200.0, 200.0)), &paint);
+            // finish recording the drawing commands. This is only a "list" and we haven't drawn anything yet.
+            builder.build().expect("failed to build a display_list")
+        };
+        let oval_dl = {
+            // create a display list builder
+            let mut builder = DisplayListBuilder::new(None);
+            // paint controls the properties of draw commands
+            let mut paint = Paint::default();
+            // eg: lets set the color to black. So, any drawing command with this paint will use that color.
+            paint.set_color(Color::GRANNY_APPLE);
+            builder.draw_oval(&Rect::from_size(Size::new(200.0, 200.0)), &paint);
+            // finish recording the drawing commands. This is only a "list" and we haven't drawn anything yet.
+            builder.build().expect("failed to build a display_list")
+        };
+        let main_display_list = {
+            let mut builder = DisplayListBuilder::new(None);
+            builder.draw_display_list(&clear_display_list, 1.0);
+            builder.draw_display_list(&animating_dl, 1.0);
+            builder.draw_display_list(&oval_dl, 1.0);
+            builder.build().expect("failed to build a display_list")
+        };
+        let mut surface = vk_swapchain.acquire_next_surface_new().unwrap();
         // Now, draw the display_list on the surface. All the commands we recorded in the display_list will be drawn.
         // you can redraw the display_list multiple times to animate it on any number of surfaces.
+
         surface
-            .draw_display_list(&display_list)
+            .draw_display_list(&main_display_list)
             .expect("failed to draw on surface");
         // submit frame and wait for vsync
         surface.present().unwrap();

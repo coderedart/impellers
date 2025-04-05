@@ -6,12 +6,12 @@ fn main() {
     // if you want to do any initialization before event loop,
     // this is the place for that.
     let dl = {
-        let builder = DisplayListBuilder::new(None);
-        let paint = Paint::default();
+        let mut builder = DisplayListBuilder::new(None);
+        let mut paint = Paint::default();
         let paragraph = {
             let ttx = TypographyContext::default(); // register any custom fonts if you want
-            let puilder = ParagraphBuilder::new(&ttx).unwrap();
-            let pstyle = ParagraphStyle::default();
+            let mut puilder = ParagraphBuilder::new(&ttx).unwrap();
+            let mut pstyle = ParagraphStyle::default();
             // you can set a custom font family if you want, but lets just use the system fonts
             pstyle.set_font_size(48.0);
             pstyle.set_font_weight(FontWeight::ExtraBold);

@@ -64,5 +64,5 @@ On linux, libcxx sources are not getting pulled into static library. We can veri
 
 This causes undefined reference errors for libcxx symbols like strings/share_ptrs when you try to link `libimpeller.a` with your app.
 
-If we explicitly add libcxx as a dependency to `library_static` target, it works on windows, but causes issues with windows builds. So, for now, we only add libcxx as the dependency for `library_static` if the target os is not windows.
+If we explicitly add libcxx as a dependency to `library_static` target, it works on linux, but causes issues with windows builds. So, for now, we only add libcxx as the dependency for `library_static` if the target os is not windows.
 

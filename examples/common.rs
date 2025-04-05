@@ -48,11 +48,11 @@ impl SdlGlImpellerFrameWork {
             glow_ctx.viewport(0, 0, width, height);
         }
         let ttx = TypographyContext::default();
-        let style = ParagraphStyle::default();
+        let mut style = ParagraphStyle::default();
         style.set_font_size(24.0);
         style.set_font_family("Roboto");
         style.set_font_weight(FontWeight::Bold);
-        let paint = Paint::default();
+        let mut paint = Paint::default();
         paint.set_color(Color::LIGHT_SKY_BLUE);
         style.set_foreground(&paint);
         Self {
@@ -123,7 +123,7 @@ impl SdlGlImpellerFrameWork {
 
             let (width, height) = self.window.get_framebuffer_size();
             // init surface by wrapping default framebuffer (fbo = 0)
-            let surface = unsafe {
+            let mut surface = unsafe {
                 self.itx.wrap_fbo(
                     0,
                     PixelFormat::RGBA8888,
@@ -131,7 +131,7 @@ impl SdlGlImpellerFrameWork {
                 )
             }
             .expect("failed to wrap window's framebuffer");
-            let dl_builder = DisplayListBuilder::new(Some(&Rect::from_size(
+            let mut dl_builder = DisplayListBuilder::new(Some(&Rect::from_size(
                 [width as f32, height as f32].into(),
             )));
 
@@ -145,7 +145,7 @@ impl SdlGlImpellerFrameWork {
                 }
             }
             {
-                let para_builder = ParagraphBuilder::new(&self.ttx).unwrap();
+                let mut para_builder = ParagraphBuilder::new(&self.ttx).unwrap();
                 para_builder.push_style(&self.style);
                 para_builder.add_text(&format!("avg fps: {fps}"));
                 let para = para_builder.build(1000.0).unwrap();
