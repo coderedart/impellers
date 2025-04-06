@@ -91,8 +91,7 @@ fn main() {
         "libs don't exist in out dir yet, so we check if the archive is already downloaded or not"
     );
 
-    download_if_not_exists(&url, &cache_dir);
-    extract_if_libs_dir_not_exists(&cache_dir);
+    extract_if_libs_dir_not_exists(&cache_dir, url);
 
     let extracted_libs_dir = cache_dir.join("lib");
     for require_lib in required_libs {
@@ -118,13 +117,15 @@ fn main() {
     }
     println!("done");
 
-    fn extract_if_libs_dir_not_exists(cache_dir: &Path) {
+    fn extract_if_libs_dir_not_exists(cache_dir: &Path, url: String) {
         if cache_dir.join("lib").exists() {
             println!("skipping extraction. found extracted impeller library in {cache_dir:?}. Please run cargo clean to remove this warning");
         } else {
             println!(
-            "there's no extracted impeller library in {cache_dir:?}, so we extract it from archive"
-        );
+            "there's no extracted impeller library in {cache_dir:?}, so we download the archive and extract it"
+            );
+            download_if_not_exists(&url, &cache_dir);
+
             let mut command = if cfg!(unix) {
                 std::process::Command::new("unzip")
             } else {
@@ -172,15 +173,15 @@ fn main() {
     const LOCAL_IMPELLER_ARCHIVE_NAME: &str = "impeller_sdk.zip";
     /// This function gets the main cache directory and creates a subdirectory named
     /// `build_name` inside it to cache our artefacts (or use existing ones if provided).
-    /// 
+    ///
     /// So, the path will be `CACHE_DIR`/`build_name` and this is where you can download
     /// impeller_sdk.zip (if it doesn't already exist) and extract it (if not already extracted).
-    /// 
-    /// For `CACHE_DIR`, we use 
+    ///
+    /// For `CACHE_DIR`, we use
     /// * `IMPELLER_CACHE_DIR` env var if present or
     /// * walks up the `OUT_DIR` until it finds the parent of `target` and creates `.impeller_cache` there.
     /// If `.impeller_cache`/version.txt doesn't exist or match the crate version, it clears the entire directory
-    /// to remove any older artefacts. 
+    /// to remove any older artefacts.
     fn get_zip_cache_dir(out_dir: &Path, build_name: &str) -> PathBuf {
         let impeller_cache_dir = if let Ok(cache_dir) = std::env::var("IMPELLER_CACHE_DIR") {
             println!("found IMPELLER_CACHE_DIR: {cache_dir}");

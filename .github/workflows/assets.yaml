@@ -18,6 +18,15 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+      
+      - name: Ensure ENGINE_SHA is up to date.
+        shell: bash
+        run: |
+          # Check to ensure that we are using the correct submodule and haven't made any accidental changes.
+          git submodule status
+          [ "$(cat ENGINE_SHA)" = "$(git submodule status | cut -d ' ' -f2)" ]
+          echo "ENGINE_SHA matches submodule commit"
+          
 
       - name: Install Ninja
         uses: seanmiddleditch/gha-setup-ninja@master

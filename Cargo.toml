@@ -1,13 +1,13 @@
 [package]
 name = "impellers"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/coderedart/flutter"
 readme = "README.md"
 description = "Bindings to Flutter's 2D vector graphics renderer"
-#links = "impeller"
-exclude = ["/flutter"]
+links = "impeller"
+exclude = ["/flutter"] # flutter sources are too large and we don't support source builds anyway.
 
 [features]
 default = []

@@ -2995,7 +2995,7 @@ impl Surface {
     /// Draw a display list onto the surface. The same display list can
     /// be drawn multiple times to different surfaces. BUT, you cannot
     /// draw multiple display lists to the same surface.
-    /// 
+    ///
     /// To be specific, each call to [Surface::draw_display_list] will clear
     /// the contents of the surface. So, any previous drawing will be
     /// lost.
