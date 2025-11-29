@@ -451,31 +451,10 @@ impl Context {
     ///
     /// * The texture must be dropped before the context is dropped
     ///
-    /// Note:   The following section doesn't apply to rust bindings.
-    ///         we just don't bother with owned copies and always prefer borrowed version.
-    ///         If someone has any idea on how to ergonomically implement this, please do let me know.
-    ///
-    /// Impeller will do its best to perform the transfer of this data
-    /// to GPU memory with a minimal number of copies. Towards this
-    /// end, it may need to send this data to a different thread for
-    /// preparation and transfer. To facilitate this transfer, it is
-    /// recommended that the content mapping have a release callback
-    /// attach to it. When there is a release callback, Impeller assumes
-    /// that collection of the data can be deferred till texture upload
-    /// is done and can happen on a background thread. When there is no
-    /// release callback, Impeller may try to perform an eager copy of
-    /// the data if it needs to perform data preparation and transfer on
-    /// a background thread.
-    ///
-    /// Whether an extra data copy actually occurs will always depend on
-    /// the rendering backend in use. But it is best practice to provide
-    /// a release callback and be resilient to the data being released
-    /// in a deferred manner on a background thread.
-    ///
     #[doc(alias = "sys::ImpellerTextureCreateWithContentsNew")]
     pub unsafe fn create_texture_with_rgba8(
         &self,
-        contents: &[u8],
+        contents: Box<[u8]>,
         width: u32,
         height: u32,
     ) -> Result<Texture, &'static str> {
@@ -491,6 +470,8 @@ impl Context {
         let mip_count = flutter_mip_count(width as f32, height as f32);
 
         let t = unsafe {
+            // SAFETY: pass the mapping with the right user_data returned from the function.
+            let (mapping, user_data) = sys::ImpellerMapping::from_boxed_boxed_slice(contents);
             sys::ImpellerTextureCreateWithContentsNew(
                 self.0,
                 &sys::ImpellerTextureDescriptor {
@@ -498,12 +479,8 @@ impl Context {
                     pixel_format: PixelFormat::RGBA8888,
                     mip_count,
                 },
-                &sys::ImpellerMapping {
-                    data: contents.as_ptr(),
-                    length: contents.len() as u64,
-                    on_release: None,
-                },
-                std::ptr::null_mut(),
+                &mapping,
+                user_data,
             )
         };
         if t.is_null() {
@@ -2092,7 +2069,7 @@ impl TypographyContext {
     #[doc(alias = "ImpellerTypographyContextRegisterFont")]
     pub fn register_font(
         &mut self,
-        font_data: &[u8],
+        font_data: Box<[u8]>,
         family_name_alias: Option<&str>,
     ) -> Result<(), &'static str> {
         let family_name_alias = if let Some(s) = family_name_alias {
@@ -2102,14 +2079,12 @@ impl TypographyContext {
         };
 
         let result = unsafe {
+            // SAFETY: pass the correct userdata with the correct mapping. Here, we only have one pair, so, we are good.
+            let (mapping, userdata) = sys::ImpellerMapping::from_boxed_boxed_slice(font_data);
             sys::ImpellerTypographyContextRegisterFont(
                 self.0,
-                &sys::ImpellerMapping {
-                    data: font_data.as_ptr(),
-                    length: font_data.len().try_into().unwrap(),
-                    on_release: None,
-                },
-                std::ptr::null_mut(),
+                &mapping,
+                userdata,
                 family_name_alias
                     .as_ref()
                     .map_or(std::ptr::null(), |s| s.as_ptr()),
@@ -2501,7 +2476,7 @@ impl GlyphInfo {
 /// // this contains the fonts from user's system (or you can add custom fonts)
 /// let fonts = TypographyContext::default();
 /// // style decides the appearance of the text
-/// let style = ParagraphStyle::default();
+/// let mut style = ParagraphStyle::default();
 /// style.set_font_family("Arial");
 /// style.set_font_size(12.0);
 /// let mut builder = ParagraphBuilder::new(&fonts).expect("failed to create para builder");
@@ -3114,6 +3089,37 @@ impl Color {
         Self { alpha, ..self }
     }
 }
+impl sys::ImpellerMapping {
+    /// A helper function to create a mapping from a boxed slice.
+    ///
+    /// This wraps `Box<[u8]>` in a `Box<Box<[u8]>>`, and leaks it.
+    /// The leak is dropped inside the on_release callback. The userdata pointer returned
+    /// can be used to access the original boxed slice.
+    ///
+    /// # Safety
+    /// - The returned Self's on_release callback MUST be called with only the returned userdata pointer.
+    /// - The allocator must be global, as we never know when or where the release callbacks can be called
+    ///
+    /// NOTE: We can probably simplify this using https://doc.rust-lang.org/std/boxed/struct.ThinBox.html on stabilization
+    pub unsafe fn from_boxed_boxed_slice(contents: Box<[u8]>) -> (Self, *mut std::ffi::c_void) {
+        let contents: Box<Box<[u8]>> = Box::new(contents);
+        let data: *const u8 = contents.as_ptr();
+        let length = contents.len() as u64;
+        let user_data: *mut Box<[u8]> = Box::leak(contents);
+        extern "C" fn boxed_boxed_slice_dropper(on_release_user_data: *mut std::ffi::c_void) {
+            let contents: Box<Box<[u8]>> = unsafe { Box::from_raw(on_release_user_data as *mut _) };
+            drop(contents);
+        }
+        (
+            sys::ImpellerMapping {
+                data,
+                length,
+                on_release: Some(boxed_boxed_slice_dropper),
+            },
+            user_data.cast(),
+        )
+    }
+}
 unsafe impl bytemuck::Zeroable for sys::ImpellerISize {}
 unsafe impl bytemuck::Pod for sys::ImpellerISize {}
 unsafe impl bytemuck::Zeroable for sys::ImpellerPoint {}
@@ -3126,6 +3132,7 @@ unsafe impl bytemuck::Zeroable for sys::ImpellerRect {}
 unsafe impl bytemuck::Pod for sys::ImpellerRect {}
 unsafe impl bytemuck::Zeroable for sys::ImpellerColor {}
 unsafe impl bytemuck::Pod for sys::ImpellerColor {}
+
 #[cfg(test)]
 mod test {
     use super::*;
