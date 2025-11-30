@@ -15,11 +15,11 @@ fn main() {
         .into_rgba8();
 
     let (width, height) = pixels.dimensions();
-    let contents = pixels.into_raw().into_boxed_slice();
+    let contents = pixels.into_raw();
     let tex = unsafe {
         framework
             .itx
-            .create_texture_with_rgba8(contents, width, height)
+            .create_texture_with_rgba8(contents.into(), width, height)
             .unwrap()
     };
     let dl = {

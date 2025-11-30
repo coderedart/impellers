@@ -66,14 +66,13 @@ def parse_enums_from_header(header_without_comments):
     we return a list of dictionaries (enum_name: str, enum_values: List[str])
     """
     # captures enum name and its block
-    enum_pattern = r"enum\s+(\w+)\s*{([\w\s,]+)}"
+    enum_pattern = r"enum\s+(\w+)\s*{([\w\s\d=<,]+)}"
     enums = re.findall(enum_pattern, header_without_comments)
     def parse_enum_values(enum_values: str):
         "parses enum values from block"
-        variant_pattern = r"(\w+)"
+        variant_pattern = r"(\w+)\s*.*,"
         variants_list = re.findall(variant_pattern, enum_values)
         return [value.strip() for value in variants_list]
-
     return {enum[0].strip(): parse_enum_values(enum[1]) for enum in enums}
 
 def parses_handles_from_header(header_without_comments):
@@ -120,23 +119,30 @@ def parse_var_ty_declaration(var_ty_declaration: str) -> Dict[str, Any]:
     eg: "int a" -> ("int" is the type, "a" is the ident)
     we will also check for nullable qualifiers
     """
-    var_ty_pattern = r"(.*?)\s+((?:IMPELLER_NULLABLE|IMPELLER_NONNULL))?\s*(\w+)(\[\d+\])?$"
+    var_ty_pattern = r"(///.*(?:\n///.*)*\s+)?((?:IMPELLER_NULLABLE|IMPELLER_NONNULL))?\s*(.*?)\s+((?:IMPELLER_NULLABLE|IMPELLER_NONNULL))?\s*(\w+)(\[\d+\])?$"
     var_ty_match = re.match(var_ty_pattern, var_ty_declaration.strip())
     if var_ty_match is None:
         raise ValueError(f"var_ty_declaration is not in correct format: {var_ty_declaration}")
-    name = var_ty_match.group(3).strip()
-    ty = ty=var_ty_match.group(1).strip()
-    nonnull=var_ty_match.group(2) == "IMPELLER_NONNULL"
-    array_match = var_ty_match.group(4)
+    doc = var_ty_match.group(1)
+    name = var_ty_match.group(5).strip()
+    ty = ty=var_ty_match.group(3).strip()
+    nonnull=var_ty_match.group(4) == "IMPELLER_NONNULL"
+    array_match = var_ty_match.group(6)
     array_size = int(array_match.strip('[]')) if array_match else 0
+    # for cases where the type is a pointer to pointers. eg: ImpellerTexture*
+    ty_nonnull = var_ty_match.group(2) == "IMPELLER_NONNULL"
     result = {
         "name": name,
         "ty": ty,
     }
+    if doc:
+        result["doc"] = doc
     if nonnull:
         result["nonnull"] = nonnull
     if array_size:
         result["array_size"] = array_size
+    if ty_nonnull:
+        result["ty_nonnull"] = ty_nonnull
     return result
 def parse_functions_from_header(header_without_comments) -> Dict[str, Dict[str, Any]]:
     "assumes that there's no comments in header"

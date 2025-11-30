@@ -13,8 +13,7 @@ pub fn generate_bindigns() -> anyhow::Result<()> {
     let raw_bindings =
         run_bindgen_and_return_rust_src(&impeller_header_src, ImpellerApiJson(impeller_api))
             .context("failed to run bindgen")?;
-    let prefix = r"
-#![allow(non_upper_case_globals)]
+    let prefix = r"#![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 #![allow(unused)]
@@ -22,8 +21,14 @@ pub fn generate_bindigns() -> anyhow::Result<()> {
 #![allow(rustdoc::invalid_rust_codeblocks)]
 #![allow(rustdoc::broken_intra_doc_links)]
     ";
-    std::fs::write("src/sys.rs", format!("{prefix}{raw_bindings}")).context("failed to write")?;
-
+    let bindings = format!("{prefix}{raw_bindings}");
+    // NOTE: windows wants i32 enums by default, as opposed to u32 used by most other platforms.
+    // So, we have this hack to simply replace u32 repr with i32, with the assumption that we run this on non-windows platforms.
+    let win_bindings = bindings.replace("repr(u32)", "repr(i32)");
+    #[cfg(target_os = "windows")]
+    panic!("this is only supposed to be run on non-windows platforms");
+    std::fs::write("src/sys.rs", bindings).context("failed to write")?;
+    std::fs::write("src/win_sys.rs", win_bindings).context("failed to write win sys")?;
     Ok(())
 }
 

@@ -107,10 +107,20 @@
 //! NOTE: The crate currently has *very* little API for some structs like matrices or rects. Contributions welcome :)
 
 mod color;
-#[cfg(feature = "sys")]
+#[cfg(all(feature = "sys", not(target_os = "windows")))]
 pub mod sys;
-#[cfg(not(feature = "sys"))]
+#[cfg(all(not(feature = "sys"), not(target_os = "windows")))]
 mod sys;
+
+#[cfg(all(not(feature = "sys"), target_os = "windows"))]
+mod win_sys;
+#[cfg(all(not(feature = "sys"), target_os = "windows"))]
+use win_sys as sys;
+#[cfg(all(feature = "sys", target_os = "windows"))]
+pub use win_sys as sys;
+
+use std::borrow::Cow;
+
 use bytemuck::cast;
 use bytemuck::cast_ref;
 // enums
@@ -247,6 +257,8 @@ impl ImpellerVersion {
 ///
 /// Swapchains are resilient to the underlying surfaces being resized. The
 /// swapchain images will be re-created as necessary on-demand.
+#[derive(Debug)]
+#[repr(transparent)]
 pub struct VkSwapChain(sys::ImpellerVulkanSwapchain);
 // impl Clone for VkSwapChain {
 //     fn clone(&self) -> Self {
@@ -296,6 +308,7 @@ impl VkSwapChain {
 /// The general guidance is to create as few contexts as possible (typically
 /// just one) and share them as much as possible.
 ///
+#[derive(Debug)]
 pub struct Context(sys::ImpellerContext, ContextType);
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 enum ContextType {
@@ -454,7 +467,7 @@ impl Context {
     #[doc(alias = "sys::ImpellerTextureCreateWithContentsNew")]
     pub unsafe fn create_texture_with_rgba8(
         &self,
-        contents: Box<[u8]>,
+        contents: Cow<'static, [u8]>,
         width: u32,
         height: u32,
     ) -> Result<Texture, &'static str> {
@@ -471,7 +484,7 @@ impl Context {
 
         let t = unsafe {
             // SAFETY: pass the mapping with the right user_data returned from the function.
-            let (mapping, user_data) = sys::ImpellerMapping::from_boxed_boxed_slice(contents);
+            let (mapping, user_data) = sys::ImpellerMapping::from_cow(contents);
             sys::ImpellerTextureCreateWithContentsNew(
                 self.0,
                 &sys::ImpellerTextureDescriptor {
@@ -679,6 +692,73 @@ impl Context {
             Some(Surface(surface))
         }
     }
+    /// Create a color source whose pixels are shaded by a fragment program.
+    ///
+    /// https://docs.flutter.dev/ui/design/graphics/fragment-shaders
+    ///
+    ///
+    /// # Safety
+    /// Make sure the uniform data is laid out according to the fragment program's requirements
+    ///
+    /// TODO: add an example and better docs
+    pub unsafe fn new_color_source_from_fragment_program(
+        &self,
+        frag_program: &FragmentProgram,
+        samplers: &[Texture],
+        uniform_data: &[u8],
+    ) -> ColorSource {
+        let samplers_len = samplers.len();
+        let mut samplers: Vec<sys::ImpellerTexture> = samplers.iter().map(|t| t.0).collect();
+        let cs = unsafe {
+            sys::ImpellerColorSourceCreateFragmentProgramNew(
+                self.0,
+                frag_program.0,
+                if samplers_len == 0 {
+                    std::ptr::null_mut()
+                } else {
+                    samplers.as_mut_ptr()
+                },
+                samplers_len.try_into().unwrap(),
+                uniform_data.as_ptr(),
+                uniform_data.len().try_into().unwrap(),
+            )
+        };
+        assert!(!cs.is_null());
+        ColorSource(cs)
+    }
+    /// Create an image filter where each pixel is shaded by a fragment program.
+    ///
+    /// https://docs.flutter.dev/ui/design/graphics/fragment-shaders
+    ///
+    /// # Safety
+    /// Make sure the uniform data is laid out according to the fragment program's requirements
+    ///
+    /// TODO: add an example and better docs
+    pub unsafe fn new_image_filter_from_fragment_program(
+        &self,
+        frag_program: &FragmentProgram,
+        samplers: &[Texture],
+        uniform_data: &[u8],
+    ) -> ImageFilter {
+        let samplers_len = samplers.len();
+        let mut samplers: Vec<sys::ImpellerTexture> = samplers.iter().map(|t| t.0).collect();
+        let cs = unsafe {
+            sys::ImpellerImageFilterCreateFragmentProgramNew(
+                self.0,
+                frag_program.0,
+                if samplers_len == 0 {
+                    std::ptr::null_mut()
+                } else {
+                    samplers.as_mut_ptr()
+                },
+                samplers_len.try_into().unwrap(),
+                uniform_data.as_ptr(),
+                uniform_data.len().try_into().unwrap(),
+            )
+        };
+        assert!(!cs.is_null());
+        ImageFilter(cs)
+    }
 }
 
 /// Display lists represent encoded rendering intent (draw commands). These objects are
@@ -687,7 +767,8 @@ impl Context {
 /// While it is perfectly fine to create new display lists per frame, there may
 /// be opportunities for optimization when display lists are reused multiple
 /// times.
-///
+#[derive(Debug)]
+#[repr(transparent)]
 pub struct DisplayList(sys::ImpellerDisplayList);
 
 impl Clone for DisplayList {
@@ -775,6 +856,8 @@ impl Drop for DisplayList {
 /// For example, [Self::draw_rect] draws a rectangle. But whether it is a filled rect or just
 /// a stroked (bordered) rect is decided by the paint's [Paint::set_draw_style].
 ///
+#[derive(Debug)]
+#[repr(transparent)]
 pub struct DisplayListBuilder(sys::ImpellerDisplayListBuilder);
 
 // impl Clone for DisplayListBuilder {
@@ -1373,6 +1456,8 @@ impl DisplayListBuilder {
 /// <https://shopify.github.io/react-native-skia/docs/paint/properties>
 ///
 /// <https://learn.microsoft.com/en-us/dotnet/api/skiasharp.skpaint?view=skiasharp-2.88>
+#[derive(Debug)]
+#[repr(transparent)]
 pub struct Paint(sys::ImpellerPaint);
 
 // impl Clone for Paint {
@@ -1537,6 +1622,8 @@ impl Paint {
 /// <https://api.flutter.dev/flutter/dart-ui/ColorFilter-class.html>
 ///
 /// <https://shopify.github.io/react-native-skia/docs/color-filters>
+#[derive(Debug)]
+#[repr(transparent)]
 pub struct ColorFilter(sys::ImpellerColorFilter);
 unsafe impl Send for ColorFilter {}
 unsafe impl Sync for ColorFilter {}
@@ -1597,6 +1684,8 @@ impl ColorFilter {
 /// <https://api.flutter.dev/flutter/dart-ui/Gradient-class.html>
 ///
 /// <https://learn.microsoft.com/en-us/previous-versions/xamarin/xamarin-forms/user-interface/graphics/skiasharp/effects/shaders/>
+#[derive(Debug)]
+#[repr(transparent)]
 ///
 pub struct ColorSource(sys::ImpellerColorSource);
 unsafe impl Send for ColorSource {}
@@ -1851,6 +1940,8 @@ impl ColorSource {
 /// <https://shopify.github.io/react-native-skia/docs/image-filters/overview>
 ///
 /// <https://learn.microsoft.com/en-us/previous-versions/xamarin/xamarin-forms/user-interface/graphics/skiasharp/effects/image-filters>
+#[derive(Debug)]
+#[repr(transparent)]
 pub struct ImageFilter(sys::ImpellerImageFilter);
 unsafe impl Send for ImageFilter {}
 unsafe impl Sync for ImageFilter {}
@@ -1963,6 +2054,8 @@ impl ImageFilter {
 /// <https://shopify.github.io/react-native-skia/docs/mask-filters>
 ///
 /// <https://learn.microsoft.com/en-us/previous-versions/xamarin/xamarin-forms/user-interface/graphics/skiasharp/effects/mask-filters>
+#[derive(Debug)]
+#[repr(transparent)]
 pub struct MaskFilter(sys::ImpellerMaskFilter);
 unsafe impl Send for MaskFilter {}
 unsafe impl Sync for MaskFilter {}
@@ -2000,6 +2093,46 @@ impl MaskFilter {
         Self(result)
     }
 }
+
+#[derive(Debug)]
+#[repr(transparent)]
+pub struct FragmentProgram(sys::ImpellerFragmentProgram);
+unsafe impl Sync for FragmentProgram {}
+unsafe impl Send for FragmentProgram {}
+impl Clone for FragmentProgram {
+    fn clone(&self) -> Self {
+        unsafe {
+            sys::ImpellerFragmentProgramRetain(self.0);
+        }
+        Self(self.0)
+    }
+}
+impl Drop for FragmentProgram {
+    fn drop(&mut self) {
+        unsafe {
+            sys::ImpellerFragmentProgramRelease(self.0);
+        }
+    }
+}
+impl FragmentProgram {
+    /// Create a new fragment program using data obtained by compiling a GLSL shader with impellerc.
+    /// # Safety
+    /// The data provided MUST be compiled by impellerc.
+    /// Providing raw GLSL strings is not supported.
+    /// Impeller does not compile shaders at runtime.
+    pub unsafe fn new(glsl_shader_compiled_by_impellerc: Cow<'static, [u8]>) -> Option<Self> {
+        let f = unsafe {
+            let (mapping, userdata) =
+                sys::ImpellerMapping::from_cow(glsl_shader_compiled_by_impellerc);
+            sys::ImpellerFragmentProgramNew(&mapping, userdata)
+        };
+        if f.is_null() {
+            None
+        } else {
+            Some(Self(f))
+        }
+    }
+}
 /// Typography contexts allow for the layout and rendering of text.
 ///
 /// These are typically expensive to create and applications will only ever need
@@ -2013,6 +2146,8 @@ impl MaskFilter {
 /// be created, used, and collected on a single thread.
 ///
 /// @see [ParagraphStyle]
+#[derive(Debug)]
+#[repr(transparent)]
 pub struct TypographyContext(sys::ImpellerTypographyContext);
 
 impl Clone for TypographyContext {
@@ -2069,7 +2204,7 @@ impl TypographyContext {
     #[doc(alias = "ImpellerTypographyContextRegisterFont")]
     pub fn register_font(
         &mut self,
-        font_data: Box<[u8]>,
+        font_data: Cow<'static, [u8]>,
         family_name_alias: Option<&str>,
     ) -> Result<(), &'static str> {
         let family_name_alias = if let Some(s) = family_name_alias {
@@ -2080,7 +2215,7 @@ impl TypographyContext {
 
         let result = unsafe {
             // SAFETY: pass the correct userdata with the correct mapping. Here, we only have one pair, so, we are good.
-            let (mapping, userdata) = sys::ImpellerMapping::from_boxed_boxed_slice(font_data);
+            let (mapping, userdata) = sys::ImpellerMapping::from_cow(font_data);
             sys::ImpellerTypographyContextRegisterFont(
                 self.0,
                 &mapping,
@@ -2104,6 +2239,8 @@ impl TypographyContext {
 ///
 /// @see [ParagraphStyle] and [ParagraphBuilder]
 ///
+#[derive(Debug)]
+#[repr(transparent)]
 pub struct Paragraph(sys::ImpellerParagraph);
 unsafe impl Send for Paragraph {}
 unsafe impl Sync for Paragraph {}
@@ -2201,7 +2338,9 @@ impl Paragraph {
     /// * return The impeller range.
     ///
     pub fn get_word_boundary_utf16(&self, code_unit_index: usize) -> Range {
-        unsafe { sys::ImpellerParagraphGetWordBoundary(self.0, code_unit_index) }
+        let mut range = Range::default();
+        unsafe { sys::ImpellerParagraphGetWordBoundary(self.0, code_unit_index, &raw mut range) };
+        range
     }
 
     //------------------------------------------------------------------------------
@@ -2262,6 +2401,8 @@ impl Paragraph {
         }
     }
 }
+#[derive(Debug)]
+#[repr(transparent)]
 pub struct LineMetrics(sys::ImpellerLineMetrics);
 unsafe impl Send for LineMetrics {}
 unsafe impl Sync for LineMetrics {}
@@ -2412,6 +2553,8 @@ impl LineMetrics {
         unsafe { sys::ImpellerLineMetricsGetCodeUnitEndIndexIncludingNewline(self.0, line) }
     }
 }
+#[derive(Debug)]
+#[repr(transparent)]
 pub struct GlyphInfo(sys::ImpellerGlyphInfo);
 impl Clone for GlyphInfo {
     fn clone(&self) -> Self {
@@ -2446,7 +2589,9 @@ impl GlyphInfo {
     ///
     /// * return     The grapheme cluster bounds.
     pub fn get_grapheme_cluster_bounds(&self) -> Rect {
-        cast(unsafe { sys::ImpellerGlyphInfoGetGraphemeClusterBounds(self.0) })
+        let mut rect = crate::sys::ImpellerRect::default();
+        unsafe { sys::ImpellerGlyphInfoGetGraphemeClusterBounds(self.0, &raw mut rect) };
+        cast(rect)
     }
     /// * return True if the glyph represents an ellipsis. False otherwise.
     pub fn is_ellipsis(&self) -> bool {
@@ -2489,6 +2634,8 @@ impl GlyphInfo {
 /// builder.add_text("Small World!\n"); // 12.0 font size
 /// let paragraph = builder.build(100.0).expect("building paragraph failed");
 /// ```
+#[derive(Debug)]
+#[repr(transparent)]
 pub struct ParagraphBuilder(sys::ImpellerParagraphBuilder);
 
 // impl Clone for ParagraphBuilder {
@@ -2587,6 +2734,8 @@ impl ParagraphBuilder {
 ///
 /// @see [Paragraph] and [ParagraphBuilder]
 ///
+#[derive(Debug)]
+#[repr(transparent)]
 pub struct ParagraphStyle(sys::ImpellerParagraphStyle);
 unsafe impl Send for ParagraphStyle {}
 unsafe impl Sync for ParagraphStyle {}
@@ -2735,6 +2884,14 @@ impl ParagraphStyle {
         }
         std::mem::drop(locale);
     }
+    pub fn set_ellipsis(&mut self, ellipsis: &str) {
+        let ellipsis =
+            std::ffi::CString::new(ellipsis).expect("failed to create cstr from ellipsis str");
+        unsafe {
+            sys::ImpellerParagraphStyleSetEllipsis(self.0, ellipsis.as_ptr());
+        }
+        std::mem::drop(ellipsis);
+    }
 }
 /// Represents a two-dimensional path that is immutable and graphics context
 /// agnostic.
@@ -2751,6 +2908,8 @@ impl ParagraphStyle {
 ///
 /// Paths are created using path builder that allow for the configuration of the
 /// path segments, how they are filled, and/or stroked.
+#[derive(Debug)]
+#[repr(transparent)]
 pub struct Path(sys::ImpellerPath);
 unsafe impl Send for Path {}
 unsafe impl Sync for Path {}
@@ -2769,10 +2928,24 @@ impl Drop for Path {
         }
     }
 }
-
+impl Path {
+    /// Get the bounds of the path.
+    ///
+    /// The bounds are conservative.
+    /// That is, they may be larger than the actual shape of the path and could include the control points and isolated calls to move the cursor.
+    pub fn get_bounds(&self) -> Rect {
+        let mut rect = sys::ImpellerRect::default();
+        unsafe {
+            sys::ImpellerPathGetBounds(self.0, &raw mut rect);
+        }
+        cast(rect)
+    }
+}
 /// Path builders allow for the incremental building up of paths.
 ///
 /// @see docs of [Path]
+#[derive(Debug)]
+#[repr(transparent)]
 pub struct PathBuilder(sys::ImpellerPathBuilder);
 
 // impl Clone for PathBuilder {
@@ -2948,6 +3121,8 @@ impl PathBuilder {
 ///
 /// This is an inherently "temporary" object. Just create one every frame and
 /// destroy it after presenting.
+#[derive(Debug)]
+#[repr(transparent)]
 pub struct Surface(sys::ImpellerSurface);
 
 // impl Clone for Surface {
@@ -3015,6 +3190,8 @@ impl Surface {
 /// @warning    While textures themselves are thread safe, some context types
 ///             (like OpenGL) may need extra configuration to be able to operate
 ///             from multiple threads.
+#[derive(Debug)]
+#[repr(transparent)]
 pub struct Texture(sys::ImpellerTexture);
 unsafe impl Sync for Texture {}
 unsafe impl Send for Texture {}
@@ -3089,6 +3266,14 @@ impl Color {
         Self { alpha, ..self }
     }
 }
+bitflags::bitflags! {
+    pub struct TextDecorationType: std::ffi::c_int {
+        const NONE = sys::TextDecorationType::None as _;
+        const UNDERLINE = sys::TextDecorationType::Underline as _;
+        const OVERLINE = sys::TextDecorationType::Overline as _;
+        const LINETHROUGH = sys::TextDecorationType::LineThrough as _;
+    }
+}
 impl sys::ImpellerMapping {
     /// A helper function to create a mapping from a boxed slice.
     ///
@@ -3101,20 +3286,21 @@ impl sys::ImpellerMapping {
     /// - The allocator must be global, as we never know when or where the release callbacks can be called
     ///
     /// NOTE: We can probably simplify this using https://doc.rust-lang.org/std/boxed/struct.ThinBox.html on stabilization
-    pub unsafe fn from_boxed_boxed_slice(contents: Box<[u8]>) -> (Self, *mut std::ffi::c_void) {
-        let contents: Box<Box<[u8]>> = Box::new(contents);
+    pub unsafe fn from_cow(contents: Cow<'static, [u8]>) -> (Self, *mut std::ffi::c_void) {
+        let contents: Box<Cow<'static, [u8]>> = Box::new(contents);
         let data: *const u8 = contents.as_ptr();
         let length = contents.len() as u64;
-        let user_data: *mut Box<[u8]> = Box::leak(contents);
-        extern "C" fn boxed_boxed_slice_dropper(on_release_user_data: *mut std::ffi::c_void) {
-            let contents: Box<Box<[u8]>> = unsafe { Box::from_raw(on_release_user_data as *mut _) };
+        let user_data: *mut Cow<'static, [u8]> = Box::leak(contents);
+        extern "C" fn boxed_cow_slice_dropper(on_release_user_data: *mut std::ffi::c_void) {
+            let contents: Box<Cow<'static, [u8]>> =
+                unsafe { Box::from_raw(on_release_user_data as *mut _) };
             drop(contents);
         }
         (
             sys::ImpellerMapping {
                 data,
                 length,
-                on_release: Some(boxed_boxed_slice_dropper),
+                on_release: Some(boxed_cow_slice_dropper),
             },
             user_data.cast(),
         )

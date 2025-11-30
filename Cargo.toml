@@ -24,6 +24,7 @@ cache_libs = ["prebuilt_libs"]
 [dependencies]
 euclid = {version = "0.22", features = ["bytemuck"]}
 bytemuck = {version = "1"}
+bitflags = {version = "2"}
 
 [dev-dependencies]
 glfw = {version = "0.59", features = ["vulkan"]}

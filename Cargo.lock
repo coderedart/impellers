@@ -201,6 +201,7 @@ name = "impellers"
 version = "0.4.0"
 dependencies = [
  "ash",
+ "bitflags 2.8.0",
  "bytemuck",
  "euclid",
  "glfw",

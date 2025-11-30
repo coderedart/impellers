@@ -380,19 +380,19 @@ pub type ImpellerVulkanProcAddressCallback = ::std::option::Option<
         user_data: *mut ::std::os::raw::c_void,
     ) -> *mut ::std::os::raw::c_void,
 >;
-#[repr(u32)]
+#[repr(i32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum FillType {
     NonZero = 0,
     Odd = 1,
 }
-#[repr(u32)]
+#[repr(i32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum ClipOperation {
     Difference = 0,
     Intersect = 1,
 }
-#[repr(u32)]
+#[repr(i32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum BlendMode {
     Clear = 0,
@@ -425,39 +425,39 @@ pub enum BlendMode {
     Color = 27,
     Luminosity = 28,
 }
-#[repr(u32)]
+#[repr(i32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum DrawStyle {
     Fill = 0,
     Stroke = 1,
     StrokeAndFill = 2,
 }
-#[repr(u32)]
+#[repr(i32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum StrokeCap {
     Butt = 0,
     Round = 1,
     Square = 2,
 }
-#[repr(u32)]
+#[repr(i32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum StrokeJoin {
     Miter = 0,
     Round = 1,
     Bevel = 2,
 }
-#[repr(u32)]
+#[repr(i32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum PixelFormat {
     RGBA8888 = 0,
 }
-#[repr(u32)]
+#[repr(i32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum TextureSampling {
     NearestNeighbor = 0,
     Linear = 1,
 }
-#[repr(u32)]
+#[repr(i32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum TileMode {
     Clamp = 0,
@@ -465,7 +465,7 @@ pub enum TileMode {
     Mirror = 2,
     Decal = 3,
 }
-#[repr(u32)]
+#[repr(i32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum BlurStyle {
     Normal = 0,
@@ -473,14 +473,14 @@ pub enum BlurStyle {
     Outer = 2,
     Inner = 3,
 }
-#[repr(u32)]
+#[repr(i32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum ColorSpace {
     SRGB = 0,
     ExtendedSRGB = 1,
     DisplayP3 = 2,
 }
-#[repr(u32)]
+#[repr(i32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum FontWeight {
     Thin = 0,
@@ -493,13 +493,13 @@ pub enum FontWeight {
     ExtraBold = 7,
     Black = 8,
 }
-#[repr(u32)]
+#[repr(i32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum FontStyle {
     Normal = 0,
     Italic = 1,
 }
-#[repr(u32)]
+#[repr(i32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum TextAlignment {
     Left = 0,
@@ -509,13 +509,13 @@ pub enum TextAlignment {
     Start = 4,
     End = 5,
 }
-#[repr(u32)]
+#[repr(i32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum TextDirection {
     RTL = 0,
     LTR = 1,
 }
-#[repr(u32)]
+#[repr(i32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum TextDecorationType {
     None = 0,
@@ -523,7 +523,7 @@ pub enum TextDecorationType {
     Overline = 2,
     LineThrough = 4,
 }
-#[repr(u32)]
+#[repr(i32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum TextDecorationStyle {
     Solid = 0,

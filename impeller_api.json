@@ -104,6 +104,19 @@
     "ImpellerTextDirection": [
       "kImpellerTextDirectionRTL",
       "kImpellerTextDirectionLTR"
+    ],
+    "ImpellerTextDecorationType": [
+      "kImpellerTextDecorationTypeNone",
+      "kImpellerTextDecorationTypeUnderline",
+      "kImpellerTextDecorationTypeOverline",
+      "kImpellerTextDecorationTypeLineThrough"
+    ],
+    "ImpellerTextDecorationStyle": [
+      "kImpellerTextDecorationStyleSolid",
+      "kImpellerTextDecorationStyleDouble",
+      "kImpellerTextDecorationStyleDotted",
+      "kImpellerTextDecorationStyleDashed",
+      "kImpellerTextDecorationStyleWavy"
     ]
   },
   "handles": {
@@ -125,7 +138,8 @@
     "ImpellerPathBuilder": "/// Path builders allow for the incremental building up of paths.\n///",
     "ImpellerSurface": "/// A surface represents a render target for Impeller to direct the rendering\n/// intent specified the form of display lists to.\n///\n/// Render targets are how Impeller API users perform Window System Integration\n/// (WSI). Users wrap swapchain images as surfaces and draw display lists onto\n/// these surfaces to present content.\n///\n/// Creating surfaces is typically platform and client-rendering-API specific.\n///",
     "ImpellerTexture": "/// A reference to a texture whose data is resident on the GPU. These can be\n/// referenced in draw calls and paints.\n///\n/// Creating textures is extremely expensive. Creating a single one can\n/// typically comfortably blow the frame budget of an application. Textures\n/// should be created on background threads.\n///\n/// @warning    While textures themselves are thread safe, some context types\n///             (like OpenGL) may need extra configuration to be able to operate\n///             from multiple threads.\n///",
-    "ImpellerVulkanSwapchain": "/// The primary form of WSI when using a Vulkan context, these swapchains use\n/// the `VK_KHR_surface` Vulkan extension.\n///\n/// Creating a swapchain is extremely expensive. One must be created at\n/// application startup and re-used throughout the application lifecycle.\n///\n/// Swapchains are resilient to the underlying surfaces being resized. The\n/// swapchain images will be re-created as necessary on-demand.\n///"
+    "ImpellerVulkanSwapchain": "/// The primary form of WSI when using a Vulkan context, these swapchains use\n/// the `VK_KHR_surface` Vulkan extension.\n///\n/// Creating a swapchain is extremely expensive. One must be created at\n/// application startup and re-used throughout the application lifecycle.\n///\n/// Swapchains are resilient to the underlying surfaces being resized. The\n/// swapchain images will be re-created as necessary on-demand.\n///",
+    "ImpellerFragmentProgram": "/// A fragment shader is a small program that is authored in GLSL and compiled\n/// using `impellerc` that runs on each pixel covered by a polygon and allows\n/// the user to configure how it is shaded.\n///\n/// @see https\n///"
   },
   "functions": {
     "ImpellerGetVersion": {
@@ -390,6 +404,23 @@
         {
           "name": "path",
           "ty": "ImpellerPath"
+        }
+      ]
+    },
+    "ImpellerPathGetBounds": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "path",
+          "ty": "ImpellerPath",
+          "nonnull": true
+        },
+        {
+          "name": "out_bounds",
+          "ty": "ImpellerRect*",
+          "nonnull": true
         }
       ]
     },
@@ -925,6 +956,45 @@
         }
       ]
     },
+    "ImpellerFragmentProgramNew": {
+      "return_ty": {
+        "ty": "ImpellerFragmentProgram",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "data",
+          "ty": "const ImpellerMapping*",
+          "nonnull": true
+        },
+        {
+          "name": "data_release_user_data",
+          "ty": "void*"
+        }
+      ]
+    },
+    "ImpellerFragmentProgramRetain": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "fragment_program",
+          "ty": "ImpellerFragmentProgram"
+        }
+      ]
+    },
+    "ImpellerFragmentProgramRelease": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "fragment_program",
+          "ty": "ImpellerFragmentProgram"
+        }
+      ]
+    },
     "ImpellerColorSourceRetain": {
       "return_ty": {
         "ty": "void"
@@ -1146,6 +1216,41 @@
         }
       ]
     },
+    "ImpellerColorSourceCreateFragmentProgramNew": {
+      "return_ty": {
+        "ty": "ImpellerColorSource",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "context",
+          "ty": "ImpellerContext",
+          "nonnull": true
+        },
+        {
+          "name": "fragment_program",
+          "ty": "ImpellerFragmentProgram",
+          "nonnull": true
+        },
+        {
+          "name": "samplers",
+          "ty": "ImpellerTexture*",
+          "ty_nonnull": true
+        },
+        {
+          "name": "samplers_count",
+          "ty": "size_t"
+        },
+        {
+          "name": "data",
+          "ty": "const uint8_t*"
+        },
+        {
+          "name": "data_bytes_length",
+          "ty": "size_t"
+        }
+      ]
+    },
     "ImpellerColorFilterRetain": {
       "return_ty": {
         "ty": "void"
@@ -1324,6 +1429,41 @@
         {
           "name": "sampling",
           "ty": "ImpellerTextureSampling"
+        }
+      ]
+    },
+    "ImpellerImageFilterCreateFragmentProgramNew": {
+      "return_ty": {
+        "ty": "ImpellerImageFilter",
+        "nodiscard": true
+      },
+      "args": [
+        {
+          "name": "context",
+          "ty": "ImpellerContext",
+          "nonnull": true
+        },
+        {
+          "name": "fragment_program",
+          "ty": "ImpellerFragmentProgram",
+          "nonnull": true
+        },
+        {
+          "name": "samplers",
+          "ty": "ImpellerTexture*",
+          "ty_nonnull": true
+        },
+        {
+          "name": "samplers_count",
+          "ty": "size_t"
+        },
+        {
+          "name": "data",
+          "ty": "const uint8_t*"
+        },
+        {
+          "name": "data_bytes_length",
+          "ty": "size_t"
         }
       ]
     },
@@ -2280,6 +2420,23 @@
         }
       ]
     },
+    "ImpellerParagraphStyleSetTextDecoration": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paragraph_style",
+          "ty": "ImpellerParagraphStyle",
+          "nonnull": true
+        },
+        {
+          "name": "decoration",
+          "ty": "const ImpellerTextDecoration*",
+          "nonnull": true
+        }
+      ]
+    },
     "ImpellerParagraphStyleSetMaxLines": {
       "return_ty": {
         "ty": "void"
@@ -2310,6 +2467,22 @@
           "name": "locale",
           "ty": "const char*",
           "nonnull": true
+        }
+      ]
+    },
+    "ImpellerParagraphStyleSetEllipsis": {
+      "return_ty": {
+        "ty": "void"
+      },
+      "args": [
+        {
+          "name": "paragraph_style",
+          "ty": "ImpellerParagraphStyle",
+          "nonnull": true
+        },
+        {
+          "name": "ellipsis",
+          "ty": "const char*"
         }
       ]
     },
@@ -2534,7 +2707,7 @@
     },
     "ImpellerParagraphGetWordBoundary": {
       "return_ty": {
-        "ty": "ImpellerRange"
+        "ty": "void"
       },
       "args": [
         {
@@ -2545,6 +2718,11 @@
         {
           "name": "code_unit_index",
           "ty": "size_t"
+        },
+        {
+          "name": "out_range",
+          "ty": "ImpellerRange*",
+          "nonnull": true
         }
       ]
     },
@@ -2860,12 +3038,17 @@
     },
     "ImpellerGlyphInfoGetGraphemeClusterBounds": {
       "return_ty": {
-        "ty": "ImpellerRect"
+        "ty": "void"
       },
       "args": [
         {
           "name": "glyph_info",
           "ty": "ImpellerGlyphInfo",
+          "nonnull": true
+        },
+        {
+          "name": "out_bounds",
+          "ty": "ImpellerRect*",
           "nonnull": true
         }
       ]
@@ -3112,11 +3295,36 @@
           "ty": "uint32_t"
         }
       ]
+    },
+    "ImpellerTextDecoration": {
+      "doc": "",
+      "fields": [
+        {
+          "name": "types",
+          "ty": "int",
+          "doc": "/// A mask of `ImpellerTextDecorationType`s to enable.\n  "
+        },
+        {
+          "name": "color",
+          "ty": "ImpellerColor",
+          "doc": "/// The decoration color.\n  "
+        },
+        {
+          "name": "style",
+          "ty": "ImpellerTextDecorationStyle",
+          "doc": "/// The decoration style.\n  "
+        },
+        {
+          "name": "thickness_multiplier",
+          "ty": "float"
+        }
+      ]
     }
   },
   "types": [
     "ImpellerCallback",
     "ImpellerProcAddressCallback",
+    "ImpellerTexture*",
     "ImpellerVulkanProcAddressCallback",
     "bool",
     "const char*",
@@ -3124,6 +3332,7 @@
     "const uint8_t*",
     "double",
     "float",
+    "int",
     "int64_t",
     "size_t",
     "uint32_t",

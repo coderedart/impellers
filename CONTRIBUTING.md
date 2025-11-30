@@ -5,6 +5,8 @@ This directory contains:
 * `crates/impellers_codegen` - generates raw FFI bindings for impeller's C API using bindgen.
 * `impellers` - wraps the FFI bindings with safe rust types and functions. and uses build script to download/link the prebuilt impeller library artefacts
 * `.github/workflows/assets.yaml` - This uses `build_impeller.sh` and `BUILD.gn.patch` to generate zip files of static libraries for linux/windows x64. 
+* `download_flutter_artefacts.sh` - This downloads the flutter pre-built libs hosted by flutter. Just run it with an argument of `target_dir` where you want to download the artefacts to.
+
 
 ### Rust Bindings Generation
 We will assume that you are in the root of the repo.
