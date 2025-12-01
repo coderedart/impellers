@@ -63,7 +63,7 @@ if (-not $dbgExists) { Write-Warning "dbghelp.dll not found. Debugging Tools may
 
 # If the exact SDK is missing, try to add it via Visual Studio Installer CLI (more reliable on hosted runners)
 if (-not $sdkExists) {
-  $programFilesX86 = $env:'ProgramFiles(x86)'
+  $programFilesX86 = $env['ProgramFiles(x86)']
   if (-not $programFilesX86) { $programFilesX86 = 'C:\Program Files (x86)' }
   $vsInstallerPath = Join-Path $programFilesX86 'Microsoft Visual Studio\Installer\vs_installer.exe'
   $vsWherePath = Join-Path $programFilesX86 'Microsoft Visual Studio\Installer\vswhere.exe'
