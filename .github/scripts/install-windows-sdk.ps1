@@ -63,9 +63,13 @@ if (-not $dbgExists) { Write-Warning "dbghelp.dll not found. Debugging Tools may
 
 # If the exact SDK is missing, try to add it via Visual Studio Installer CLI (more reliable on hosted runners)
 if (-not $sdkExists) {
-  $vsInstallerPath = Join-Path $env:ProgramFiles '(x86)\Microsoft Visual Studio\Installer\vs_installer.exe'
-  $vsWherePath = Join-Path $env:ProgramFiles '(x86)\Microsoft Visual Studio\Installer\vswhere.exe'
-  if (Test-Path $vsInstallerPath -PathType Leaf -ErrorAction SilentlyContinue -and Test-Path $vsWherePath -PathType Leaf -ErrorAction SilentlyContinue) {
+  $programFilesX86 = $env:'ProgramFiles(x86)'
+  if (-not $programFilesX86) { $programFilesX86 = 'C:\Program Files (x86)' }
+  $vsInstallerPath = Join-Path $programFilesX86 'Microsoft Visual Studio\Installer\vs_installer.exe'
+  $vsWherePath = Join-Path $programFilesX86 'Microsoft Visual Studio\Installer\vswhere.exe'
+  $vsInstallerExists = Test-Path -Path $vsInstallerPath -PathType Leaf -ErrorAction SilentlyContinue
+  $vsWhereExists = Test-Path -Path $vsWherePath -PathType Leaf -ErrorAction SilentlyContinue
+  if ($vsInstallerExists -and $vsWhereExists) {
     Write-Host "Attempting to install Windows SDK $SdkVersion via Visual Studio Installer..."
     try {
       # Find the default installation path of the latest Visual Studio instance
