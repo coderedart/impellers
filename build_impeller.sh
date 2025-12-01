@@ -13,7 +13,7 @@ fi
 # sanity checks and start build
 rm -rf "$OUT_DIR" # clean out any old build files
 ls -lh "$UPLOAD_DIR" # list for sanity
-./engine/src/flutter/tools/gn ${USE_CCACHE:+"$USE_CCACHE"} --runtime-mode="$PROFILE"  --prebuilt-dart-sdk --no-goma --no-build-engine-artifacts --no-enable-unittests --no-lto --target-dir=out --windows_sdk_version="$WINDOWS_SDK_VERSION" # lto makes static libs huge and unstrippable
+./engine/src/flutter/tools/gn ${USE_CCACHE:+"$USE_CCACHE"} --runtime-mode="$PROFILE"  --prebuilt-dart-sdk --no-goma --no-build-engine-artifacts --no-enable-unittests --no-lto --target-dir=out # lto makes static libs huge and unstrippable
 cat "$OUT_DIR"/args.gn ||: # displays the gn args
 ninja -C "$OUT_DIR" flutter/impeller/toolkit/interop:library_static
 # prepare for archive

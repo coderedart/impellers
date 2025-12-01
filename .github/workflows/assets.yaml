@@ -5,9 +5,7 @@ on:
 name: Release
 env:
   DEPOT_TOOLS_WIN_TOOLCHAIN: 0
-  WINDOWSSDKDIR: 'C:/Program Files (x86)/Windows Kits/10/'
   UPLOAD_DIR: ${{ github.workspace }}/assets
-  WINDOWS_SDK_VERSION: '10.0.26100.0' # for build_impeller.sh's gn invocation
 jobs:
   build:
     runs-on: ${{ matrix.os }}-latest
@@ -30,11 +28,14 @@ jobs:
           sudo rm -rf /opt/ghc
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
 
-      - name: Install Windows SDK on Windows
+      - name: Install Windows SDK and Debugging Tools on Windows (script)
         if: matrix.os == 'windows'
-        uses: GuillaumeFalourd/setup-windows10-sdk-action@v2.4
-        with:
-          sdk-version: 22621
+        shell: powershell
+        run: |
+          Write-Host "Running .github/scripts/install-windows-sdk.ps1"
+          # Run with failure on missing by default; can pass -FailIfMissing:$false to be permissive
+          ./.github/scripts/install-windows-sdk.ps1 -FailIfMissing
+
 
       - name: Ensure ENGINE_SHA is up to date.
         shell: bash
