@@ -117,7 +117,9 @@ mod win_sys;
 #[cfg(all(not(feature = "sys"), target_os = "windows"))]
 use win_sys as sys;
 #[cfg(all(feature = "sys", target_os = "windows"))]
-pub use win_sys as sys;
+pub mod sys {
+    pub use crate::win_sys::*;
+}
 
 use std::borrow::Cow;
 

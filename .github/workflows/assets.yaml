@@ -28,6 +28,12 @@ jobs:
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /opt/ghc
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          
+      - name: Install Windows SDK on Windows
+        if: matrix.os == 'windows'
+        uses: GuillaumeFalourd/setup-windows10-sdk-action@v2.4
+        with:
+          sdk-version: 22621
 
       - name: Ensure ENGINE_SHA is up to date.
         shell: bash
