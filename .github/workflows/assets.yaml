@@ -7,6 +7,7 @@ env:
   DEPOT_TOOLS_WIN_TOOLCHAIN: 0
   WINDOWSSDKDIR: 'C:/Program Files (x86)/Windows Kits/10/'
   UPLOAD_DIR: ${{ github.workspace }}/assets
+  WINDOWS_SDK_VERSION: '10.0.26100.0' # for build_impeller.sh's gn invocation
 jobs:
   build:
     runs-on: ${{ matrix.os }}-latest
@@ -28,7 +29,7 @@ jobs:
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /opt/ghc
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-          
+
       - name: Install Windows SDK on Windows
         if: matrix.os == 'windows'
         uses: GuillaumeFalourd/setup-windows10-sdk-action@v2.4

@@ -6,8 +6,8 @@ fn main() {
     use std::path::{Path, PathBuf};
 
     const STATIC_MAJOR: u32 = 0;
-    const STATIC_MINOR: u32 = 2;
-    const STATIC_PATCH: u32 = 1;
+    const STATIC_MINOR: u32 = 3;
+    const STATIC_PATCH: u32 = 0;
     // gather variables
     let out_dir = std::path::Path::new(&std::env::var("OUT_DIR").unwrap()).to_owned();
     let profile = cfg!(feature = "debug_static_link")
