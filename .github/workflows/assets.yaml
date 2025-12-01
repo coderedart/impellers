@@ -19,6 +19,16 @@ jobs:
         with:
           submodules: recursive
       
+      - name: Free Space on Ubuntu
+        shell: bash
+        if: matrix.os == 'ubuntu'
+        run: |
+          # we can run out of space on github CI because flutters downloads so much stuff with gclient
+          df -h
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
       - name: Ensure ENGINE_SHA is up to date.
         shell: bash
         run: |
@@ -34,19 +44,21 @@ jobs:
       - name: Install 7Zip and LLVM on Ubuntu
         if: matrix.os == 'ubuntu'
         run: sudo apt install -y 7zip llvm
+
       - name: Add Depot Tools to path
         shell: bash
         run: |
-                  git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
-                  echo "$GITHUB_WORKSPACE/depot_tools" >> $GITHUB_PATH
+          git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
+          echo "$GITHUB_WORKSPACE/depot_tools" >> $GITHUB_PATH
 
-      - name: Download Depot Tools and Add it to PATH.
+      - name: Build Impeller
         shell: bash
         run: |
           mkdir $UPLOAD_DIR
           cd flutter
           echo "$PATH"
-          cp engine/scripts/standard.gclient .gclient
+          # custom gclient file to skip irrelevant deps
+          cp ../github_ci.gclient .gclient
           gclient sync --delete_unversioned_trees --no-history --shallow
           # add the library_static target to BUILD.gn
           cat ../BUILD.gn.patch >> ./engine/src/flutter/impeller/toolkit/interop/BUILD.gn
