@@ -17,16 +17,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-      
-      - name: Free Space on Ubuntu
-        shell: bash
-        if: matrix.os == 'ubuntu'
-        run: |
-          # we can run out of space on github CI because flutters downloads so much stuff with gclient
-          df -h
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
 
       - name: Install Windows SDK and Debugging Tools on Windows (script)
         if: matrix.os == 'windows'
