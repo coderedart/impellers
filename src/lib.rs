@@ -112,7 +112,7 @@ pub mod sys;
 #[cfg(all(not(feature = "sys"), not(target_os = "windows")))]
 mod sys;
 
-#[cfg(all(not(feature = "sys"), target_os = "windows"))]
+#[cfg(target_os = "windows")]
 mod win_sys;
 #[cfg(all(not(feature = "sys"), target_os = "windows"))]
 use win_sys as sys;
