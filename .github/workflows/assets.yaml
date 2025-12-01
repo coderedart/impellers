@@ -5,7 +5,7 @@ on:
 name: Release
 env:
   DEPOT_TOOLS_WIN_TOOLCHAIN: 0
-  GYP_MSVS_VERSION: 2022
+  GYP_MSVS_OVERRIDE_PATH: C:/Program Files/Microsoft Visual Studio/2022/Enterprise
   UPLOAD_DIR: ${{ github.workspace }}/assets
 jobs:
   build:
