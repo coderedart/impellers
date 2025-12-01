@@ -57,8 +57,6 @@ jobs:
           cp ../github_ci.gclient .gclient
           gclient sync --delete_unversioned_trees --no-history --shallow
           # add the library_static target to BUILD.gn
-          dos2unix ../build_impeller.sh
-          dos2unix ../BUILD.gn.patch
           cat ../BUILD.gn.patch >> ./engine/src/flutter/impeller/toolkit/interop/BUILD.gn
           ../build_impeller.sh release $UPLOAD_DIR
           ../build_impeller.sh debug $UPLOAD_DIR
