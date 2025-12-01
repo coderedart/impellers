@@ -30,11 +30,10 @@ jobs:
 
       - name: Install Windows SDK and Debugging Tools on Windows (script)
         if: matrix.os == 'windows'
-        shell: powershell
-        run: |
-          Write-Host "Running .github/scripts/install-windows-sdk.ps1"
-          # Run with failure on missing by default; can pass -FailIfMissing:$false to be permissive
-          ./.github/scripts/install-windows-sdk.ps1 -FailIfMissing
+        uses: ChristopheLav/windows-sdk-install@v1
+        with:
+          version-sdk: 22621
+          features: 'OptionId.DesktopCPPx64,OptionId.DesktopCPPx86'
 
 
       - name: Ensure ENGINE_SHA is up to date.
