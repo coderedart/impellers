@@ -696,7 +696,7 @@ impl Context {
     }
     /// Create a color source whose pixels are shaded by a fragment program.
     ///
-    /// https://docs.flutter.dev/ui/design/graphics/fragment-shaders
+    /// <https://docs.flutter.dev/ui/design/graphics/fragment-shaders>
     ///
     ///
     /// # Safety
@@ -730,7 +730,7 @@ impl Context {
     }
     /// Create an image filter where each pixel is shaded by a fragment program.
     ///
-    /// https://docs.flutter.dev/ui/design/graphics/fragment-shaders
+    /// <https://docs.flutter.dev/ui/design/graphics/fragment-shaders>
     ///
     /// # Safety
     /// Make sure the uniform data is laid out according to the fragment program's requirements

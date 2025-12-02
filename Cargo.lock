@@ -198,7 +198,7 @@ dependencies = [
 
 [[package]]
 name = "impellers"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "ash",
  "bitflags 2.8.0",
