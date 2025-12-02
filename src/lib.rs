@@ -2357,6 +2357,11 @@ impl Paragraph {
         if ptr.is_null() {
             None
         } else {
+            // safety: https://github.com/flutter/flutter/tree/master/engine/src/flutter/impeller/toolkit/interop#reference-management
+            // only functions that end with `new` return an object with reference count 1
+            // All other functions return "borrowed" objects, so,
+            // we increment ref count to get an "owned" version
+            unsafe { sys::ImpellerLineMetricsRetain(ptr) };
             Some(LineMetrics(ptr))
         }
     }
