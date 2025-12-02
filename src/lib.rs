@@ -2706,7 +2706,11 @@ impl ParagraphBuilder {
     #[doc(alias = "ImpellerParagraphBuilderAddText")]
     pub fn add_text(&mut self, text: &str) {
         unsafe {
-            sys::ImpellerParagraphBuilderAddText(self.0, text.as_ptr(), text.len() as u32);
+            sys::ImpellerParagraphBuilderAddText(
+                self.0,
+                text.as_ptr(),
+                text.len().try_into().unwrap(),
+            );
         }
     }
 
