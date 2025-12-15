@@ -131,6 +131,10 @@ use std::borrow::Cow;
 
 use bytemuck::cast;
 use bytemuck::cast_ref;
+
+/// The commit hash of the prebuilt library artefacts used by this crate.
+pub const FLUTTER_ARTEFACT_COMMIT: &str = include_str!("../ENGINE_SHA");
+
 // enums
 /// <https://api.flutter.dev/flutter/dart-ui/BlendMode.html>
 ///
@@ -185,9 +189,10 @@ pub use sys::TextureSampling;
 
 /// <https://api.flutter.dev/flutter/dart-ui/TileMode.html>
 pub use sys::TileMode;
+
 pub use sys::{
-    ImpellerColor as Color, ImpellerColorMatrix as ColorMatrix, ImpellerRange as Range,
-    ImpellerRoundingRadii as RoundingRadii,
+    ImpellerColor as Color, ImpellerColorMatrix as ColorMatrix,
+    ImpellerContextVulkanInfo as VulkanInfo, ImpellerRange as Range,
 };
 #[allow(missing_docs)]
 pub type Rect = euclid::Rect<f32, euclid::UnknownUnit>;
@@ -636,9 +641,9 @@ impl Context {
     /// @warning    If the context is not a Vulkan context, this will return Err.
     ///
     #[doc(alias = "ImpellerContextGetVulkanInfo")]
-    pub fn get_vulkan_info(&self) -> Result<sys::ImpellerContextVulkanInfo, &'static str> {
+    pub fn get_vulkan_info(&self) -> Result<VulkanInfo, &'static str> {
         assert_eq!(self.1, ContextType::Vk);
-        let mut vulkan_info = sys::ImpellerContextVulkanInfo::default();
+        let mut vulkan_info = VulkanInfo::default();
         if unsafe { sys::ImpellerContextGetVulkanInfo(self.0, &mut vulkan_info) } {
             Ok(vulkan_info)
         } else {
@@ -878,14 +883,6 @@ impl Drop for DisplayList {
 #[doc(alias = "ImpellerDisplayListBuilder")]
 pub struct DisplayListBuilder(sys::ImpellerDisplayListBuilder);
 
-// impl Clone for DisplayListBuilder {
-//     fn clone(&self) -> Self {
-//         unsafe {
-//             sys::ImpellerDisplayListBuilderRetain(self.0);
-//         }
-//         Self(self.0)
-//     }
-// }
 unsafe impl Send for DisplayListBuilder {}
 unsafe impl Sync for DisplayListBuilder {}
 impl Drop for DisplayListBuilder {
@@ -1070,10 +1067,14 @@ impl DisplayListBuilder {
     ///
     /// @return The transform.
     #[doc(alias = "ImpellerDisplayListBuilderGetTransform")]
-    pub fn get_transform(&self) -> sys::ImpellerMatrix {
-        let mut out_transform = sys::ImpellerMatrix::default();
+    pub fn get_transform(&self) -> Matrix {
+        let mut out_transform = Matrix::default();
         unsafe {
-            sys::ImpellerDisplayListBuilderGetTransform(self.0, &mut out_transform);
+            sys::ImpellerDisplayListBuilderGetTransform(
+                self.0,
+                // TODO: is converting mut ref to mut pointer UB?
+                bytemuck::cast_mut(&mut out_transform),
+            );
         }
         out_transform
     }
@@ -1169,7 +1170,12 @@ impl DisplayListBuilder {
         op: ClipOperation,
     ) -> &mut Self {
         unsafe {
-            sys::ImpellerDisplayListBuilderClipRoundedRect(self.0, cast_ref(rect), radii, op);
+            sys::ImpellerDisplayListBuilderClipRoundedRect(
+                self.0,
+                cast_ref(rect),
+                &radii.into(),
+                op,
+            );
         }
         self
     }
@@ -1308,7 +1314,12 @@ impl DisplayListBuilder {
         paint: &Paint,
     ) -> &mut Self {
         unsafe {
-            sys::ImpellerDisplayListBuilderDrawRoundedRect(self.0, cast_ref(rect), radii, paint.0);
+            sys::ImpellerDisplayListBuilderDrawRoundedRect(
+                self.0,
+                cast_ref(rect),
+                &radii.into(),
+                paint.0,
+            );
         }
         self
     }
@@ -1336,9 +1347,9 @@ impl DisplayListBuilder {
             sys::ImpellerDisplayListBuilderDrawRoundedRectDifference(
                 self.0,
                 cast_ref(outer_rect),
-                outer_radii,
+                &outer_radii.into(),
                 cast_ref(inner_rect),
-                inner_radii,
+                &inner_radii.into(),
                 paint.0,
             );
         }
@@ -1721,7 +1732,7 @@ impl ColorFilter {
     /// - blend_mode  The blend mode.
     ///
     /// @return     The color filter.
-    
+
     #[doc(alias = "ImpellerColorFilterCreateBlendNew")]
     pub fn new_blend(color: Color, blend_mode: BlendMode) -> Self {
         unsafe { Self(sys::ImpellerColorFilterCreateBlendNew(&color, blend_mode)) }
@@ -1737,7 +1748,7 @@ impl ColorFilter {
     /// playground to play with matrices: <https://fecolormatrix.com/>
     ///
     /// read more in struct docs [ColorFilter]
-    
+
     #[doc(alias = "ImpellerColorFilterCreateColorMatrixNew")]
     pub fn new_matrix(color_matrix: ColorMatrix) -> Self {
         unsafe { Self(sys::ImpellerColorFilterCreateColorMatrixNew(&color_matrix)) }
@@ -1794,7 +1805,7 @@ impl ColorSource {
     /// - transformation  The transformation.
     ///
     /// @return     The color source.
-    
+
     #[doc(alias = "ImpellerColorSourceCreateLinearGradientNew")]
     pub fn new_linear_gradient(
         start: Point,
@@ -1841,7 +1852,7 @@ impl ColorSource {
     /// - transformation  The transformation.
     ///
     /// @return     The color source.
-    
+
     #[doc(alias = "ImpellerColorSourceCreateRadialGradientNew")]
     pub fn new_radial_gradient(
         center: Point,
@@ -1938,7 +1949,7 @@ impl ColorSource {
     /// - transformation  The transformation.
     ///
     /// @return     The color source.
-    
+
     #[doc(alias = "ImpellerColorSourceCreateSweepGradientNew")]
     pub fn new_sweep_gradient(
         center: Point,
@@ -1987,7 +1998,7 @@ impl ColorSource {
         horizontal_tile_mode: TileMode,
         vertical_tile_mode: TileMode,
         sampling: TextureSampling,
-        transformation: Option<&sys::ImpellerMatrix>,
+        transformation: Option<&Matrix>,
     ) -> Self {
         let result = unsafe {
             sys::ImpellerColorSourceCreateImageNew(
@@ -1995,7 +2006,7 @@ impl ColorSource {
                 horizontal_tile_mode,
                 vertical_tile_mode,
                 sampling,
-                transformation.map_or(std::ptr::null(), |m| m),
+                transformation.map_or(std::ptr::null(), |m| cast_ref(m)),
             )
         };
         assert!(!result.is_null());
@@ -3245,7 +3256,11 @@ impl PathBuilder {
         rounding_radii: &RoundingRadii,
     ) -> &mut Self {
         unsafe {
-            sys::ImpellerPathBuilderAddRoundedRect(self.0, cast_ref(oval_bounds), rounding_radii);
+            sys::ImpellerPathBuilderAddRoundedRect(
+                self.0,
+                cast_ref(oval_bounds),
+                &rounding_radii.into(),
+            );
         }
         self
     }
@@ -3455,6 +3470,44 @@ bitflags::bitflags! {
         const LINETHROUGH = sys::TextDecorationType::LineThrough as std::ffi::c_int;
     }
 }
+/// Represents the rounding radii of a rounded rect.
+///
+/// Each point represents the X and Y radius of a corner.
+#[repr(C)]
+#[derive(Debug, Copy, Clone, Default)]
+pub struct RoundingRadii {
+    /// x and y radius of the top left corner.
+    pub top_left: Point,
+    /// x and y radius of the top right corner.
+    pub top_right: Point,
+    /// x and y radius of the bottom left corner.
+    pub bottom_left: Point,
+    /// x and y radius of the bottom right corner.
+    pub bottom_right: Point,
+}
+impl From<&RoundingRadii> for sys::ImpellerRoundingRadii {
+    fn from(value: &RoundingRadii) -> Self {
+        Self {
+            top_left: sys::ImpellerPoint {
+                x: value.top_left.x,
+                y: value.top_left.y,
+            },
+            top_right: sys::ImpellerPoint {
+                x: value.top_right.x,
+                y: value.top_right.y,
+            },
+            bottom_left: sys::ImpellerPoint {
+                x: value.bottom_left.x,
+                y: value.bottom_left.y,
+            },
+            bottom_right: sys::ImpellerPoint {
+                x: value.bottom_right.x,
+                y: value.bottom_right.y,
+            },
+        }
+    }
+}
+
 impl sys::ImpellerMapping {
     /// A helper function to create a mapping from a boxed slice.
     ///
