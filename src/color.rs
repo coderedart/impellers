@@ -1,6 +1,7 @@
 //! parsed from json file at <<https://github.com/jonathantneal/color-names/blob/master/color-names.json>>
 use crate::Color;
-
+// No need for docs for color constants
+#[allow(missing_docs)]
 impl Color {
     pub const ABBEY: Self = Self::new_srgb(0.298_039_23, 0.309_803_93, 0.337_254_9);
     pub const ABSOLUTE_ZERO: Self = Self::new_srgb(0.0, 0.282_352_95, 0.729_411_8);
