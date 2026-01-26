@@ -60,6 +60,7 @@ The flutter submodule is mainly intended for building static libraries. If you w
 * Just add lots of print statements in gn files or src/flutter/tools/gn to debug any issues.
 
 ### Problems with Static linking
+TODO: Is this still a problem?
 I am just documenting this here, in case anyone familiar with gn build system can help fix this.
 
 On linux, libcxx sources are not getting pulled into static library. We can verify this by just generating the gn files and looking at the diff between `library_static.ninja` vs `library.ninja` in the `out/{profile}/obj/flutter/impeller/toolkit/interop` directory.
@@ -68,3 +69,9 @@ This causes undefined reference errors for libcxx symbols like strings/share_ptr
 
 If we explicitly add libcxx as a dependency to `library_static` target, it works on linux, but causes issues with windows builds. So, for now, we only add libcxx as the dependency for `library_static` if the target os is not windows.
 
+### Dependencies
+We generally need these libraries
+- cmake
+- glfw
+    - x11 development headers (xrandr, xinerama, xcursor, xi, x11)
+- Roboto font (for running text related examples)
