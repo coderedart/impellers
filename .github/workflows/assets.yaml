@@ -24,7 +24,9 @@ jobs:
 
       - name: Download Flutter's artefacts
         shell: bash
-        run: ./download_flutter_artefacts.sh "$UPLOAD_DIR"
+        run: |
+          mkdir "$UPLOAD_DIR"
+          ./download_flutter_artefacts.sh "$UPLOAD_DIR"
           
       - name: Upload Assets
         uses: xresloader/upload-to-github-release@v1
