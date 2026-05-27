@@ -4,26 +4,15 @@ on:
       - "a_*"
 name: Release
 env:
-  DEPOT_TOOLS_WIN_TOOLCHAIN: 0
   UPLOAD_DIR: ${{ github.workspace }}/assets
 jobs:
   build:
-    runs-on: ${{ matrix.os }}-latest
-    strategy:
-      matrix:
-        os: [ubuntu, windows]
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
-
-      - name: Install Windows SDK and Debugging Tools on Windows (script)
-        if: matrix.os == 'windows'
-        uses: ChristopheLav/windows-sdk-install@v1
-        with:
-          version-sdk: 22621
-          features: 'OptionId.DesktopCPPx64,OptionId.DesktopCPPx86'
 
       - name: Ensure ENGINE_SHA is up to date.
         shell: bash
@@ -32,38 +21,9 @@ jobs:
           git submodule status
           [ "$(cat ENGINE_SHA)" = "$(git submodule status | cut -d ' ' -f2)" ]
           echo "ENGINE_SHA matches submodule commit"
-          
-
-      - name: Install Ninja
-        uses: seanmiddleditch/gha-setup-ninja@master
-
-      - name: Install 7Zip and LLVM on Ubuntu
-        if: matrix.os == 'ubuntu'
-        run: sudo apt install -y 7zip llvm
-
-      - name: Add Depot Tools to path
-        shell: bash
-        run: |
-          git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
-          echo "$GITHUB_WORKSPACE/depot_tools" >> $GITHUB_PATH
-
-      - name: Build Impeller
-        shell: bash
-        run: |
-          mkdir $UPLOAD_DIR
-          cd flutter
-          echo "$PATH"
-          # custom gclient file to skip irrelevant deps
-          cp ../github_ci.gclient .gclient
-          gclient sync --delete_unversioned_trees --no-history --shallow
-          # add the library_static target to BUILD.gn
-          cat ../BUILD.gn.patch >> ./engine/src/flutter/impeller/toolkit/interop/BUILD.gn
-          ../build_impeller.sh release $UPLOAD_DIR
-          ../build_impeller.sh debug $UPLOAD_DIR
 
       - name: Download Flutter's artefacts
         shell: bash
-        if: matrix.os == 'ubuntu'
         run: ./download_flutter_artefacts.sh "$UPLOAD_DIR"
           
       - name: Upload Assets
