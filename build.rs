@@ -116,7 +116,7 @@ fn prebuilt_libs() {
                 println!("cargo:rustc-link-lib={lib}");
             }
         }
-        if target_os == "macos" {
+        if target_os == "darwin" {
             println!("cargo:rustc-link-lib=objc");
             println!("cargo:rustc-link-lib=c++");
             println!("cargo:rustc-link-lib=framework=Metal");
@@ -268,8 +268,11 @@ fn prebuilt_libs() {
             let impeller_version = std::env::var("CARGO_PKG_VERSION").unwrap();
             let version_in_file =
                 std::fs::read_to_string(&impeller_cache_version_path).unwrap_or_default();
+
             if version_in_file != impeller_version {
-                println!("cargo:warning=impeller cache directory is out of date {impeller_version} vs {version_in_file}");
+                if !version_in_file.is_empty() {
+                    println!("cargo:warning=impeller cache directory is out of date {impeller_version} vs {version_in_file}");
+                }
                 if impeller_cache_dir.exists() {
                     std::fs::remove_dir_all(&impeller_cache_dir)
                         .expect("failed to remove impeller cache dir");
