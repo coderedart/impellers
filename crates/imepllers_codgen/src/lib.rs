@@ -133,29 +133,6 @@ impl bindgen::callbacks::ParseCallbacks for ImpellerApiJson {
         Some(variant_name.to_string())
     }
 
-    fn item_name(&self, original_item_name: &str) -> Option<String> {
-        if original_item_name.ends_with("_") {
-            trace!(
-                "skipping renaming item {} as it ends with underscore",
-                original_item_name
-            );
-            return None;
-        }
-
-        if self.has_enum(original_item_name) {
-            let Some(new_name) = original_item_name.strip_prefix("Impeller") else {
-                error!(
-                    "failed to strip Impeller prefix from enum {}",
-                    original_item_name
-                );
-                return None;
-            };
-            debug!("renaming enum {} to {}", original_item_name, new_name);
-            return Some(new_name.to_string());
-        }
-        None
-    }
-
     fn process_comment(&self, comment: &str) -> Option<String> {
         // comments with "```" cause doctest to fail, so we must replace them with "```ignore"
         let mut new_comment = String::new();
@@ -186,5 +163,29 @@ impl bindgen::callbacks::ParseCallbacks for ImpellerApiJson {
         } else {
             Some(new_comment)
         }
+    }
+
+    fn item_name(&self, item_info: bindgen::callbacks::ItemInfo) -> Option<String> {
+        let original_item_name = item_info.name;
+        if original_item_name.ends_with("_") {
+            trace!(
+                "skipping renaming item {} as it ends with underscore",
+                original_item_name
+            );
+            return None;
+        }
+
+        if self.has_enum(original_item_name) {
+            let Some(new_name) = original_item_name.strip_prefix("Impeller") else {
+                error!(
+                    "failed to strip Impeller prefix from enum {}",
+                    original_item_name
+                );
+                return None;
+            };
+            debug!("renaming enum {} to {}", original_item_name, new_name);
+            return Some(new_name.to_string());
+        }
+        None
     }
 }

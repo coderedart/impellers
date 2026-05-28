@@ -62,8 +62,7 @@ The final binary/executable should enable the `prebuilt_libs` feature to downloa
 
 ## Features
 * `prebuilt_libs` - Downloads the prebuilt libraries from github releases and links them to your project.
-* `static_link` - If enabled, we will link static libraries. only available on linux/windows. All other platforms will need to use shared libraries or provide their own (see [Custom Linking](#custom-linking)).
-* `debug_static_link` - If enabled, we will use the unstripped static libs with debug info (useful for debugging). only available on linux/windows just like `static_link`.
+* `static_link` - If enabled, we will link static libraries. only available on linux/windows/mac. All other platforms will need to use shared libraries or provide their own (see [Custom Linking](#custom-linking)).
 * `cache_libs` - If enabled, we will cache the prebuilt-libs in `.impeller_cache` directory inside your project directory (parent dir of `target`). Add `/.impeller_cache` to `.gitignore`, if you enable this feature. 
     * You can customize cache directory path with `IMPELLER_CACHE_DIR` env variable. And also use this to provide your own custom built libs.
     * caching avoids redownloading after `cargo clean` saving bandwidth and this in turns also makes the builds faster.
@@ -80,6 +79,6 @@ Objects like textures/contexts are inherently linked to platform resources (like
 When you want to link in your own custom impeller library:
 * Enable `cache_libs` feature to make it use libraries from a cached directory.
 * set `IMPELLER_CACHE_DIR` environment variable to manually set the location of the cache directory.
-* Inside that directory, create `targetos_targetarch` (eg: `linux_x64`) directory for dynamic libs and `targetos_targetarch_static_profile` (eg: `linux_x64_static_release`) directory for static libs.
-* depending on the features `static_link` and `debug_static_link` you might need to create `targetos_targetarch_static_debug` directory, build script will search for dynamic libs or release static libs or debug static libs (useful for debugging).
+* Inside that directory, create `targetos_targetarch` (eg: `linux_x64`) directory.
+* depending on the features `static_link`, build script will search for dynamic libs or static libs (eg: `linux_x64/libimpeller.a`).
 

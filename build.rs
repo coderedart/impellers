@@ -7,12 +7,9 @@ fn main() {
 
     const STATIC_MAJOR: u32 = 0;
     const STATIC_MINOR: u32 = 5;
-    const STATIC_PATCH: u32 = 12;
+    const STATIC_PATCH: u32 = 14;
     // gather variables
     let out_dir = std::path::Path::new(&std::env::var("OUT_DIR").unwrap()).to_owned();
-    let profile = cfg!(feature = "debug_static_link")
-        .then_some("debug")
-        .unwrap_or("release");
     let cargo_target_os = std::env::var("CARGO_CFG_TARGET_OS").unwrap();
     let target_os = match cargo_target_os.as_str() {
         "windows" => "windows",
@@ -43,11 +40,7 @@ fn main() {
             rest => panic!("unsupported target OS: {rest}"),
         }
     };
-    let build_name = if static_link {
-        format!("{target_os}_{target_arch}_static_{profile}",)
-    } else {
-        format!("{target_os}_{target_arch}",)
-    };
+    let build_name = format!("{target_os}_{target_arch}",);
     let url = format!(
         "https://github.com/coderedart/impellers/releases/download/a_{}.{}.{}/{build_name}.zip",
         STATIC_MAJOR, STATIC_MINOR, STATIC_PATCH

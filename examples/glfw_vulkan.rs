@@ -17,10 +17,9 @@ pub fn main() {
         // create context using callback
         impellers::Context::new_vulkan(false, |vk_instance, vk_proc_name| {
             let proc_name = std::ffi::CStr::from_ptr(vk_proc_name).to_str().unwrap();
-            gtx.get_instance_proc_address_raw(
-                ash::vk::Instance::from_raw(vk_instance as _),
-                proc_name,
-            ) as _
+            gtx.get_instance_proc_address_raw(vk_instance as _, proc_name)
+                .map(|f| f as _)
+                .unwrap_or(std::ptr::null_mut())
         })
     }
     .expect("failed to create impeller context");
@@ -33,14 +32,16 @@ pub fn main() {
     );
 
     let mut vulkan_surface_khr: ash::vk::SurfaceKHR = ash::vk::SurfaceKHR::null();
-    window
-        .create_window_surface(
-            ash::vk::Instance::from_raw(vk_info.vk_instance as _),
+    let result = unsafe {
+        window.create_window_surface(
+            vk_info.vk_instance as _,
             std::ptr::null(),
-            &raw mut vulkan_surface_khr,
+            &raw mut vulkan_surface_khr as _,
         )
-        .result()
-        .expect("failed to create vk surface khr");
+    };
+    if result != 0 {
+        panic!("failed to create vk surface khr");
+    }
     assert!(!vulkan_surface_khr.is_null(), "surface pointer is null");
     let mut vk_swapchain =
         unsafe { itx.create_new_vulkan_swapchain(vulkan_surface_khr.as_raw() as _) }

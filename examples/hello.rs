@@ -15,10 +15,23 @@ pub fn main() {
     window.make_current();
 
     // initialize impeller context using opengl fn pointers
-    let mut itx =
-        unsafe { impellers::Context::new_opengl_es(|s| window.get_proc_address(s) as _) }.unwrap();
-    let glow_ctx: glow::Context =
-        unsafe { glow::Context::from_loader_function(|s| window.get_proc_address(s)) as _ };
+    let mut itx = unsafe {
+        impellers::Context::new_opengl_es(|s| {
+            window
+                .get_proc_address(s)
+                .map(|f| f as _)
+                .unwrap_or(std::ptr::null_mut())
+        })
+    }
+    .unwrap();
+    let glow_ctx: glow::Context = unsafe {
+        glow::Context::from_loader_function(|s| {
+            window
+                .get_proc_address(s)
+                .map(|f| f as _)
+                .unwrap_or(std::ptr::null_mut())
+        })
+    };
     // enter event loop
     while !window.should_close() {
         // check events

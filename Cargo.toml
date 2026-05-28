@@ -14,8 +14,7 @@ default = []
 sys = []
 # This downloads and links the prebuilt-libs of impeller using curl and tar.
 prebuilt_libs = []
-static_link = ["prebuilt_libs"] # enables static linking with stripped libs (only on linux or windows x64)
-debug_static_link = ["static_link"] # static links prebuilt libs that have debug info (only on linux or windows x64)
+static_link = ["prebuilt_libs"] # enables static linking (only on linux/windows/mac)
 # will create a .impeller_cache beside target directory and stores the downloaded libraries
 # Will skip redownloading libs if they can be found in .impeller_cache. please add the directory to .gitignore
 cache_libs = ["prebuilt_libs"]
@@ -27,9 +26,9 @@ bytemuck = {version = "1"}
 bitflags = {version = "2"}
 
 [dev-dependencies]
-glfw = {version = "0.59", features = ["vulkan"]}
+glfw = {version = "0.62", features = ["vulkan"]}
 ash = {version = "0.38"}
-glow = {version = "0.16"}
+glow = {version = "0.17"}
 image = {version  = "0.25", default-features = false, features = ["jpeg"]}
 
 [[example]]

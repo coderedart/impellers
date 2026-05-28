@@ -39,10 +39,23 @@ impl SdlGlImpellerFrameWork {
         window.set_all_polling(true);
 
         // initialize impeller context using opengl fn pointers
-        let itx = unsafe { impellers::Context::new_opengl_es(|s| window.get_proc_address(s) as _) }
-            .unwrap();
-        let glow_ctx =
-            unsafe { glow::Context::from_loader_function(|s| window.get_proc_address(s) as _) };
+        let itx = unsafe {
+            impellers::Context::new_opengl_es(|s| {
+                window
+                    .get_proc_address(s)
+                    .map(|f| f as _)
+                    .unwrap_or(std::ptr::null_mut())
+            })
+        }
+        .unwrap();
+        let glow_ctx = unsafe {
+            glow::Context::from_loader_function(|s| {
+                window
+                    .get_proc_address(s)
+                    .map(|f| f as _)
+                    .unwrap_or(std::ptr::null_mut())
+            })
+        };
         unsafe {
             let (width, height) = window.get_framebuffer_size();
             glow_ctx.viewport(0, 0, width, height);
