@@ -116,6 +116,19 @@ fn prebuilt_libs() {
                 println!("cargo:rustc-link-lib={lib}");
             }
         }
+        if target_os == "macos" {
+            println!("cargo:rustc-link-lib=objc");
+            println!("cargo:rustc-link-lib=c++");
+            println!("cargo:rustc-link-lib=framework=Metal");
+            println!("cargo:rustc-link-lib=framework=QuartzCore");
+
+            println!("cargo:rustc-link-lib=framework=CoreGraphics");
+
+            println!("cargo:rustc-link-lib=framework=CoreText");
+
+            println!("cargo:rustc-link-lib=framework=Foundation");
+            println!("cargo:rustc-link-lib=framework=CoreFoundation");
+        }
         println!("cargo:rustc-link-lib=static=impeller");
     } else {
         // on windows, you link with impeller.dll.lib
