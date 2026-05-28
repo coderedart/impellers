@@ -1,6 +1,6 @@
 [package]
 name = "impellers"
-version = "0.4.1"
+version = "0.4.2"
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/coderedart/flutter"
@@ -12,6 +12,11 @@ exclude = ["/flutter"] # flutter sources are too large and we don't support sour
 [features]
 default = []
 sys = []
+
+# Generates bindings to impeller header as part of build.rs.
+# Without this feature, we will use pre-generated bindings for all 64-bit targets.
+bindgen_live = ["dep:bindgen", "dep:anyhow", "dep:tracing", "dep:tracing-subscriber", "dep:serde_json"]
+
 # This downloads and links the prebuilt-libs of impeller using curl and tar.
 prebuilt_libs = []
 static_link = ["prebuilt_libs"] # enables static linking (only on linux/windows/mac)
@@ -19,11 +24,20 @@ static_link = ["prebuilt_libs"] # enables static linking (only on linux/windows/
 # Will skip redownloading libs if they can be found in .impeller_cache. please add the directory to .gitignore
 cache_libs = ["prebuilt_libs"]
 
+internal_pre_bindgen = ["bindgen_live"]
+
 
 [dependencies]
 euclid = {version = "0.22", features = ["bytemuck"]}
 bytemuck = {version = "1"}
 bitflags = {version = "2"}
+
+[build-dependencies]
+bindgen = {version = "0.72", optional = true}
+anyhow = {version = "1", optional = true}
+tracing = {version = "0.1", optional = true}
+tracing-subscriber = {version = "0.3", features = ["fmt", "env-filter"], optional = true}
+serde_json = {version = "1", optional = true}
 
 [dev-dependencies]
 glfw = {version = "0.62", features = ["vulkan"]}
@@ -40,9 +54,6 @@ name = "common"
 crate-type = ["staticlib"]
 doc-scrape-examples = true
 
-
-[workspace]
-members = ["crates/*"]
 
 
 

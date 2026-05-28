@@ -519,23 +519,17 @@ checksum = "40fac9d56ed6437b198fddba683305e8e2d651aa42647f00f5ae542e7f5c94a2"
 
 [[package]]
 name = "impellers"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
+ "anyhow",
  "ash",
+ "bindgen",
  "bitflags 2.11.1",
  "bytemuck",
  "euclid",
  "glfw",
  "glow",
  "image",
-]
-
-[[package]]
-name = "impellers_codegen"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bindgen",
  "serde_json",
  "tracing",
  "tracing-subscriber",

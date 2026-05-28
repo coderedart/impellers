@@ -2,6 +2,8 @@
 
 `Impeller` is a 2D vector graphics renderer used in [Flutter](https://flutter.dev). Impeller can also be used standalone (without flutter) with its C API. This crate provides a safe rust wrapper around the C API (and also the raw bindings). 
 
+> NOTE: It is HIGHLY recommended that you use `cache_libs` feature to improve build times and save bandwidth.
+
 ### What can it do?
 * draw 2D shapes like paths (lines/curvies), rectangles, circles, etc.
 * draw AND layout text.
@@ -62,12 +64,13 @@ The final binary/executable should enable the `prebuilt_libs` feature to downloa
 
 ## Features
 * `prebuilt_libs` - Downloads the prebuilt libraries from github releases and links them to your project.
-* `static_link` - If enabled, we will link static libraries. only available on linux/windows/mac. All other platforms will need to use shared libraries or provide their own (see [Custom Linking](#custom-linking)).
+* `static_link` - If enabled, we will link static libraries. may not be available on all platforms (see [Custom Linking](#custom-linking)).
 * `cache_libs` - If enabled, we will cache the prebuilt-libs in `.impeller_cache` directory inside your project directory (parent dir of `target`). Add `/.impeller_cache` to `.gitignore`, if you enable this feature. 
     * You can customize cache directory path with `IMPELLER_CACHE_DIR` env variable. And also use this to provide your own custom built libs.
     * caching avoids redownloading after `cargo clean` saving bandwidth and this in turns also makes the builds faster.
     * You also get to inspect the downloaded archives in the cache to debug any errors.
-
+* `bindgen_live` - This feature lets you build the rust bindings for impeller header at build time using bindgen. This is necessary on non-64bit platforms. If this is disabled, we will use pre-generated bindings for most mainstream platforms like windows/linux/android/mac 64bit. 
+* `sys`: This feature exposes the raw unsafe bindings as `impellers::sys` module. Useful, if the safe wrappers have any unsoundness or limitations, that need direct workarounds.
 
 ## Safety
 

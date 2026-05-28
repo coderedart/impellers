@@ -22,13 +22,13 @@ jobs:
     - name: Shared Build
       shell: bash
       run: |
-        cargo run --example=empty --features=prebuilt_libs,sys,cache_libs
+        cargo run --example=version --features=prebuilt_libs,sys,cache_libs
         cargo build --examples --features=prebuilt_libs,sys,cache_libs
+        cargo run --example=version --features=prebuilt_libs,sys,cache_libs,bindgen_live
+        cargo build --examples --features=prebuilt_libs,sys,cache_libs,bindgen_live
 
     - name: Static Build
       shell: bash
-      if: matrix.os != 'macos'
       run: |
-        cargo run --example=empty --features=prebuilt_libs,sys,debug_static_link
-        cargo run --example=empty --features=prebuilt_libs,sys,static_link
+        cargo run --example=version --features=prebuilt_libs,sys,static_link
         

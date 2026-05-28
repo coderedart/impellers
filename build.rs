@@ -1,8 +1,61 @@
-#[cfg(not(feature = "prebuilt_libs"))]
-fn main() {}
+#[cfg(feature = "bindgen_live")]
+mod bindgen_helper;
 
-#[cfg(feature = "prebuilt_libs")]
 fn main() {
+    #[cfg(feature = "prebuilt_libs")]
+    prebuilt_libs();
+
+    let out_dir = std::env::var("OUT_DIR").expect("failed to get OUT_DIR env var");
+    let bindings_path = format!("{out_dir}/bindings.rs");
+    #[cfg(not(feature = "bindgen_live"))]
+    {
+        const WIN_PREGENERATED_BINDINGS: &str = include_str!("src/sys/win.rs");
+        const NO_WIN_PREGENERATED_BINDINGS: &str = include_str!("src/sys/nowin.rs");
+        let contents = if cfg!(target_os = "windows") {
+            WIN_PREGENERATED_BINDINGS
+        } else {
+            NO_WIN_PREGENERATED_BINDINGS
+        };
+        std::fs::write(&bindings_path, contents)
+            .expect("failed to write pre-generated bindings to bindings.rs");
+    }
+    #[cfg(feature = "bindgen_live")]
+    {
+        let bindings = bindgen_helper::generate_bindings(None).expect("failed to run bindgen");
+        std::fs::write(&bindings_path, bindings)
+            .expect(&format!("failed to write bindings to {bindings_path}"));
+    }
+    #[cfg(feature = "internal_pre_bindgen")]
+    {
+        use anyhow::Context;
+        // only used for internally pre-generating bindings before publishing
+        assert!(
+            std::fs::exists("src/sys")
+                .context("'src/sys' existence can't be checked for")
+                .unwrap(),
+            "'src/sys' directory doesn't exist"
+        );
+        // I think the ABI is same for all, except for the enum being repr(i32) on windows platforms.
+        // "aarch64-unknown-linux-gnu",
+        // "x86_64-apple-darwin",
+        // "aarch64-apple-darwin",
+        // "aarch64-linux-android",
+
+        for (name, platform) in [
+            ("nowin", "x86_64-unknown-linux-gnu"),
+            ("win", "x86_64-pc-windows-msvc"),
+        ] {
+            let bindings = bindgen_helper::generate_bindings(Some(platform))
+                .with_context(|| format!("failed to generate bindings for {platform}"))
+                .unwrap();
+            std::fs::write(&format!("src/sys/{name}.rs"), bindings)
+                .with_context(|| format!("failed to write bindings for {platform}"))
+                .unwrap();
+        }
+    }
+}
+#[cfg(feature = "prebuilt_libs")]
+fn prebuilt_libs() {
     use std::path::{Path, PathBuf};
 
     const STATIC_MAJOR: u32 = 0;

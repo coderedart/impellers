@@ -109,23 +109,10 @@
 #![warn(clippy::missing_safety_doc)]
 
 mod color;
-#[cfg(all(feature = "sys", not(target_os = "windows")))]
-#[allow(missing_docs)]
+#[cfg(feature = "sys")]
 pub mod sys;
-#[cfg(all(not(feature = "sys"), not(target_os = "windows")))]
-#[allow(missing_docs)]
+#[cfg(not(feature = "sys"))]
 mod sys;
-
-#[cfg(target_os = "windows")]
-#[allow(missing_docs)]
-mod win_sys;
-#[cfg(all(not(feature = "sys"), target_os = "windows"))]
-use win_sys as sys;
-#[cfg(all(feature = "sys", target_os = "windows"))]
-#[allow(missing_docs)]
-pub mod sys {
-    pub use crate::win_sys::*;
-}
 
 use std::borrow::Cow;
 
@@ -1732,7 +1719,6 @@ impl ColorFilter {
     /// - blend_mode  The blend mode.
     ///
     /// @return     The color filter.
-
     #[doc(alias = "ImpellerColorFilterCreateBlendNew")]
     pub fn new_blend(color: Color, blend_mode: BlendMode) -> Self {
         unsafe { Self(sys::ImpellerColorFilterCreateBlendNew(&color, blend_mode)) }
@@ -1748,7 +1734,6 @@ impl ColorFilter {
     /// playground to play with matrices: <https://fecolormatrix.com/>
     ///
     /// read more in struct docs [ColorFilter]
-
     #[doc(alias = "ImpellerColorFilterCreateColorMatrixNew")]
     pub fn new_matrix(color_matrix: ColorMatrix) -> Self {
         unsafe { Self(sys::ImpellerColorFilterCreateColorMatrixNew(&color_matrix)) }
@@ -1805,7 +1790,6 @@ impl ColorSource {
     /// - transformation  The transformation.
     ///
     /// @return     The color source.
-
     #[doc(alias = "ImpellerColorSourceCreateLinearGradientNew")]
     pub fn new_linear_gradient(
         start: Point,
@@ -1852,7 +1836,6 @@ impl ColorSource {
     /// - transformation  The transformation.
     ///
     /// @return     The color source.
-
     #[doc(alias = "ImpellerColorSourceCreateRadialGradientNew")]
     pub fn new_radial_gradient(
         center: Point,
@@ -1948,8 +1931,7 @@ impl ColorSource {
     /// - tile_mode       The tile mode.
     /// - transformation  The transformation.
     ///
-    /// @return     The color source.
-
+    /// @return     The color source.car
     #[doc(alias = "ImpellerColorSourceCreateSweepGradientNew")]
     pub fn new_sweep_gradient(
         center: Point,

@@ -2,39 +2,30 @@ use anyhow::Context;
 
 use tracing::{debug, error, trace};
 
-pub fn generate_bindigns() -> anyhow::Result<()> {
-    let impeller_header_src =
-        load_impeller_header("impeller.h").context("failed to load impeller header")?;
-    let impeller_api_json = std::fs::read_to_string("impeller_api.json")
-        .context("failed to read impeller_api.json file")?;
-    let impeller_api: serde_json::Value = serde_json::from_str(&impeller_api_json)
+const IMPELLER_HEADER_SRC: &str = include_str!("impeller.h");
+const IMPELLER_API_JSON_STR: &str = include_str!("impeller_api.json");
+
+pub fn generate_bindings(platform: Option<&str>) -> anyhow::Result<String> {
+    let impeller_api: serde_json::Value = serde_json::from_str(&IMPELLER_API_JSON_STR)
         .context("failed to parse impeller_api.json file")?;
 
-    let raw_bindings =
-        run_bindgen_and_return_rust_src(&impeller_header_src, ImpellerApiJson(impeller_api))
-            .context("failed to run bindgen")?;
-    let prefix = r"#![allow(non_upper_case_globals)]
-#![allow(non_camel_case_types)]
-#![allow(non_snake_case)]
-#![allow(unused)]
-#![allow(rustdoc::invalid_codeblock_attributes)]
-#![allow(rustdoc::invalid_rust_codeblocks)]
-#![allow(rustdoc::broken_intra_doc_links)]
-    ";
-    let bindings = format!("{prefix}{raw_bindings}");
-    // NOTE: windows wants i32 enums by default, as opposed to u32 used by most other platforms.
-    // So, we have this hack to simply replace u32 repr with i32, with the assumption that we run this on non-windows platforms.
-    let win_bindings = bindings.replace("repr(u32)", "repr(i32)");
-    #[cfg(target_os = "windows")]
-    panic!("this is only supposed to be run on non-windows platforms");
-    std::fs::write("src/sys.rs", bindings).context("failed to write")?;
-    std::fs::write("src/win_sys.rs", win_bindings).context("failed to write win sys")?;
-    Ok(())
+    let platform = platform.map(|p| format!("--target={p}"));
+    let clang_args = platform.as_ref().map(|s| s.as_str());
+
+    let raw_bindings = run_bindgen_and_return_rust_src(
+        &IMPELLER_HEADER_SRC,
+        ImpellerApiJson(impeller_api.clone()),
+        clang_args.as_slice(),
+    )
+    .context("failed to run bindgen")?;
+
+    Ok(raw_bindings)
 }
 
 fn run_bindgen_and_return_rust_src(
     impeller_header_src: &str,
     impeller_api: impl bindgen::callbacks::ParseCallbacks + 'static,
+    clang_args: &[&str],
 ) -> anyhow::Result<String> {
     let generator = bindgen::builder()
         .derive_default(true)
@@ -44,25 +35,18 @@ fn run_bindgen_and_return_rust_src(
         .header_contents("impeller.h", impeller_header_src)
         .merge_extern_blocks(true)
         .prepend_enum_name(false)
+        .allowlist_item("k*Impeller.*") // filter out distracting compiler internal constants/types.
+        .allowlist_item("IMPELLER.*")
         .default_enum_style(bindgen::EnumVariation::Rust {
             non_exhaustive: false,
         })
         .parse_callbacks(Box::new(impeller_api))
+        .clang_args(clang_args)
         .generate()?;
 
     Ok(generator.to_string())
 }
 
-fn load_impeller_header(path: &str) -> anyhow::Result<String> {
-    tracing::debug!(
-        "current directory: {}",
-        std::env::current_dir()
-            .context("failed to get current directory before reading impeller header")?
-            .display()
-    );
-    tracing::debug!("loading impeller header from {}", path);
-    std::fs::read_to_string(path).context("failed to read from impeller.h file")
-}
 #[derive(Debug)]
 struct ImpellerApiJson(serde_json::Value);
 impl ImpellerApiJson {
