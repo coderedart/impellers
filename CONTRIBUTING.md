@@ -70,11 +70,21 @@ We generally need these libraries
 
 ## Flutter Upgrade CheckList
 When bumping submodule to a new commit
-- update `ENGINE_SHA` using `git submodule status | cut -d ' ' -f2`
-- Create a new tag with `a_` prefix like `a_0.15.2` to trigger `.github/workflows/assets.yaml` workflow.
+- Process to switch to a new commit
+    - go to flutter repo and find a recent commit by autoroll bot. Copy the commit hash.
+    - `git submodule status` will show you the current commit we are using (and probably matches ENGINE_SHA file content)
+    - `cd flutter` to go into flutter submodule
+    - `git pull origin master`
+    - `git checkout COMMIT_ID` (replace COMMIT_ID with the hash)
+    - `cd ..` to get back to our repo directory.
+    - `git submodule status` to verify that the submodule is pointing to the commit we want with a `+` at the beginning to indicate that we haven't committed yet.
+    - update `ENGINE_SHA` with new commit id. Our CI workflow checks that `ENGINE_SHA` matches with flutter submodule. 
+    - `git commit -am "bump flutter hash"` to commit the change.
+    - `git submodule status` to verify that there's no `+` anymore and the commit is correct.
+- Create a new tag with `a_` prefix like `a_0.15.2` to trigger `.github/workflows/assets.yaml` workflow. eg: `git tag a_0.15.3`.
 - If above succeeds, cut a new release on github. 
 - Update the assets version in `build.rs` (eg: `STATIC_*` constants)
-- Pre-generate bindings using `internal_pre_bindgen` feature to update to new impeller header.
+- Pre-generate bindings using `internal_pre_bindgen` feature to update to new `impeller.h`.
 - Run `generate_impeller_api_json.py` to update `impeller_api.json`.
 - Run `cargo clean` -> some tests and examples to verify that the new artefacts are working properly.
 - Check for any new items via diffs in pre-generated bindings or json file. If there's new items, add safe bindings and examples to make sure that the new items are working correctly.
