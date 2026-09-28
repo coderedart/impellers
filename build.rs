@@ -111,7 +111,7 @@ fn prebuilt_libs() {
         if target_os == "windows" {
             // do we really need all of these?
             for lib in [
-                "advapi32", "Rpcrt4", "Shlwapi", "user32", "Gdi32", "Shell32", "Winmm", "msvcrt",
+                "advapi32", "Rpcrt4", "Shlwapi", "user32", "Gdi32", "Shell32", "Winmm",
             ] {
                 println!("cargo:rustc-link-lib={lib}");
             }
