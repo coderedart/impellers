@@ -1,4 +1,5 @@
 use glfw::*;
+use glfw::Context;
 use glow::HasContext;
 use impellers::*;
 

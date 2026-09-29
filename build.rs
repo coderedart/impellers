@@ -60,7 +60,7 @@ fn prebuilt_libs() {
 
     const STATIC_MAJOR: u32 = 0;
     const STATIC_MINOR: u32 = 5;
-    const STATIC_PATCH: u32 = 14;
+    const STATIC_PATCH: u32 = 15;
     // gather variables
     let out_dir = std::path::Path::new(&std::env::var("OUT_DIR").unwrap()).to_owned();
     let cargo_target_os = std::env::var("CARGO_CFG_TARGET_OS").unwrap();
@@ -274,6 +274,7 @@ fn prebuilt_libs() {
                     println!("cargo:warning=impeller cache directory is out of date {impeller_version} vs {version_in_file}");
                 }
                 if impeller_cache_dir.exists() {
+                    println!("cargo:warning=impeller cache directory is being recreated for being out of date");
                     std::fs::remove_dir_all(&impeller_cache_dir)
                         .expect("failed to remove impeller cache dir");
                 }
